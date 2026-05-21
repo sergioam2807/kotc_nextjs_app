@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { Topbar } from '@/components/layout/Topbar';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -32,11 +33,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         username={user?.user_metadata?.full_name ?? profile?.username ?? ''}
       />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto">
+        <div className="hidden md:flex">
+          <Sidebar />
+        </div>
+        <main className="flex-1 overflow-y-auto pb-[64px] md:pb-0">
           {children}
         </main>
       </div>
+      <MobileBottomNav />
     </div>
   );
 }

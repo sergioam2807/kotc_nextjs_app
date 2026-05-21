@@ -13,6 +13,26 @@ const DEPORTES_MAP: Record<string, { emoji: string; label: string }> = {
 
 const NIVEL_NOMBRES = ['', 'Rookie', 'Contender', 'Challenger', 'Warrior', 'Elite', 'Legend', 'King'];
 
+function SidebarContent() {
+  return (
+    <>
+      {/* Temporada */}
+      <div className="bg-[#151518] border border-[#1e1e24] rounded-[8px] p-2.5 mb-5">
+        <div className="text-[10px] text-[#555] mb-1">Temporada activa</div>
+        <div className="text-[12px] text-[#444] italic">No hay temporada activa</div>
+      </div>
+
+      {/* Ranking */}
+      <div className="text-[10px] text-[#444] tracking-[0.1em] font-medium mb-2.5 uppercase">Ranking temporada</div>
+      <div className="text-[12px] text-[#444] italic mb-5">Sin datos de ranking aún.</div>
+
+      {/* Próximos */}
+      <div className="text-[10px] text-[#444] tracking-[0.1em] font-medium mb-2.5 uppercase">Próximos partidos</div>
+      <div className="text-[12px] text-[#444] italic">No hay partidos programados.</div>
+    </>
+  );
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -36,7 +56,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex h-full">
-      {/* Main */}
+      {/* Main column */}
       <div className="flex-1 p-5 overflow-y-auto">
 
         {/* Player banner */}
@@ -48,12 +68,12 @@ export default async function DashboardPage() {
               <span className="text-[20px] font-medium text-[#F5C344]">{iniciales}</span>
             )}
           </div>
-          <div className="flex-1">
-            <div className="text-[15px] font-medium text-white mb-0.5">{displayName}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[15px] font-medium text-white mb-0.5 truncate">{displayName}</div>
             <div className="text-[12px] text-[#F5C344] mb-1.5">Nivel {nivel} — {nivelNombre}</div>
             <XPBar xp={xp} nivel={nivel} />
           </div>
-          <div className="flex gap-1.5 flex-wrap justify-end">
+          <div className="flex gap-1.5 flex-wrap justify-end flex-shrink-0">
             <Badge variant="neutral">Sin equipo aún</Badge>
           </div>
         </div>
@@ -66,10 +86,7 @@ export default async function DashboardPage() {
               const d = DEPORTES_MAP[id];
               if (!d) return null;
               return (
-                <div
-                  key={id}
-                  className="bg-[#111114] border border-[#F5C34460] rounded-[8px] px-3 py-2 flex items-center gap-1.5"
-                >
+                <div key={id} className="bg-[#111114] border border-[#F5C34460] rounded-[8px] px-3 py-2 flex items-center gap-1.5">
                   <span className="text-[15px]">{d.emoji}</span>
                   <span className="text-[12px] text-[#ddd]">{d.label}</span>
                 </div>
@@ -98,28 +115,21 @@ export default async function DashboardPage() {
 
         {/* Desafíos */}
         <div className="text-[10px] text-[#888] tracking-[0.06em] font-medium uppercase mb-3">Desafíos pendientes</div>
-        <div className="bg-[#111114] border border-[#1e1e24] rounded-[10px] p-6 text-center">
+        <div className="bg-[#111114] border border-[#1e1e24] rounded-[10px] p-6 mb-5 text-center">
           <p className="text-[28px] mb-2">⚔️</p>
           <p className="text-[13px] text-[#555] mb-1">Sin desafíos pendientes.</p>
           <p className="text-[12px] text-[#444]">Ve al mapa y reta a los equipos que dominan una cancha.</p>
         </div>
+
+        {/* Sidebar content — only visible on mobile, rendered inline */}
+        <div className="md:hidden border-t border-[#1a1a1f] pt-5">
+          <SidebarContent />
+        </div>
       </div>
 
-      {/* Right panel */}
-      <div className="w-[210px] bg-[#0a0a0c] border-l border-[#1a1a1f] p-4 overflow-y-auto flex-shrink-0">
-        {/* Temporada */}
-        <div className="bg-[#151518] border border-[#1e1e24] rounded-[8px] p-2.5 mb-5">
-          <div className="text-[10px] text-[#555] mb-1">Temporada activa</div>
-          <div className="text-[12px] text-[#444] italic">No hay temporada activa</div>
-        </div>
-
-        {/* Ranking */}
-        <div className="text-[10px] text-[#444] tracking-[0.1em] font-medium mb-2.5 uppercase">Ranking temporada</div>
-        <div className="text-[12px] text-[#444] italic mb-5">Sin datos de ranking aún.</div>
-
-        {/* Próximos */}
-        <div className="text-[10px] text-[#444] tracking-[0.1em] font-medium mb-2.5 uppercase">Próximos partidos</div>
-        <div className="text-[12px] text-[#444] italic">No hay partidos programados.</div>
+      {/* Right panel — desktop only */}
+      <div className="hidden md:flex md:flex-col w-[210px] bg-[#0a0a0c] border-l border-[#1a1a1f] p-4 overflow-y-auto flex-shrink-0">
+        <SidebarContent />
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, usernam
       <Link href="/dashboard" className="text-[13px] font-medium text-white tracking-[0.06em] flex-shrink-0 mr-2">
         KING <span className="text-[#F5C344]">OF THE</span> COURT
       </Link>
-      <nav className="flex gap-0.5 flex-1">
+      <nav className="hidden md:flex gap-0.5 flex-1">
         {tabs.map(tab => (
           <Link
             key={tab.href}
@@ -55,7 +55,7 @@ export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, usernam
       </nav>
 
       <div className="ml-auto flex items-center gap-2.5">
-        <div className="flex items-center gap-1.5">
+        <div className="hidden md:flex items-center gap-1.5">
           <span className="text-[11px] text-[#F5C344] font-medium">Lv.{nivel}</span>
           <div className="w-14 h-1 bg-[#1e1e24] rounded-full overflow-hidden">
             <div className="h-full bg-[#F5C344] rounded-full" style={{ width: `${Math.min((xp % 100), 100)}%` }} />
