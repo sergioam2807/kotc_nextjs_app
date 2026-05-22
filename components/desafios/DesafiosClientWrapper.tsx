@@ -65,23 +65,24 @@ export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas }: 
   }, [desafiosLocales, filtro, equipoId]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between flex-shrink-0">
-        <div>
+    <div className="flex flex-col min-h-full">
+      <div className="px-4 sm:px-6 py-4 border-b border-outline-variant flex items-center justify-between gap-3 flex-shrink-0">
+        <div className="min-w-0">
           <div className="text-[15px] font-bold text-on-surface">Desafíos</div>
-          <div className="text-[11px] text-outline">Gestiona los retos de tu equipo</div>
+          <div className="text-[11px] text-outline truncate">Gestiona los retos de tu equipo</div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={handleRefresh}
             disabled={isPending}
             title="Actualizar desafíos"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors disabled:opacity-40"
+            aria-label="Actualizar desafíos"
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors disabled:opacity-40"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="15"
-              height="15"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -98,19 +99,20 @@ export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas }: 
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-accent text-on-accent rounded-lg px-3 py-1.5 text-[12px] font-bold hover:brightness-90 transition-all"
+            className="bg-accent text-on-accent rounded-lg px-3 py-2 text-[12px] font-bold hover:brightness-90 transition-all min-h-[40px] whitespace-nowrap"
           >
-            + Nuevo desafío
+            <span className="sm:hidden">+ Nuevo</span>
+            <span className="hidden sm:inline">+ Nuevo desafío</span>
           </button>
         </div>
       </div>
 
-      <div className="px-6 pt-4 pb-0 flex gap-1 flex-shrink-0">
+      <div className="px-4 sm:px-6 pt-4 pb-0 flex gap-1 flex-shrink-0 overflow-x-auto">
         {FILTROS.map((f) => (
           <button
             key={f.value}
             onClick={() => setFiltro(f.value)}
-            className={`px-3 py-1.5 rounded-lg text-[11px] capitalize transition-colors font-medium ${
+            className={`px-3 py-2 rounded-lg text-[11px] capitalize transition-colors font-medium flex-shrink-0 min-h-[36px] ${
               filtro === f.value ? 'bg-accent/15 text-accent' : 'text-outline hover:text-on-surface-variant'
             }`}
           >
@@ -119,11 +121,11 @@ export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas }: 
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 pt-4">
+      <div className="flex-1 p-4 sm:p-6 pt-4">
         {filtrados.length === 0 ? (
           <div className="text-outline text-[12px] text-center py-12">Sin desafíos en esta categoría</div>
         ) : (
-          <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+          <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
             {filtrados.map((d) => (
               <DesafioCard
                 key={d.id}

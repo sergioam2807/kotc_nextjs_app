@@ -353,7 +353,8 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         {!canchaSeleccionada && !modoAgregar && !modoEditarUbicacion && (
           <button
             onClick={() => setMobileListOpen(true)}
-            className="md:hidden absolute bottom-4 left-3 z-20 bg-surface-container-low border border-outline-variant rounded-full px-3.5 py-2 text-[11px] text-on-surface-variant flex items-center gap-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.4)]"
+            className="md:hidden absolute left-3 z-20 bg-surface-container-low border border-outline-variant rounded-full px-3.5 py-2.5 text-[11px] text-on-surface-variant flex items-center gap-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.4)] min-h-[40px]"
+            style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
           >
             <span className="w-2 h-2 rounded-full bg-on-surface-variant" />
             {canchasFiltradas.length} canchas
@@ -364,7 +365,9 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         {!canchaSeleccionada && !modoAgregar && !modoEditarUbicacion && (
           <button
             onClick={handleAgregarCanchaClick}
-            className="md:hidden absolute bottom-4 right-3 z-20 w-11 h-11 bg-accent text-on-accent rounded-full text-xl font-bold flex items-center justify-center shadow-[0_4px_16px_rgba(255,224,131,0.35)]"
+            aria-label="Agregar cancha"
+            className="md:hidden absolute right-3 z-20 w-14 h-14 bg-accent text-on-accent rounded-full text-2xl font-bold flex items-center justify-center shadow-[0_4px_16px_rgba(255,224,131,0.35)]"
+            style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
           >
             +
           </button>
@@ -372,7 +375,10 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
 
         {/* ── Selected court panel — full width on mobile, fixed width on desktop ── */}
         {canchaSeleccionada && (
-          <div className="absolute bottom-3 left-3 right-3 md:left-auto md:right-3 md:w-[220px] z-20 bg-surface-container-low border border-outline-variant rounded-xl p-4 shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
+          <div
+            className="absolute left-3 right-3 md:left-auto md:right-3 md:w-[220px] z-20 bg-surface-container-low border border-outline-variant rounded-xl p-4 shadow-[0_4px_24px_rgba(0,0,0,0.5)] md:!bottom-3"
+            style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
+          >
             <div className="flex items-start justify-between mb-2">
               <div
                 className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium"
@@ -429,13 +435,22 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         {/* ── MOBILE: court list bottom sheet ── */}
         {mobileListOpen && (
           <>
-            <div className="md:hidden fixed inset-0 z-30 bg-black/50" onClick={() => setMobileListOpen(false)} />
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-outline-variant rounded-t-xl max-h-[60vh] flex flex-col">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
+            <div className="md:hidden fixed inset-0 z-[60] bg-black/50" onClick={() => setMobileListOpen(false)} />
+            <div
+              className="md:hidden fixed bottom-0 left-0 right-0 z-[70] bg-surface border-t border-outline-variant rounded-t-xl flex flex-col"
+              style={{ maxHeight: 'calc(75vh + env(safe-area-inset-bottom, 0px))' }}
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant flex-shrink-0">
                 <span className="text-[12px] font-medium text-on-surface">Canchas ({canchasFiltradas.length})</span>
-                <button onClick={() => setMobileListOpen(false)} className="text-outline hover:text-on-surface-variant text-xl leading-none">×</button>
+                <button
+                  onClick={() => setMobileListOpen(false)}
+                  aria-label="Cerrar"
+                  className="w-10 h-10 -mr-2 flex items-center justify-center text-outline hover:text-on-surface-variant text-2xl leading-none"
+                >
+                  ×
+                </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-3">
+              <div className="flex-1 overflow-y-auto p-3 min-h-0">
                 {canchasFiltradas.length === 0 ? (
                   <div className="text-[11px] text-outline text-center py-6">Sin resultados</div>
                 ) : (
@@ -443,7 +458,7 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
                     <button
                       key={c.id}
                       onClick={() => { setCanchaSeleccionada(c); setPanToCoords({ lat: c.lat, lng: c.lng }); setMobileListOpen(false); }}
-                      className="flex items-start gap-2 w-full bg-transparent border border-transparent rounded-lg px-2 py-2.5 mb-0.5 transition-colors text-left hover:bg-surface-container-low"
+                      className="flex items-start gap-2 w-full bg-transparent border border-transparent rounded-lg px-2 py-3 mb-0.5 transition-colors text-left hover:bg-surface-container-low min-h-[44px]"
                     >
                       <div className="w-2.5 h-2.5 rounded-full mt-[3px] flex-shrink-0" style={{ background: ESTADO_COLORS[c.estado] }} />
                       <div className="flex-1 min-w-0">
@@ -462,10 +477,13 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
                   ))
                 )}
               </div>
-              <div className="p-3 border-t border-outline-variant">
+              <div
+                className="p-3 border-t border-outline-variant flex-shrink-0"
+                style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
+              >
                 <button
                   onClick={handleAgregarCanchaClick}
-                  className="w-full bg-transparent border border-dashed border-outline-variant rounded-lg p-2.5 text-[12px] text-outline flex items-center justify-center gap-1.5 hover:border-outline hover:text-on-surface-variant transition-colors"
+                  className="w-full bg-transparent border border-dashed border-outline-variant rounded-lg p-3 text-[12px] text-outline flex items-center justify-center gap-1.5 hover:border-outline hover:text-on-surface-variant transition-colors min-h-[44px]"
                 >
                   + Agregar cancha
                 </button>

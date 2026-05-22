@@ -213,18 +213,18 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
 
         {/* Actions: aceptar/rechazar */}
         {puedeAceptarRechazar && (
-          <div className="flex gap-1.5 mt-1">
+          <div className="flex gap-2 mt-1">
             <button
               onClick={() => handleAccion('aceptado')}
               disabled={loading}
-              className="rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-status-libre/15 text-status-libre border border-status-libre/25 hover:bg-status-libre/25"
+              className="flex-1 sm:flex-initial rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-status-libre/15 text-status-libre border border-status-libre/25 hover:bg-status-libre/25 min-h-[40px]"
             >
               {loading ? '...' : 'Aceptar'}
             </button>
             <button
               onClick={() => handleAccion('rechazado')}
               disabled={loading}
-              className="rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-error/15 text-error border border-error/25 hover:bg-error/25"
+              className="flex-1 sm:flex-initial rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-error/15 text-error border border-error/25 hover:bg-error/25 min-h-[40px]"
             >
               {loading ? '...' : 'Rechazar'}
             </button>
@@ -237,7 +237,7 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
             <button
               onClick={() => setShowProponer(true)}
               disabled={loading}
-              className="rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-accent/15 text-accent border border-accent/25 hover:bg-accent/25"
+              className="w-full sm:w-auto rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-accent/15 text-accent border border-accent/25 hover:bg-accent/25 min-h-[40px]"
             >
               🏆 Proponer resultado
             </button>
@@ -267,14 +267,14 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
                   <button
                     onClick={handleConfirmar}
                     disabled={loading}
-                    className="rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-status-libre/15 text-status-libre border border-status-libre/25 hover:bg-status-libre/25"
+                    className="flex-1 sm:flex-initial rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-status-libre/15 text-status-libre border border-status-libre/25 hover:bg-status-libre/25 min-h-[40px]"
                   >
                     {loading ? '...' : '✓ Confirmar'}
                   </button>
                   <button
                     onClick={handleDisputar}
                     disabled={loading}
-                    className="rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-error/15 text-error border border-error/25 hover:bg-error/25"
+                    className="flex-1 sm:flex-initial rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-error/15 text-error border border-error/25 hover:bg-error/25 min-h-[40px]"
                   >
                     {loading ? '...' : '✗ Disputar'}
                   </button>

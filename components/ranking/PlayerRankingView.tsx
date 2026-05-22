@@ -34,8 +34,8 @@ export function PlayerRankingView({ stats, currentUserId }: Props) {
   return (
     <>
       {stats.length >= 1 && (
-        <div className="px-6 pt-6 pb-2">
-          <div className="flex items-end justify-center gap-3">
+        <div className="px-4 sm:px-6 pt-6 pb-2">
+          <div className="flex items-end justify-center gap-2 sm:gap-3">
             {/* 2nd place */}
             {stats[1] && (
               <Link href={`/jugadores/${stats[1].id}`} className="flex flex-col items-center gap-2 flex-1 hover:opacity-80 transition-opacity">
@@ -143,7 +143,7 @@ export function PlayerRankingView({ stats, currentUserId }: Props) {
             </div>
 
             {/* Level + XP */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <div className="text-[10px] text-on-surface-variant bg-surface-container rounded-sm px-1.5 py-0.5">
                 Lv{player.nivel}
               </div>

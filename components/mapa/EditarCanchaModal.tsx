@@ -104,15 +104,17 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-surface/80 backdrop-blur-sm overflow-y-auto p-0 sm:p-4"
     >
       <div
-        className="relative w-full max-w-md bg-surface-container-low border border-outline-variant rounded-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)]"
+        className="relative w-full max-w-md bg-surface-container-low border border-outline-variant sm:rounded-xl rounded-t-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)] max-h-[100dvh] sm:max-h-[92dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
+        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container text-outline hover:text-on-surface hover:bg-surface-container transition-colors text-[16px] leading-none"
+          aria-label="Cerrar"
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container text-outline hover:text-on-surface transition-colors text-[20px] leading-none z-10"
         >
           ×
         </button>

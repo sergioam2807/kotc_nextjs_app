@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { TeamRankingStat } from './types';
 
 interface Props {
@@ -19,11 +20,11 @@ export function TeamRankingView({ stats }: Props) {
   return (
     <>
       {stats.length >= 1 && (
-        <div className="px-6 pt-6 pb-2">
-          <div className="flex items-end justify-center gap-3">
+        <div className="px-4 sm:px-6 pt-6 pb-2">
+          <div className="flex items-end justify-center gap-2 sm:gap-3">
             {/* 2nd place */}
             {stats[1] && (
-              <div className="flex flex-col items-center gap-2 flex-1">
+              <Link href={`/equipos/${stats[1].id}`} className="flex flex-col items-center gap-2 flex-1 hover:opacity-90 transition-opacity">
                 <div
                   className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-bold border-2"
                   style={{ background: `${stats[1].color}20`, borderColor: `${stats[1].color}60`, color: stats[1].color }}
@@ -38,11 +39,11 @@ export function TeamRankingView({ stats }: Props) {
                 >
                   <span className="text-[16px] font-bold" style={{ color: MEDAL.silver.text }}>2</span>
                 </div>
-              </div>
+              </Link>
             )}
 
             {/* 1st place */}
-            <div className="flex flex-col items-center gap-2 flex-1">
+            <Link href={`/equipos/${stats[0].id}`} className="flex flex-col items-center gap-2 flex-1 hover:opacity-90 transition-opacity">
               <div className="text-[18px]">👑</div>
               <div
                 className="w-14 h-14 rounded-full flex items-center justify-center text-[20px] font-bold border-2"
@@ -63,11 +64,11 @@ export function TeamRankingView({ stats }: Props) {
               >
                 <span className="text-[20px] font-bold" style={{ color: MEDAL.gold.text }}>1</span>
               </div>
-            </div>
+            </Link>
 
             {/* 3rd place */}
             {stats[2] && (
-              <div className="flex flex-col items-center gap-2 flex-1">
+              <Link href={`/equipos/${stats[2].id}`} className="flex flex-col items-center gap-2 flex-1 hover:opacity-90 transition-opacity">
                 <div
                   className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] font-bold border-2"
                   style={{ background: `${stats[2].color}20`, borderColor: `${stats[2].color}60`, color: stats[2].color }}
@@ -82,7 +83,7 @@ export function TeamRankingView({ stats }: Props) {
                 >
                   <span className="text-[16px] font-bold" style={{ color: MEDAL.bronze.text }}>3</span>
                 </div>
-              </div>
+              </Link>
             )}
           </div>
         </div>
@@ -90,8 +91,9 @@ export function TeamRankingView({ stats }: Props) {
 
       <div className="px-4 pb-6">
         {stats.map((team, idx) => (
-          <div
+          <Link
             key={team.id}
+            href={`/equipos/${team.id}`}
             className="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 hover:bg-surface-container-low transition-colors"
           >
             {/* Rank */}
@@ -123,7 +125,7 @@ export function TeamRankingView({ stats }: Props) {
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <div className="text-center">
                 <div className="text-[11px] font-semibold" style={{ color: MEDAL.gold.text }}>{team.kingCourts}</div>
                 <div className="text-[9px] text-outline">🏆</div>
@@ -146,7 +148,7 @@ export function TeamRankingView({ stats }: Props) {
                 <div className="text-[9px] text-outline">pts</div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
         {stats.length === 0 && (
           <div className="text-outline text-[12px] text-center py-12">Sin equipos registrados</div>

@@ -104,21 +104,23 @@ export function NuevoDesafioModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-surface/80 backdrop-blur-sm overflow-y-auto p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-surface-container border border-outline-variant rounded-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)] overflow-y-auto max-h-[90vh]"
+        className="relative w-full max-w-lg bg-surface-container border border-outline-variant sm:rounded-xl rounded-t-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)] overflow-y-auto max-h-[100dvh] sm:max-h-[92dvh]"
         onClick={(e) => e.stopPropagation()}
+        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
       >
         <button
           onClick={onClose}
-          className="float-right -mt-2 -mr-2 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-high text-outline hover:text-on-surface hover:bg-surface-container-highest transition-colors text-[16px] leading-none"
+          aria-label="Cerrar"
+          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-outline hover:text-on-surface transition-colors text-[20px] leading-none z-10"
         >
           ×
         </button>
 
-        <div className="text-[15px] font-bold text-on-surface mb-1">Nuevo desafío</div>
+        <div className="text-[15px] font-bold text-on-surface mb-1 pr-10">Nuevo desafío</div>
         <div className="text-[11px] text-outline mb-5">Reta a otro equipo en una cancha.</div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

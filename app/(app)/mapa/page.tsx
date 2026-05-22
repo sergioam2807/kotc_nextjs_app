@@ -33,28 +33,32 @@ export default async function MapaPage() {
 
   // Calcular estado de cada cancha respecto al equipo del usuario
   const canchas: CanchaConEstado[] = (canchasRaw ?? []).map((c: Record<string, unknown>) => {
-    const dominio = Array.isArray(c.cancha_dominio)
-      ? (c.cancha_dominio[0] as Record<string, unknown> | undefined)
-      : (c.cancha_dominio as Record<string, unknown> | undefined);
+    const dominioArr: Record<string, unknown>[] = Array.isArray(c.cancha_dominio)
+      ? (c.cancha_dominio as Record<string, unknown>[])
+      : c.cancha_dominio
+        ? [c.cancha_dominio as Record<string, unknown>]
+        : [];
+
+    // El King real es la única fila con es_king = true
+    const kingEntry = dominioArr.find(d => d.es_king === true) ?? null;
 
     let estado: 'libre' | 'king' | 'rival' = 'libre';
     let equipoNombre: string | undefined;
     let equipoColor: string | undefined;
     let victorias: number | undefined;
     let derrotas: number | undefined;
+    let dominioEquipoId: string | undefined;
 
-    if (dominio && dominio.equipo_id) {
-      if (equipoId && dominio.equipo_id === equipoId) {
-        estado = 'king';
-      } else {
-        estado = 'rival';
-      }
+    if (kingEntry) {
+      dominioEquipoId = kingEntry.equipo_id as string;
+      // 'king' = mi equipo es el King · 'rival' = otro equipo es el King
+      estado = equipoId && dominioEquipoId === equipoId ? 'king' : 'rival';
 
-      const equipo = dominio.equipos as Record<string, unknown> | undefined;
+      const equipo = kingEntry.equipos as Record<string, unknown> | undefined;
       equipoNombre = equipo?.nombre as string | undefined;
-      equipoColor = equipo?.color as string | undefined;
-      victorias = dominio.victorias as number | undefined;
-      derrotas = dominio.derrotas as number | undefined;
+      equipoColor  = equipo?.color  as string | undefined;
+      victorias    = kingEntry.victorias as number | undefined;
+      derrotas     = kingEntry.derrotas  as number | undefined;
     }
 
     return {
@@ -65,7 +69,7 @@ export default async function MapaPage() {
       lng: c.lng as number,
       deporte: (c.deporte as string[]) ?? [],
       estado,
-      equipoId: dominio?.equipo_id as string | undefined,
+      equipoId: dominioEquipoId,
       equipoNombre,
       equipoColor,
       victorias,

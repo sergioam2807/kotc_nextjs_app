@@ -119,25 +119,27 @@ export default async function DashboardPage() {
   const nivelNombre = nombreNivel(nivel);
 
   return (
-    <div className="flex h-full">
+    <div className="flex min-h-full md:h-full">
       {/* Main column */}
-      <div className="flex-1 p-5 overflow-y-auto">
+      <div className="flex-1 p-4 sm:p-5 md:overflow-y-auto">
 
         {/* Player banner */}
-        <div className="bg-[#0f0f12] border border-[#1e1e24] rounded-[12px] p-3.5 flex items-center gap-3.5 mb-5">
-          <div className="w-14 h-14 rounded-[10px] border-2 border-[#F5C344] overflow-hidden flex-shrink-0 flex items-center justify-center bg-[#1a1a0a]">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-[20px] font-medium text-[#F5C344]">{iniciales}</span>
-            )}
+        <div className="bg-[#0f0f12] border border-[#1e1e24] rounded-[12px] p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3.5 mb-5">
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+            <div className="w-14 h-14 rounded-[10px] border-2 border-[#F5C344] overflow-hidden flex-shrink-0 flex items-center justify-center bg-[#1a1a0a]">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[20px] font-medium text-[#F5C344]">{iniciales}</span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[15px] font-medium text-white mb-0.5 truncate">{displayName}</div>
+              <div className="text-[12px] text-[#F5C344] mb-1.5 truncate">Nivel {nivel} — {nivelNombre}</div>
+              <XPBar xp={xp} nivel={nivel} />
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[15px] font-medium text-white mb-0.5 truncate">{displayName}</div>
-            <div className="text-[12px] text-[#F5C344] mb-1.5">Nivel {nivel} — {nivelNombre}</div>
-            <XPBar xp={xp} nivel={nivel} />
-          </div>
-          <div className="flex gap-1.5 flex-wrap justify-end flex-shrink-0">
+          <div className="flex gap-1.5 flex-wrap sm:justify-end flex-shrink-0">
             {miEquipo ? (
               <Badge variant="gold">{miEquipo.nombre}</Badge>
             ) : (

@@ -137,32 +137,34 @@ export default async function EquipoPage() {
   const equipoIniciales = equipo.nombre.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
 
   return (
-    <div className="p-5">
+    <div className="p-4 sm:p-5">
       {/* Team hero */}
-      <div className="bg-[#0f0f12] border border-[#1e1e24] rounded-[14px] p-4 flex items-center gap-4 mb-5">
-        <div
-          className="w-16 h-16 rounded-[12px] border-2 flex items-center justify-center text-[22px] font-medium flex-shrink-0"
-          style={{ background: `${equipo.color}20`, borderColor: equipo.color, color: equipo.color }}
-        >
-          {equipoIniciales}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[20px] font-medium text-white mb-0.5 truncate">{equipo.nombre}</div>
-          <div className="text-[12px] text-[#555] mb-2">
-            {equipo.ciudad} · {deporteLabel} {equipo.modalidad}
+      <div className="bg-[#0f0f12] border border-[#1e1e24] rounded-[14px] p-4 flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-[12px] border-2 flex items-center justify-center text-[20px] sm:text-[22px] font-medium flex-shrink-0"
+            style={{ background: `${equipo.color}20`, borderColor: equipo.color, color: equipo.color }}
+          >
+            {equipoIniciales}
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            <Badge variant="purple">Nivel {equipo.nivel}</Badge>
-            <Badge variant="gold">{equipo.xp} XP</Badge>
-            <Badge variant="green">{(roster?.length ?? 0)}/{rosterConfig.titulares + rosterConfig.suplentes} jugadores</Badge>
-            <Badge variant="neutral">Sin temporada activa</Badge>
+          <div className="flex-1 min-w-0">
+            <div className="text-[18px] sm:text-[20px] font-medium text-white mb-0.5 truncate">{equipo.nombre}</div>
+            <div className="text-[12px] text-[#555] mb-2 truncate">
+              {equipo.ciudad} · {deporteLabel} {equipo.modalidad}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="purple">Nivel {equipo.nivel}</Badge>
+              <Badge variant="gold">{equipo.xp} XP</Badge>
+              <Badge variant="green">{(roster?.length ?? 0)}/{rosterConfig.titulares + rosterConfig.suplentes} jugadores</Badge>
+              <Badge variant="neutral">Sin temporada activa</Badge>
+            </div>
           </div>
         </div>
         {isAdmin && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-full sm:w-auto">
             <Link
               href="/equipo/invitaciones"
-              className="bg-[#F5C344] text-[#080809] rounded-[7px] px-3.5 py-1.5 text-[12px] font-medium cursor-pointer hover:bg-[#e8b53d] transition-colors inline-flex items-center gap-1.5"
+              className="bg-[#F5C344] text-[#080809] rounded-[7px] px-4 py-2.5 text-[12px] font-medium cursor-pointer hover:bg-[#e8b53d] transition-colors inline-flex items-center justify-center gap-1.5 w-full sm:w-auto min-h-[40px]"
             >
               + Invitar jugador
             </Link>
@@ -171,7 +173,7 @@ export default async function EquipoPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-2 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
         {[
           { val: String(totalVictorias), label: 'Victorias' },
           { val: String(totalDerrotas),  label: 'Derrotas' },
@@ -186,14 +188,14 @@ export default async function EquipoPage() {
       </div>
 
       {/* Roster header */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] text-[#444] tracking-[0.1em] font-medium uppercase">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="text-[10px] text-[#444] tracking-[0.1em] font-medium uppercase truncate">
           Roster — {deporteLabel} {equipo.modalidad}
         </span>
         {isAdmin && (
           <Link
             href="/equipo/invitaciones"
-            className="bg-transparent text-[#555] border border-[#2a2a2a] rounded-[7px] px-3.5 py-1.5 text-[12px] cursor-pointer hover:border-[#444] hover:text-[#aaa] transition-colors inline-flex items-center"
+            className="bg-transparent text-[#555] border border-[#2a2a2a] rounded-[7px] px-3.5 py-1.5 text-[12px] cursor-pointer hover:border-[#444] hover:text-[#aaa] transition-colors inline-flex items-center flex-shrink-0 min-h-[36px]"
           >
             + Invitar
           </Link>

@@ -24,7 +24,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     : fullName.slice(0, 2).toUpperCase() || 'TU';
 
   return (
-    <div className="flex flex-col h-screen bg-[#080809]">
+    <div className="flex flex-col h-[100dvh] bg-surface">
       <Topbar
         nivel={profile?.nivel ?? 1}
         xp={profile?.xp ?? 0}
@@ -36,7 +36,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="hidden md:flex">
           <Sidebar />
         </div>
-        <main className="flex-1 overflow-y-auto pb-[64px] md:pb-0">
+        <main className="flex-1 overflow-y-auto kotc-main-scroll">
           {children}
         </main>
       </div>

@@ -62,7 +62,7 @@ export default async function RankingPage() {
   });
 
   return (
-    <div className="flex flex-col h-full bg-[#080809]">
+    <div className="flex flex-col min-h-full bg-surface">
       <RankingClientWrapper
         teamStats={teamStats}
         playerStats={playerStats}

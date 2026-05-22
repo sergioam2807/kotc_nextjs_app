@@ -32,6 +32,7 @@ app/
     equipo/invitaciones/        ← Gestión de invitaciones
     ranking/page.tsx            ← Ranking territorial (equipos + jugadores)
     jugadores/[id]/page.tsx     ← Perfil público de jugador
+    equipos/[id]/page.tsx       ← Perfil público de equipo (canchas, stats, roster)
   auth/callback/route.ts        ← OAuth callback
   api/
     equipos/route.ts            ← POST crear equipo
@@ -111,7 +112,7 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 
 **Nunca usar** colores hardcodeados (`bg-[#0f0f12]`, `text-[#F5C344]`) en código nuevo.
 
-**Componentes UI disponibles:** `Badge` (variants: accent/primary/green/error/purple/neutral/king/libre/rival), `XPBar` (xp, nivel, showLabel?, compact?), `ThemeToggle`
+**Componentes UI disponibles:** `Badge` (variants: accent/primary/green/error/purple/neutral/king/libre/rival), `XPBar` (xp, nivel, showLabel?, compact?), `RefreshButton` (llama router.refresh() via useTransition, w-9 h-9 tap target), `ThemeToggle`
 
 **Radios:** `rounded-xl` (14px) cards principales · `rounded-lg` (8px) botones/inputs  
 **Tipografía:** `text-[15px]` títulos · `text-[13px]` body · `text-[11px]` secondary · `text-[10px]` labels uppercase
@@ -131,7 +132,7 @@ const { data: { user } } = await supabase.auth.getUser();
 En `DesafioCard`: actualizar estado local inmediatamente + llamar `router.refresh()` tras la mutación para sincronizar server data.
 
 ### Botón de refresco
-`DesafiosClientWrapper` tiene un `↻` que llama `router.refresh()` via `useTransition`.
+`<RefreshButton />` (`components/ui/RefreshButton.tsx`) — componente cliente reutilizable, llama `router.refresh()` via `useTransition`. Spinner animado mientras carga. Usado en Dashboard (canchas + desafíos) y DesafiosClientWrapper.
 
 ---
 
@@ -251,10 +252,21 @@ RESEND_API_KEY=...
 
 ---
 
+## Mobile / responsive — patrones clave
+
+- **Viewport:** `h-[100dvh]` en el layout raíz (evita cropping por barra del browser en iPhone)
+- **Bottom padding del `<main>`:** utility CSS `.kotc-main-scroll` en `app/globals.css` = `padding-bottom: calc(64px + env(safe-area-inset-bottom))` en mobile, `0` en `md+`
+- **Bottom sheets que van ENCIMA del nav (z > 50):** `padding-bottom: env(safe-area-inset-bottom, 0px)`
+- **Elementos `absolute bottom-X` dentro del mapa:** `bottom: calc(12px + env(safe-area-inset-bottom, 0px))`
+- **Modales:** `z-[100]`, en mobile `items-end rounded-t-xl` (bottom-sheet), `max-h-[100dvh] overflow-y-auto`, `padding-bottom: max(1.5rem, env(safe-area-inset-bottom))`
+- **Touch targets:** mínimo 44×44 px (`.kotc-tap-target`); botones de acción con `min-h-[40px]`
+- **MobileBottomNav:** `min-h-[56px]`, iconos 18px, labels 10px, `aria-label` + `aria-current`
+
+---
+
 ## Cosas pendientes / conocidas
 
 - **Karla Moyano** (u otros jugadores de equipo) pueden no aparecer en ranking si no tienen fila en `profiles` — diagnosticar con: `SELECT em.jugador_id, p.username FROM equipo_miembros em LEFT JOIN profiles p ON p.id = em.jugador_id WHERE p.id IS NULL`
 - **Sin temporadas activas** — `temporada_id` es nullable en todas las tablas relevantes
 - **Sin Supabase Realtime** — cambios entre equipos requieren recarga manual (`router.refresh()` o botón ↻)
-- **Dashboard "Canchas bajo control"** y **"Desafíos pendientes"** son live desde DB pero no auto-refrescan
 - El equipo page y dashboard aún usan estilos hardcodeados legacy (`bg-[#0f0f12]` etc.) — refactoring pendiente

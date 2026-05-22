@@ -12,8 +12,8 @@ interface Props {
 const MapaGoogle = dynamic(() => import('./MapaGoogle'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-[#0d0e10]">
-      <span className="text-[#444] text-[12px]">Cargando mapa...</span>
+    <div className="w-full h-full flex items-center justify-center bg-surface-container-low">
+      <span className="text-outline text-[12px]">Cargando mapa...</span>
     </div>
   ),
 });

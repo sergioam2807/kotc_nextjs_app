@@ -16,12 +16,12 @@ export function RefreshButton({ className = '' }: RefreshButtonProps) {
       onClick={() => startTransition(() => router.refresh())}
       disabled={isPending}
       aria-label="Refrescar"
-      className={`text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-40 ${className}`}
+      className={`w-9 h-9 flex items-center justify-center rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors disabled:opacity-40 ${className}`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="14"
-        height="14"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

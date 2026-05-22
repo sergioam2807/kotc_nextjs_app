@@ -68,15 +68,20 @@ export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, usernam
         <div className="relative">
           <button
             onClick={() => setMenuOpen(o => !o)}
-            className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center border border-accent/25 cursor-pointer focus:outline-none"
+            aria-label="Menú de usuario"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className="w-10 h-10 -mr-1.5 rounded-full flex items-center justify-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
           >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={username ?? iniciales} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-accent flex items-center justify-center text-[10px] text-on-accent font-semibold">
-                {iniciales}
-              </div>
-            )}
+            <span className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border border-accent/25">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={username ?? iniciales} className="w-full h-full object-cover" />
+              ) : (
+                <span className="w-full h-full bg-accent flex items-center justify-center text-[11px] text-on-accent font-semibold">
+                  {iniciales}
+                </span>
+              )}
+            </span>
           </button>
 
           {menuOpen && (

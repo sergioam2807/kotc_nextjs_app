@@ -276,3 +276,30 @@ body {
 ::-webkit-scrollbar-track    { background: var(--surface-dim); }
 ::-webkit-scrollbar-thumb    { background: var(--outline-variant); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--outline); }
+
+/* ── Safe-area helpers (iPhone home indicator, notch) ──────── */
+/* Main scroll area below the topbar: reserves space for bottom nav (64px) + home indicator */
+.kotc-main-scroll {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .kotc-main-scroll {
+    padding-bottom: 0;
+  }
+}
+
+/* Bottom sheet / modal that sits ABOVE the bottom nav (z > 50): just respect the home indicator */
+.kotc-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Bottom sheet that sits BELOW the bottom nav: reserve nav height + home indicator */
+.kotc-safe-bottom-with-nav {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Minimum touch target — 44x44 px (Apple HIG / WCAG 2.5.5) */
+.kotc-tap-target {
+  min-width: 44px;
+  min-height: 44px;
+}
