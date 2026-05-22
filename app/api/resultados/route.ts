@@ -135,7 +135,7 @@ export async function PATCH(request: Request) {
         .select('*').eq('cancha_id', desafio.cancha_id).eq('equipo_id', perdedorId).maybeSingle(),
     ]);
 
-    // Ganador
+    // Ganador — upsert victorias (sin tocar es_king todavía)
     if (dominioGanador) {
       await supabase.from('cancha_dominio')
         .update({ victorias: dominioGanador.victorias + 1 })
@@ -150,7 +150,7 @@ export async function PATCH(request: Request) {
       });
     }
 
-    // Perdedor
+    // Perdedor — upsert derrotas
     if (dominioPerdedor) {
       await supabase.from('cancha_dominio')
         .update({ derrotas: dominioPerdedor.derrotas + 1 })
@@ -164,6 +164,36 @@ export async function PATCH(request: Request) {
         es_king: false,
       });
     }
+
+    // ── Recalcular King de esta cancha ──────────────────────────────────────
+    // Regla: 1 solo King por cancha = equipo con más victorias (≥1).
+    // Desempate: menos derrotas. Si empate exacto, el ganador de este partido.
+    const { data: todoDominio } = await supabase
+      .from('cancha_dominio')
+      .select('id, equipo_id, victorias, derrotas')
+      .eq('cancha_id', desafio.cancha_id)
+      .gt('victorias', 0);
+
+    if (todoDominio && todoDominio.length > 0) {
+      const king = todoDominio.reduce((mejor, curr) => {
+        if (curr.victorias > mejor.victorias) return curr;
+        if (curr.victorias === mejor.victorias) {
+          if (curr.derrotas < mejor.derrotas) return curr;
+          // Último desempate: favorece al ganador del partido actual
+          if (curr.derrotas === mejor.derrotas && curr.equipo_id === resultado.ganador_id) return curr;
+        }
+        return mejor;
+      });
+
+      await Promise.all(
+        todoDominio.map(d =>
+          supabase.from('cancha_dominio')
+            .update({ es_king: d.id === king.id })
+            .eq('id', d.id)
+        )
+      );
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     return NextResponse.json({ resultado: updatedResultado, estado: 'completado' });
   }

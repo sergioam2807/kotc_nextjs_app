@@ -68,7 +68,9 @@ También: `pendiente → rechazado`, `aceptado → resultado_pendiente` (via POS
 - `add_xp(target_user_id uuid, amount int)` → incrementa `profiles.xp` y auto-nivela
 - `add_team_xp(team_id uuid, amount int)` → incrementa `equipos.xp` y auto-nivela
 
-**Al confirmar resultado:** ganador +500 XP equipo / +100 XP por jugador · perdedor +150 XP equipo / +35 XP por jugador · actualiza `cancha_dominio` (victorias/derrotas)
+**Al confirmar resultado:** ganador +500 XP equipo / +100 XP por jugador · perdedor +150 XP equipo / +35 XP por jugador · actualiza `cancha_dominio` (victorias/derrotas) · recalcula King de la cancha
+
+**Regla King:** 1 solo equipo por cancha puede tener `es_king = true` = el que más victorias tiene en esa cancha (≥1). Desempate: menos derrotas. Último desempate: ganador del partido actual. Se recalcula en cada confirmación de resultado.
 
 ---
 
@@ -153,6 +155,7 @@ En `DesafioCard`: actualizar estado local inmediatamente + llamar `router.refres
 | 014 | `add_team_xp()` function |
 | 015 | **Fix:** `cancha_dominio.temporada_id` nullable; unique sin temporada; RLS INSERT/UPDATE |
 | 016 | Sistema de niveles 1–100: `_compute_nivel()`, `add_xp()` y `add_team_xp()` con auto-nivel; backfill |
+| 017 | **Fix:** `cancha_dominio.es_king` — reset + recalcular King real por cancha (más victorias, desempate: menos derrotas) |
 
 ---
 
