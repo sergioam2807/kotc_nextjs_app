@@ -65,10 +65,10 @@ invitaciones      (id, equipo_id, token, email, metodo, estado, expira_at)
 También: `pendiente → rechazado`, `aceptado → resultado_pendiente` (via POST /api/resultados)
 
 **XP functions (SECURITY DEFINER, bypasan RLS):**
-- `add_xp(target_user_id uuid, amount int)` → incrementa `profiles.xp`
-- `add_team_xp(team_id uuid, amount int)` → incrementa `equipos.xp`
+- `add_xp(target_user_id uuid, amount int)` → incrementa `profiles.xp` y auto-nivela
+- `add_team_xp(team_id uuid, amount int)` → incrementa `equipos.xp` y auto-nivela
 
-**Al confirmar resultado:** ganador +50 XP equipo / +15 XP por jugador · perdedor +10 XP equipo / +5 XP por jugador · actualiza `cancha_dominio` (victorias/derrotas)
+**Al confirmar resultado:** ganador +500 XP equipo / +100 XP por jugador · perdedor +150 XP equipo / +35 XP por jugador · actualiza `cancha_dominio` (victorias/derrotas)
 
 ---
 
@@ -152,6 +152,87 @@ En `DesafioCard`: actualizar estado local inmediatamente + llamar `router.refres
 | 013 | **Fix:** elimina constraint `estado_valido` zombie; hace nullable `puntos_retador/retado` |
 | 014 | `add_team_xp()` function |
 | 015 | **Fix:** `cancha_dominio.temporada_id` nullable; unique sin temporada; RLS INSERT/UPDATE |
+| 016 | Sistema de niveles 1–100: `_compute_nivel()`, `add_xp()` y `add_team_xp()` con auto-nivel; backfill |
+
+---
+
+## Sistema de Niveles (1–100)
+
+### Fórmula matemática
+
+**XP acumulado para alcanzar el nivel `n`:**
+
+```
+xp(n) = 100 × n × (n − 1)
+```
+
+**Nivel a partir del XP total (inversa analítica, O(1)):**
+
+```
+n = ⌊ (1 + √(1 + 4·xp/100)) / 2 ⌋    (clampeado a [1, 100])
+```
+
+**XP necesario para subir del nivel `n` al `n+1` (incremento):**
+
+```
+Δxp(n) = 200 × n    ← crece linealmente con el nivel
+```
+
+### Umbrales clave
+
+| Nivel | XP acumulado | Incremento al siguiente |
+|------:|-------------:|------------------------:|
+| 1     | 0            | 200 XP |
+| 2     | 200          | 400 XP |
+| 5     | 2 000        | 1 000 XP |
+| 10    | 9 000        | 2 000 XP |
+| 20    | 38 000       | 4 000 XP |
+| 50    | 245 000      | 10 000 XP |
+| 100   | 990 000      | — (máximo) |
+
+### Nombres de nivel (tiers)
+
+Cada tier cubre 10 niveles. El sub-nivel se añade en romano a partir del 2.
+
+| Niveles | Tier base |
+|---------|-----------|
+| 1–10    | Rookie (I … X) |
+| 11–20   | Contender |
+| 21–30   | Challenger |
+| 31–40   | Fighter |
+| 41–50   | Warrior |
+| 51–60   | Elite |
+| 61–70   | Master |
+| 71–80   | Champion |
+| 81–90   | Legend |
+| 91–99   | King (I … IX) |
+| **100** | **King of the Court** |
+
+Ejemplos: `Nivel 1 → Rookie`, `Nivel 3 → Rookie III`, `Nivel 12 → Contender II`, `Nivel 100 → King of the Court`.
+
+### Implementación
+
+- **`lib/levels.ts`** — utilidades compartidas (client + server):
+  - `xpParaNivel(n)` / `nivelDesdeXP(xp)` — conversión XP ↔ nivel
+  - `nombreNivel(nivel)` — nombre del nivel (tier + romano)
+  - `porcentajeEnNivel(xp, nivel)` — % de progreso en el nivel actual
+  - `xpInicioNivel(nivel)` / `xpSiguienteNivel(nivel)` / `xpNecesarioEnNivel(nivel)`
+  - `MAX_NIVEL = 100`
+
+- **`components/ui/XPBar`** — barra visual; muestra XP en nivel / XP necesario + XP total + nombre siguiente nivel. Si nivel == 100 muestra "👑 Nivel máximo alcanzado".
+
+- **SQL (migración 016):**
+  - `_compute_nivel(xp_total int)` — helper inmutable, implementa la inversa analítica
+  - `add_xp(target_user_id, amount)` — incrementa `profiles.xp` y actualiza `profiles.nivel` si cambió
+  - `add_team_xp(team_id, amount)` — ídem para `equipos`
+  - Backfill automático al aplicar la migración
+
+### XP por partido
+
+| Evento | XP equipo | XP por jugador |
+|--------|----------:|---------------:|
+| Victoria | +500 | +100 |
+| Derrota  | +150 | +35  |
 
 ---
 
