@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { XPBar } from '@/components/ui/XPBar';
 import { Badge } from '@/components/ui/Badge';
+import { RefreshButton } from '@/components/ui/RefreshButton';
 import Link from 'next/link';
 
 const DEPORTES_MAP: Record<string, { emoji: string; label: string }> = {
@@ -12,9 +13,9 @@ const DEPORTES_MAP: Record<string, { emoji: string; label: string }> = {
 };
 
 const ESTADO_BADGE: Record<string, { label: string; variant: 'accent' | 'neutral' | 'error' | 'green' }> = {
-  pendiente:          { label: 'Pendiente',          variant: 'accent' },
-  resultado_pendiente:{ label: 'Resultado pendiente', variant: 'error' },
-  aceptado:           { label: 'Aceptado',           variant: 'green' },
+  pendiente:           { label: 'Pendiente',          variant: 'accent' },
+  aceptado:            { label: 'Confirmado',         variant: 'green'  },
+  resultado_pendiente: { label: 'Resultado pendiente', variant: 'error' },
 };
 
 import { nombreNivel } from '@/lib/levels';
@@ -100,7 +101,7 @@ export default async function DashboardPage() {
         .from('desafios')
         .select('id, equipo_retador_id, equipo_retado_id, estado, fecha, equipo_retador:equipo_retador_id(nombre), equipo_retado:equipo_retado_id(nombre)')
         .or(`equipo_retador_id.eq.${equipoId},equipo_retado_id.eq.${equipoId}`)
-        .in('estado', ['pendiente', 'resultado_pendiente'])
+        .in('estado', ['pendiente', 'aceptado', 'resultado_pendiente'])
         .order('fecha', { ascending: true })
         .limit(3)
     : { data: null };
@@ -172,7 +173,10 @@ export default async function DashboardPage() {
         {/* Canchas */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-[10px] text-[#888] tracking-[0.06em] font-medium uppercase">Canchas bajo control</span>
-          <Link href="/mapa" className="text-[11px] text-[#F5C344] hover:underline">Ver mapa</Link>
+          <div className="flex items-center gap-2.5">
+            <RefreshButton />
+            <Link href="/mapa" className="text-[11px] text-[#F5C344] hover:underline">Ver mapa</Link>
+          </div>
         </div>
         {canchaDominio.length > 0 ? (
           <div className="flex flex-col gap-1.5 mb-5">
@@ -204,7 +208,13 @@ export default async function DashboardPage() {
         )}
 
         {/* Desafíos */}
-        <div className="text-[10px] text-[#888] tracking-[0.06em] font-medium uppercase mb-3">Desafíos pendientes</div>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] text-[#888] tracking-[0.06em] font-medium uppercase">Desafíos pendientes</span>
+          <div className="flex items-center gap-2.5">
+            <RefreshButton />
+            <Link href="/desafios" className="text-[11px] text-[#F5C344] hover:underline">Ver todos</Link>
+          </div>
+        </div>
         {desafiosPendientes.length > 0 ? (
           <div className="flex flex-col gap-1.5 mb-5">
             {desafiosPendientes.map(d => {
