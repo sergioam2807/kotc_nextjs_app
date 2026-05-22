@@ -17,7 +17,7 @@ const ESTADO_BADGE: Record<string, { label: string; variant: 'accent' | 'neutral
   aceptado:           { label: 'Aceptado',           variant: 'green' },
 };
 
-const NIVEL_NOMBRES = ['', 'Rookie', 'Contender', 'Challenger', 'Warrior', 'Elite', 'Legend', 'King'];
+import { nombreNivel } from '@/lib/levels';
 
 function SidebarContent() {
   return (
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
     ? (palabras[0][0] + palabras[1][0]).toUpperCase()
     : displayName.slice(0, 2).toUpperCase();
   const avatarUrl: string | null = profile?.avatar_url ?? user?.user_metadata?.avatar_url ?? null;
-  const nivelNombre = NIVEL_NOMBRES[nivel] ?? 'King';
+  const nivelNombre = nombreNivel(nivel);
 
   return (
     <div className="flex h-full">

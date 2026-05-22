@@ -15,7 +15,7 @@ const DEPORTES_MAP: Record<string, { emoji: string; label: string }> = {
   padel:      { emoji: '🏓', label: 'Pádel' },
 };
 
-const NIVEL_NOMBRES = ['', 'Rookie', 'Contender', 'Challenger', 'Warrior', 'Elite', 'Legend', 'King'];
+import { nombreNivel } from '@/lib/levels';
 
 const DEPORTE_LABELS: Record<string, string> = {
   basketball: 'Basketball',
@@ -101,7 +101,7 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
   const displayName = profile.display_name ?? profile.username;
   const nivel = profile.nivel ?? 1;
   const xp = profile.xp ?? 0;
-  const nivelNombre = NIVEL_NOMBRES[nivel] ?? 'King';
+  const nivelNombre = nombreNivel(nivel);
   const deportesActivos: string[] = profile.deportes_activos ?? [];
 
   const palabras = displayName.trim().split(/\s+/);

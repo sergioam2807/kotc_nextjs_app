@@ -106,24 +106,25 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // XP: equipo ganador +50, perdedor +10
+    // XP de equipo: ganador +500, perdedor +150
     const perdedorId = resultado.ganador_id === desafio.equipo_retador_id
       ? desafio.equipo_retado_id
       : desafio.equipo_retador_id;
 
     await Promise.all([
-      supabase.rpc('add_team_xp', { team_id: resultado.ganador_id, amount: 50 }),
-      supabase.rpc('add_team_xp', { team_id: perdedorId, amount: 10 }),
+      supabase.rpc('add_team_xp', { team_id: resultado.ganador_id, amount: 500 }),
+      supabase.rpc('add_team_xp', { team_id: perdedorId,           amount: 150 }),
     ]);
 
-    // XP personal: jugadores ganadores +15, perdedores +5
+    // XP personal: jugadores ganadores +100, perdedores +35
+    // Las funciones add_xp también auto-nivelan al jugador
     const [{ data: miembrosGanador }, { data: miembrosPerdedor }] = await Promise.all([
       supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', resultado.ganador_id),
       supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', perdedorId),
     ]);
     await Promise.all([
-      ...(miembrosGanador ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 15 })),
-      ...(miembrosPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 5 })),
+      ...(miembrosGanador ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 100 })),
+      ...(miembrosPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 35  })),
     ]);
 
     // Actualizar dominio de cancha (victoria para el ganador, derrota para el perdedor)

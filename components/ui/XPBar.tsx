@@ -1,5 +1,14 @@
 'use client';
 
+import {
+  nombreNivel,
+  porcentajeEnNivel,
+  xpInicioNivel,
+  xpSiguienteNivel,
+  xpNecesarioEnNivel,
+  MAX_NIVEL,
+} from '@/lib/levels';
+
 interface XPBarProps {
   xp: number;
   nivel: number;
@@ -7,20 +16,13 @@ interface XPBarProps {
   compact?: boolean;
 }
 
-function xpParaSiguienteNivel(nivel: number): number {
-  const niveles = [0, 200, 500, 1000, 2000, 4000, 7000];
-  return niveles[nivel] ?? 7000;
-}
-
-function nombreNivel(nivel: number): string {
-  const nombres = ['', 'Rookie', 'Contender', 'Challenger', 'Warrior', 'Elite', 'Legend', 'King'];
-  return nombres[nivel] ?? 'King';
-}
-
 export function XPBar({ xp, nivel, showLabel = true, compact = false }: XPBarProps) {
-  const xpActual = xpParaSiguienteNivel(nivel - 1);
-  const xpSiguiente = xpParaSiguienteNivel(nivel);
-  const porcentaje = Math.min(100, Math.round(((xp - xpActual) / (xpSiguiente - xpActual)) * 100));
+  const isMax = nivel >= MAX_NIVEL;
+  const porcentaje = porcentajeEnNivel(xp, nivel);
+  const inicio = xpInicioNivel(nivel);
+  const siguiente = xpSiguienteNivel(nivel);
+  const necesario = xpNecesarioEnNivel(nivel);
+  const ganados = xp - inicio;
 
   if (compact) {
     return (
@@ -45,9 +47,16 @@ export function XPBar({ xp, nivel, showLabel = true, compact = false }: XPBarPro
         />
       </div>
       {showLabel && (
-        <p className="text-[10px] text-outline">
-          {xp} / {xpSiguiente} XP — {nombreNivel(nivel + 1)}
-        </p>
+        isMax ? (
+          <p className="text-[10px] text-accent font-semibold">👑 Nivel máximo alcanzado</p>
+        ) : (
+          <p className="text-[10px] text-outline">
+            {ganados.toLocaleString()} / {necesario.toLocaleString()} XP en nivel
+            {' '}—{' '}
+            <span className="text-on-surface-variant">{xp.toLocaleString()} XP total</span>
+            {' '}— siguiente: <span className="text-accent">{nombreNivel(nivel + 1)}</span>
+          </p>
+        )
       )}
     </div>
   );
