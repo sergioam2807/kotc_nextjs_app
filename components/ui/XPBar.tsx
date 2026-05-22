@@ -25,10 +25,10 @@ export function XPBar({ xp, nivel, showLabel = true, compact = false }: XPBarPro
   if (compact) {
     return (
       <div className="flex items-center gap-1.5">
-        <span className="text-[11px] text-[#F5C344] font-medium">Lv.{nivel}</span>
-        <div className="w-14 h-1 bg-[#1e1e24] rounded-full overflow-hidden">
+        <span className="text-[11px] text-accent font-semibold">Lv.{nivel}</span>
+        <div className="w-14 h-1 bg-surface-container rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#F5C344] rounded-full transition-all"
+            className="h-full bg-accent rounded-full transition-all"
             style={{ width: `${porcentaje}%` }}
           />
         </div>
@@ -38,14 +38,14 @@ export function XPBar({ xp, nivel, showLabel = true, compact = false }: XPBarPro
 
   return (
     <div>
-      <div className="h-1.5 bg-[#1e1e24] rounded-full overflow-hidden mb-1">
+      <div className="h-1.5 bg-surface-container rounded-full overflow-hidden mb-1">
         <div
-          className="h-full bg-[#F5C344] rounded-full transition-all"
+          className="h-full bg-accent rounded-full transition-all"
           style={{ width: `${porcentaje}%` }}
         />
       </div>
       {showLabel && (
-        <p className="text-[10px] text-[#444]">
+        <p className="text-[10px] text-outline">
           {xp} / {xpSiguiente} XP — {nombreNivel(nivel + 1)}
         </p>
       )}

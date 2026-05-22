@@ -45,14 +45,16 @@ export function InvitacionForm({ equipoId, linkToken }: InvitacionFormProps) {
   };
 
   return (
-    <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[12px] p-4">
+    <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
       <div className="flex gap-1 mb-3.5">
         {(['email', 'whatsapp', 'link'] as MetodoInvitacion[]).map(m => (
           <button
             key={m}
             onClick={() => setMetodo(m)}
-            className={`px-3.5 py-1.5 rounded-[6px] text-[12px] border-none cursor-pointer transition-colors capitalize ${
-              metodo === m ? 'bg-[#18180f] text-[#F5C344]' : 'bg-[#1a1a1f] text-[#555] hover:text-[#888]'
+            className={`px-3.5 py-1.5 rounded-md text-[12px] border-none cursor-pointer transition-colors capitalize font-medium ${
+              metodo === m
+                ? 'bg-accent-dim text-accent'
+                : 'bg-surface-container text-outline hover:text-on-surface-variant'
             }`}
           >
             {m === 'email' ? 'Email' : m === 'whatsapp' ? 'WhatsApp' : 'Link'}
@@ -67,7 +69,7 @@ export function InvitacionForm({ equipoId, linkToken }: InvitacionFormProps) {
             placeholder={metodo === 'email' ? 'correo@ejemplo.com' : '+56 9 1234 5678'}
             value={valor}
             onChange={e => setValor(e.target.value)}
-            className="flex-1 bg-[#0a0a0c] border border-[#2a2a2a] rounded-[8px] px-3 py-2 text-[13px] text-[#ddd] placeholder-[#333] outline-none focus:border-[#F5C34460] transition-colors"
+            className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[13px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors"
           />
           <Button onClick={handleEnviar} disabled={!valor || enviando} size="md">
             {enviando ? 'Enviando...' : 'Enviar'}
@@ -75,7 +77,7 @@ export function InvitacionForm({ equipoId, linkToken }: InvitacionFormProps) {
         </div>
       ) : (
         <div className="flex gap-2">
-          <div className="flex-1 bg-[#0a0a0c] border border-[#2a2a2a] rounded-[8px] px-3 py-2 text-[12px] text-[#555] truncate font-mono">
+          <div className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-outline truncate font-mono">
             {linkInvitacion || 'kotc.app/join/...'}
           </div>
           <Button onClick={handleCopiarLink} size="md">
@@ -85,7 +87,7 @@ export function InvitacionForm({ equipoId, linkToken }: InvitacionFormProps) {
       )}
 
       {mensaje && (
-        <p className="mt-2 text-[12px] text-[#5a9e5a]">{mensaje}</p>
+        <p className="mt-2 text-[12px] text-status-libre">{mensaje}</p>
       )}
     </div>
   );

@@ -15,24 +15,25 @@ interface Props {
 const DEFAULT_CENTER = { lat: -33.46, lng: -70.645 };
 const DEFAULT_ZOOM = 13;
 
+// Pro League Asphalt — navy dark palette
 const DARK_STYLES = [
-  { elementType: 'geometry', stylers: [{ color: '#0d0e10' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d0e10' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#4a4a5a' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#5a5a6e' }] },
+  { elementType: 'geometry', stylers: [{ color: '#0a1628' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0a1628' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#3a4a5e' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#4a5a72' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#111215' }] },
-  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#3a3a4a' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a1a22' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0f0f14' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#3a3a4e' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#22222e' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#14141c' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#5a5a6e' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0d1f32' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#2a3a4e' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#122438' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0a1830' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#3a4a5e' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#162a42' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#0d1c30' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#4a5a72' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#080810' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#1a1a28' }] },
-  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#1e1e28' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#010f1f' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#1a2a3e' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#1e2e42' }] },
   { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
 ];
 
@@ -41,8 +42,16 @@ const MAP_OPTIONS = {
   disableDefaultUI: true,
   clickableIcons: false,
   gestureHandling: 'greedy',
-  backgroundColor: '#0d0e10',
+  backgroundColor: '#0d1c2d',
   keyboardShortcuts: false,
+};
+
+// Design token hex values — must be hardcoded for Google Maps API (no CSS vars)
+const TOKEN = {
+  king: '#ffe083',   // --accent
+  libre: '#4ade80',  // --status-libre
+  rival: '#f87171',  // --status-rival
+  white: '#ffffff',
 };
 
 function buildIcon(estado: CanchaConEstado['estado']): google.maps.Symbol {
@@ -50,9 +59,9 @@ function buildIcon(estado: CanchaConEstado['estado']): google.maps.Symbol {
     return {
       path: google.maps.SymbolPath.CIRCLE,
       scale: 10,
-      fillColor: '#F5C344',
+      fillColor: TOKEN.king,
       fillOpacity: 1,
-      strokeColor: '#ffffff',
+      strokeColor: TOKEN.white,
       strokeWeight: 2,
     };
   }
@@ -60,18 +69,18 @@ function buildIcon(estado: CanchaConEstado['estado']): google.maps.Symbol {
     return {
       path: google.maps.SymbolPath.CIRCLE,
       scale: 7,
-      fillColor: '#5a9e5a',
+      fillColor: TOKEN.libre,
       fillOpacity: 1,
-      strokeColor: '#5a9e5a',
+      strokeColor: TOKEN.libre,
       strokeWeight: 1.5,
     };
   }
   return {
     path: google.maps.SymbolPath.CIRCLE,
     scale: 7,
-    fillColor: '#E24B4A',
+    fillColor: TOKEN.rival,
     fillOpacity: 1,
-    strokeColor: '#E24B4A',
+    strokeColor: TOKEN.rival,
     strokeWeight: 1.5,
   };
 }
@@ -170,9 +179,9 @@ export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = fals
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 9,
-          fillColor: '#F5C344',
+          fillColor: TOKEN.king,
           fillOpacity: 1,
-          strokeColor: '#ffffff',
+          strokeColor: TOKEN.white,
           strokeWeight: 2,
         },
         zIndex: 999,
@@ -185,8 +194,8 @@ export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = fals
 
   if (!isLoaded) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-[#0d0e10]">
-        <span className="text-[#444] text-[12px]">Cargando mapa...</span>
+      <div className="w-full h-full flex items-center justify-center bg-surface-container-low">
+        <span className="text-outline text-[12px]">Cargando mapa...</span>
       </div>
     );
   }

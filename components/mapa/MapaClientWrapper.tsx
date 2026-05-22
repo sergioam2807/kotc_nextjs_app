@@ -29,10 +29,11 @@ interface Props {
 
 type Filtro = 'todas' | 'king' | 'libre' | 'rival';
 
+// Design token hex values — used in inline styles where Tailwind classes can't reach
 const ESTADO_COLORS = {
-  king: '#F5C344',
-  libre: '#5a9e5a',
-  rival: '#E24B4A',
+  king: '#ffe083',   // --accent
+  libre: '#4ade80',  // --status-libre
+  rival: '#f87171',  // --status-rival
 };
 
 const ESTADO_LABELS = {
@@ -84,10 +85,10 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
   }), [canchasLocales]);
 
   const filtroItems: { id: Filtro; label: string; color: string; count: number }[] = [
-    { id: 'todas', label: 'Todas', color: '#888', count: conteos.todas },
-    { id: 'king', label: 'King', color: '#F5C344', count: conteos.king },
-    { id: 'libre', label: 'Libres', color: '#5a9e5a', count: conteos.libre },
-    { id: 'rival', label: 'Rivales', color: '#E24B4A', count: conteos.rival },
+    { id: 'todas', label: 'Todas', color: '#8f909d', count: conteos.todas },
+    { id: 'king',  label: 'King',   color: '#ffe083', count: conteos.king },
+    { id: 'libre', label: 'Libres', color: '#4ade80', count: conteos.libre },
+    { id: 'rival', label: 'Rivales',color: '#f87171', count: conteos.rival },
   ];
 
   useEffect(() => {
@@ -174,108 +175,108 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
     <div className="flex h-full">
 
       {/* ── LEFT PANEL (desktop only) ── */}
-      <div className="hidden md:flex md:flex-col w-[200px] bg-[#0a0a0c] border-r border-[#1a1a1f] flex-shrink-0">
-        <div className="p-3.5 border-b border-[#1a1a1f]">
-          <div className="text-[10px] text-[#444] tracking-[0.1em] mb-2.5 font-medium uppercase">
+      <div className="hidden md:flex md:flex-col w-[200px] bg-surface border-r border-outline-variant flex-shrink-0">
+        <div className="p-3.5 border-b border-outline-variant">
+          <div className="text-[10px] text-outline tracking-[0.1em] mb-2.5 font-medium uppercase">
             Filtrar por estado
           </div>
           {filtroItems.map((f) => (
             <button
               key={f.id}
               onClick={() => setFiltro(f.id)}
-              className={`flex items-center gap-2 w-full bg-transparent border-none px-2 py-1.5 rounded-[7px] cursor-pointer mb-0.5 transition-colors ${
-                filtro === f.id ? 'bg-[#18180f]' : 'hover:bg-[#111114]'
+              className={`flex items-center gap-2 w-full bg-transparent border-none px-2 py-1.5 rounded-lg cursor-pointer mb-0.5 transition-colors ${
+                filtro === f.id ? 'bg-accent/10' : 'hover:bg-surface-container-low'
               }`}
             >
               <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: f.color }} />
-              <span className={`text-[12px] flex-1 text-left ${filtro === f.id ? 'text-[#ddd]' : 'text-[#666]'}`}>
+              <span className={`text-[12px] flex-1 text-left ${filtro === f.id ? 'text-on-surface' : 'text-outline'}`}>
                 {f.label}
               </span>
-              <span className="text-[10px] text-[#444] bg-[#1e1e24] rounded-[4px] px-1.5">{f.count}</span>
+              <span className="text-[10px] text-outline bg-surface-container rounded-sm px-1.5">{f.count}</span>
             </button>
           ))}
         </div>
 
-        <div className="p-3.5 border-b border-[#1a1a1f]">
-          <div className="text-[10px] text-[#444] tracking-[0.1em] mb-2.5 font-medium uppercase">Deporte</div>
+        <div className="p-3.5 border-b border-outline-variant">
+          <div className="text-[10px] text-outline tracking-[0.1em] mb-2.5 font-medium uppercase">Deporte</div>
           <button
             onClick={() => setDeporteFiltro('todas')}
-            className={`flex items-center gap-1.5 w-full bg-transparent border-none px-2 py-1.5 rounded-[7px] cursor-pointer mb-0.5 transition-colors ${
-              deporteFiltro === 'todas' ? 'bg-[#18180f]' : 'hover:bg-[#111114]'
+            className={`flex items-center gap-1.5 w-full bg-transparent border-none px-2 py-1.5 rounded-lg cursor-pointer mb-0.5 transition-colors ${
+              deporteFiltro === 'todas' ? 'bg-accent/10' : 'hover:bg-surface-container-low'
             }`}
           >
             <span className="text-[14px]">🏟️</span>
-            <span className={`text-[12px] ${deporteFiltro === 'todas' ? 'text-[#ddd]' : 'text-[#555]'}`}>Todos</span>
+            <span className={`text-[12px] ${deporteFiltro === 'todas' ? 'text-on-surface' : 'text-outline'}`}>Todos</span>
           </button>
           {DEPORTES.map((d) => (
             <button
               key={d.id}
               onClick={() => setDeporteFiltro(d.id)}
-              className={`flex items-center gap-1.5 w-full bg-transparent border-none px-2 py-1.5 rounded-[7px] cursor-pointer mb-0.5 transition-colors ${
-                deporteFiltro === d.id ? 'bg-[#18180f]' : 'hover:bg-[#111114]'
+              className={`flex items-center gap-1.5 w-full bg-transparent border-none px-2 py-1.5 rounded-lg cursor-pointer mb-0.5 transition-colors ${
+                deporteFiltro === d.id ? 'bg-accent/10' : 'hover:bg-surface-container-low'
               }`}
             >
               <span className="text-[14px]">{d.emoji}</span>
-              <span className={`text-[12px] ${deporteFiltro === d.id ? 'text-[#ddd]' : 'text-[#555]'}`}>{d.label}</span>
+              <span className={`text-[12px] ${deporteFiltro === d.id ? 'text-on-surface' : 'text-outline'}`}>{d.label}</span>
             </button>
           ))}
         </div>
 
         <div className="p-3.5 flex-1">
-          <div className="text-[10px] text-[#444] tracking-[0.1em] mb-2 font-medium uppercase">Mis stats</div>
+          <div className="text-[10px] text-outline tracking-[0.1em] mb-2 font-medium uppercase">Mis stats</div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] text-[#444]">Mis canchas</span>
-            <span className="text-[12px] font-medium text-[#F5C344]">{stats.misKing}</span>
+            <span className="text-[11px] text-outline">Mis canchas</span>
+            <span className="text-[12px] font-medium text-accent">{stats.misKing}</span>
           </div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] text-[#444]">Partidos jugados</span>
-            <span className="text-[12px] font-medium text-[#ddd]">{stats.partidos}</span>
+            <span className="text-[11px] text-outline">Partidos jugados</span>
+            <span className="text-[12px] font-medium text-on-surface">{stats.partidos}</span>
           </div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[11px] text-[#444]">Total canchas</span>
-            <span className="text-[12px] font-medium text-[#ddd]">{stats.total}</span>
+            <span className="text-[11px] text-outline">Total canchas</span>
+            <span className="text-[12px] font-medium text-on-surface">{stats.total}</span>
           </div>
         </div>
       </div>
 
       {/* ── MAP AREA ── */}
-      <div className="flex-1 relative bg-[#0d0e10] overflow-hidden">
+      <div className="flex-1 relative bg-surface-container-low overflow-hidden">
 
         {/* Search bar overlay */}
         <div className="absolute top-3 left-3 right-3 z-10 flex gap-2 items-start pointer-events-none">
           <div className="relative flex-1 pointer-events-auto">
-            <div className="bg-[#0f0f12] border border-[#2a2a2a] rounded-[8px] px-3 py-2 flex items-center gap-2">
-              <span className="text-[#444]">🔍</span>
+            <div className="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 flex items-center gap-2">
+              <span className="text-outline">🔍</span>
               <input
-                className="bg-transparent border-none text-[12px] text-[#888] outline-none flex-1 min-w-0"
+                className="bg-transparent border-none text-[12px] text-on-surface-variant outline-none flex-1 min-w-0 placeholder:text-outline"
                 placeholder="Buscar cancha..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
               {busqueda && (
-                <button onClick={() => setBusqueda('')} className="text-[#444] hover:text-[#888] text-[14px] leading-none">
+                <button onClick={() => setBusqueda('')} className="text-outline hover:text-on-surface-variant text-[14px] leading-none">
                   ×
                 </button>
               )}
             </div>
 
             {busqueda.trim() && canchasFiltradas.length > 1 && (
-              <div className="absolute top-full mt-1 left-0 right-0 bg-[#0f0f12] border border-[#2a2a2a] rounded-[8px] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.7)]">
+              <div className="absolute top-full mt-1 left-0 right-0 bg-surface-container-low border border-outline-variant rounded-lg overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
                 {canchasFiltradas.slice(0, 8).map((c) => (
                   <button
                     key={c.id}
                     onClick={() => handleSelectFromDropdown(c)}
-                    className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-[#18181f] transition-colors border-b border-[#1a1a1f] last:border-0"
+                    className="flex items-center gap-2.5 w-full px-3 py-2.5 text-left hover:bg-surface-container transition-colors border-b border-outline-variant last:border-0"
                   >
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ESTADO_COLORS[c.estado] }} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-[12px] text-[#ccc] font-medium truncate">{c.nombre}</div>
-                      <div className="text-[10px] text-[#555] truncate">{c.direccion}</div>
+                      <div className="text-[12px] text-on-surface font-medium truncate">{c.nombre}</div>
+                      <div className="text-[10px] text-outline truncate">{c.direccion}</div>
                     </div>
                   </button>
                 ))}
                 {canchasFiltradas.length > 8 && (
-                  <div className="px-3 py-2 text-[10px] text-[#444] text-center">
+                  <div className="px-3 py-2 text-[10px] text-outline text-center">
                     +{canchasFiltradas.length - 8} más — refiná la búsqueda
                   </div>
                 )}
@@ -284,8 +285,8 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
           </div>
 
           {(modoAgregar || modoEditarUbicacion) && (
-            <div className="bg-[#F5C34420] border border-[#F5C34460] rounded-[8px] px-3 py-2 pointer-events-auto">
-              <span className="text-[11px] text-[#F5C344]">
+            <div className="bg-accent/15 border border-accent/40 rounded-lg px-3 py-2 pointer-events-auto">
+              <span className="text-[11px] text-accent">
                 {modoEditarUbicacion ? 'Haz clic en la nueva ubicación' : 'Haz clic en el mapa'}
               </span>
             </div>
@@ -301,23 +302,23 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
                 onClick={() => setFiltro(f.id)}
                 className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-semibold border transition-colors ${
                   filtro === f.id
-                    ? 'bg-[#0f0f12] border-[#3a3a3a] text-[#ddd]'
-                    : 'bg-[#0f0f12bb] border-[#2a2a2a] text-[#555]'
+                    ? 'bg-surface-container border-outline-variant text-on-surface'
+                    : 'bg-surface-container-low/75 border-outline-variant text-outline'
                 }`}
               >
                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: f.color }} />
                 {f.label}
               </button>
             ))}
-            <div className="w-px self-stretch bg-[#2a2a2a] mx-0.5 shrink-0" />
+            <div className="w-px self-stretch bg-outline-variant mx-0.5 shrink-0" />
             {DEPORTES.map((d) => (
               <button
                 key={d.id}
                 onClick={() => setDeporteFiltro(deporteFiltro === d.id ? 'todas' : d.id)}
                 className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-semibold border transition-colors ${
                   deporteFiltro === d.id
-                    ? 'bg-[#0f0f12] border-[#3a3a3a] text-[#ddd]'
-                    : 'bg-[#0f0f12bb] border-[#2a2a2a] text-[#555]'
+                    ? 'bg-surface-container border-outline-variant text-on-surface'
+                    : 'bg-surface-container-low/75 border-outline-variant text-outline'
                 }`}
               >
                 {d.emoji} {d.label}
@@ -335,15 +336,15 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         />
 
         {/* Legend (desktop only) */}
-        <div className="hidden md:block absolute bottom-3 left-3 bg-[#0f0f12cc] border border-[#1e1e24] rounded-[8px] px-3 py-2.5 z-10">
+        <div className="hidden md:block absolute bottom-3 left-3 bg-surface-container-low/80 border border-outline-variant rounded-lg px-3 py-2.5 z-10">
           {[
-            { color: '#F5C344', label: 'Mis canchas (King)' },
-            { color: '#5a9e5a', label: 'Libre para conquistar' },
-            { color: '#E24B4A', label: 'Cancha rival' },
+            { color: '#ffe083', label: 'Mis canchas (King)' },
+            { color: '#4ade80', label: 'Libre para conquistar' },
+            { color: '#f87171', label: 'Cancha rival' },
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5 mb-1.5 last:mb-0">
               <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: l.color }} />
-              <span className="text-[11px] text-[#666]">{l.label}</span>
+              <span className="text-[11px] text-outline">{l.label}</span>
             </div>
           ))}
         </div>
@@ -352,9 +353,9 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         {!canchaSeleccionada && !modoAgregar && !modoEditarUbicacion && (
           <button
             onClick={() => setMobileListOpen(true)}
-            className="md:hidden absolute bottom-4 left-3 z-20 bg-[#0f0f12] border border-[#2a2a2a] rounded-full px-3.5 py-2 text-[11px] text-[#888] flex items-center gap-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.5)]"
+            className="md:hidden absolute bottom-4 left-3 z-20 bg-surface-container-low border border-outline-variant rounded-full px-3.5 py-2 text-[11px] text-on-surface-variant flex items-center gap-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.4)]"
           >
-            <span className="w-2 h-2 rounded-full bg-[#888]" />
+            <span className="w-2 h-2 rounded-full bg-on-surface-variant" />
             {canchasFiltradas.length} canchas
           </button>
         )}
@@ -363,7 +364,7 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         {!canchaSeleccionada && !modoAgregar && !modoEditarUbicacion && (
           <button
             onClick={handleAgregarCanchaClick}
-            className="md:hidden absolute bottom-4 right-3 z-20 w-11 h-11 bg-[#F5C344] text-[#080809] rounded-full text-xl font-bold flex items-center justify-center shadow-[0_4px_16px_rgba(245,195,68,0.4)]"
+            className="md:hidden absolute bottom-4 right-3 z-20 w-11 h-11 bg-accent text-on-accent rounded-full text-xl font-bold flex items-center justify-center shadow-[0_4px_16px_rgba(255,224,131,0.35)]"
           >
             +
           </button>
@@ -371,10 +372,10 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
 
         {/* ── Selected court panel — full width on mobile, fixed width on desktop ── */}
         {canchaSeleccionada && (
-          <div className="absolute bottom-3 left-3 right-3 md:left-auto md:right-3 md:w-[220px] z-20 bg-[#0f0f12] border border-[#2a2a2a] rounded-[12px] p-4 shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
+          <div className="absolute bottom-3 left-3 right-3 md:left-auto md:right-3 md:w-[220px] z-20 bg-surface-container-low border border-outline-variant rounded-xl p-4 shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
             <div className="flex items-start justify-between mb-2">
               <div
-                className="text-[9px] px-1.5 py-0.5 rounded-[3px] font-medium"
+                className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium"
                 style={{
                   background: `${ESTADO_COLORS[canchaSeleccionada.estado]}20`,
                   color: ESTADO_COLORS[canchaSeleccionada.estado],
@@ -384,41 +385,41 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
               </div>
               <button
                 onClick={() => setCanchaSeleccionada(null)}
-                className="text-[#444] hover:text-[#888] text-[16px] leading-none -mt-0.5"
+                className="text-outline hover:text-on-surface-variant text-[16px] leading-none -mt-0.5"
               >
                 ×
               </button>
             </div>
-            <div className="text-[13px] font-medium text-[#ddd] mb-1">{canchaSeleccionada.nombre}</div>
-            <div className="text-[11px] text-[#555] mb-2">{canchaSeleccionada.direccion}</div>
+            <div className="text-[13px] font-medium text-on-surface mb-1">{canchaSeleccionada.nombre}</div>
+            <div className="text-[11px] text-outline mb-2">{canchaSeleccionada.direccion}</div>
             {canchaSeleccionada.equipoNombre && (
-              <div className="text-[11px] mb-1" style={{ color: canchaSeleccionada.equipoColor ?? '#888' }}>
+              <div className="text-[11px] mb-1" style={{ color: canchaSeleccionada.equipoColor ?? '#8f909d' }}>
                 {canchaSeleccionada.equipoNombre}
               </div>
             )}
             {(canchaSeleccionada.victorias !== undefined || canchaSeleccionada.derrotas !== undefined) && (
-              <div className="text-[10px] text-[#444]">
+              <div className="text-[10px] text-outline">
                 {canchaSeleccionada.victorias ?? 0}V - {canchaSeleccionada.derrotas ?? 0}D
               </div>
             )}
             {canchaSeleccionada.deporte.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {canchaSeleccionada.deporte.map((d) => (
-                  <span key={d} className="text-[9px] px-1.5 py-0.5 rounded-[3px] bg-[#1e1e24] text-[#555]">{d}</span>
+                  <span key={d} className="text-[9px] px-1.5 py-0.5 rounded-sm bg-surface-container text-outline">{d}</span>
                 ))}
               </div>
             )}
             {canchaSeleccionada.estado === 'rival' && equipoId && canchaSeleccionada.equipoId && (
               <button
                 onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
-                className="w-full mt-3 bg-[#E24B4A15] border border-[#E24B4A40] rounded-[7px] py-1.5 text-[11px] text-[#E24B4A] hover:bg-[#E24B4A25] hover:border-[#E24B4A70] transition-colors font-medium"
+                className="w-full mt-3 bg-status-rival/10 border border-status-rival/30 rounded-md py-1.5 text-[11px] text-status-rival hover:bg-status-rival/20 hover:border-status-rival/50 transition-colors font-medium"
               >
                 ⚔️ Desafiar
               </button>
             )}
             <button
               onClick={() => handleEditarCancha(canchaSeleccionada)}
-              className="w-full mt-2 bg-transparent border border-[#2a2a2a] rounded-[7px] py-1.5 text-[11px] text-[#555] hover:border-[#444] hover:text-[#888] transition-colors"
+              className="w-full mt-2 bg-transparent border border-outline-variant rounded-md py-1.5 text-[11px] text-outline hover:border-outline hover:text-on-surface-variant transition-colors"
             >
               Editar cancha
             </button>
@@ -429,30 +430,30 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         {mobileListOpen && (
           <>
             <div className="md:hidden fixed inset-0 z-30 bg-black/50" onClick={() => setMobileListOpen(false)} />
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0a0a0c] border-t border-[#1a1a1f] rounded-t-[16px] max-h-[60vh] flex flex-col">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a1a1f]">
-                <span className="text-[12px] font-medium text-[#ddd]">Canchas ({canchasFiltradas.length})</span>
-                <button onClick={() => setMobileListOpen(false)} className="text-[#444] hover:text-[#888] text-xl leading-none">×</button>
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-outline-variant rounded-t-xl max-h-[60vh] flex flex-col">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
+                <span className="text-[12px] font-medium text-on-surface">Canchas ({canchasFiltradas.length})</span>
+                <button onClick={() => setMobileListOpen(false)} className="text-outline hover:text-on-surface-variant text-xl leading-none">×</button>
               </div>
               <div className="flex-1 overflow-y-auto p-3">
                 {canchasFiltradas.length === 0 ? (
-                  <div className="text-[11px] text-[#444] text-center py-6">Sin resultados</div>
+                  <div className="text-[11px] text-outline text-center py-6">Sin resultados</div>
                 ) : (
                   canchasFiltradas.map((c) => (
                     <button
                       key={c.id}
                       onClick={() => { setCanchaSeleccionada(c); setPanToCoords({ lat: c.lat, lng: c.lng }); setMobileListOpen(false); }}
-                      className="flex items-start gap-2 w-full bg-transparent border border-transparent rounded-[8px] px-2 py-2.5 mb-0.5 transition-colors text-left hover:bg-[#111114]"
+                      className="flex items-start gap-2 w-full bg-transparent border border-transparent rounded-lg px-2 py-2.5 mb-0.5 transition-colors text-left hover:bg-surface-container-low"
                     >
                       <div className="w-2.5 h-2.5 rounded-full mt-[3px] flex-shrink-0" style={{ background: ESTADO_COLORS[c.estado] }} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-[12px] text-[#ccc] font-medium truncate">{c.nombre}</div>
-                        <div className="text-[10px] text-[#444] mt-0.5 truncate">
+                        <div className="text-[12px] text-on-surface font-medium truncate">{c.nombre}</div>
+                        <div className="text-[10px] text-outline mt-0.5 truncate">
                           {c.equipoNombre ? `${c.equipoNombre} · ${c.victorias ?? 0}-${c.derrotas ?? 0}` : c.direccion}
                         </div>
                       </div>
                       <span
-                        className="text-[9px] px-1.5 py-0.5 rounded-[3px] font-medium flex-shrink-0"
+                        className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium flex-shrink-0"
                         style={{ background: `${ESTADO_COLORS[c.estado]}20`, color: ESTADO_COLORS[c.estado] }}
                       >
                         {ESTADO_LABELS[c.estado]}
@@ -461,10 +462,10 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
                   ))
                 )}
               </div>
-              <div className="p-3 border-t border-[#1a1a1f]">
+              <div className="p-3 border-t border-outline-variant">
                 <button
                   onClick={handleAgregarCanchaClick}
-                  className="w-full bg-transparent border border-dashed border-[#2a2a2a] rounded-[8px] p-2.5 text-[12px] text-[#444] flex items-center justify-center gap-1.5 hover:border-[#444] hover:text-[#666] transition-colors"
+                  className="w-full bg-transparent border border-dashed border-outline-variant rounded-lg p-2.5 text-[12px] text-outline flex items-center justify-center gap-1.5 hover:border-outline hover:text-on-surface-variant transition-colors"
                 >
                   + Agregar cancha
                 </button>
@@ -475,33 +476,33 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
       </div>
 
       {/* ── RIGHT PANEL (desktop only) ── */}
-      <div className="hidden md:flex md:flex-col w-[210px] bg-[#0a0a0c] border-l border-[#1a1a1f] p-3.5 overflow-y-auto flex-shrink-0">
-        <div className="text-[10px] text-[#444] tracking-[0.1em] mb-2.5 font-medium uppercase flex-shrink-0">
+      <div className="hidden md:flex md:flex-col w-[210px] bg-surface border-l border-outline-variant p-3.5 overflow-y-auto flex-shrink-0">
+        <div className="text-[10px] text-outline tracking-[0.1em] mb-2.5 font-medium uppercase flex-shrink-0">
           Canchas ({canchasFiltradas.length})
         </div>
         <div className="flex-1 overflow-y-auto">
           {canchasFiltradas.length === 0 ? (
-            <div className="text-[11px] text-[#444] text-center py-6">Sin resultados</div>
+            <div className="text-[11px] text-outline text-center py-6">Sin resultados</div>
           ) : (
             canchasFiltradas.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setCanchaSeleccionada(c)}
-                className={`flex items-start gap-2 w-full bg-transparent border rounded-[8px] px-2 py-2.5 cursor-pointer mb-0.5 transition-colors text-left ${
+                className={`flex items-start gap-2 w-full bg-transparent border rounded-lg px-2 py-2.5 cursor-pointer mb-0.5 transition-colors text-left ${
                   canchaSeleccionada?.id === c.id
-                    ? 'bg-[#18180f] border-[#F5C34430]'
-                    : 'border-transparent hover:bg-[#111114]'
+                    ? 'bg-accent/10 border-accent/30'
+                    : 'border-transparent hover:bg-surface-container-low'
                 }`}
               >
                 <div className="w-2.5 h-2.5 rounded-full mt-[3px] flex-shrink-0" style={{ background: ESTADO_COLORS[c.estado] }} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-[12px] text-[#ccc] font-medium truncate">{c.nombre}</div>
-                  <div className="text-[10px] text-[#444] mt-0.5 truncate">
+                  <div className="text-[12px] text-on-surface font-medium truncate">{c.nombre}</div>
+                  <div className="text-[10px] text-outline mt-0.5 truncate">
                     {c.equipoNombre ? `${c.equipoNombre} · ${c.victorias ?? 0}-${c.derrotas ?? 0}` : c.direccion}
                   </div>
                 </div>
                 <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-[3px] font-medium flex-shrink-0"
+                  className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium flex-shrink-0"
                   style={{ background: `${ESTADO_COLORS[c.estado]}20`, color: ESTADO_COLORS[c.estado] }}
                 >
                   {ESTADO_LABELS[c.estado]}
@@ -512,7 +513,7 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         </div>
         <button
           onClick={handleAgregarCanchaClick}
-          className="w-full bg-transparent border border-dashed border-[#2a2a2a] rounded-[8px] p-2.5 text-[12px] text-[#444] cursor-pointer flex items-center justify-center gap-1.5 mt-2.5 hover:border-[#444] hover:text-[#666] transition-colors flex-shrink-0"
+          className="w-full bg-transparent border border-dashed border-outline-variant rounded-lg p-2.5 text-[12px] text-outline cursor-pointer flex items-center justify-center gap-1.5 mt-2.5 hover:border-outline hover:text-on-surface-variant transition-colors flex-shrink-0"
         >
           + Agregar cancha
         </button>

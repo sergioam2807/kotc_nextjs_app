@@ -67,7 +67,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0a0a0c] border-t border-[#1a1a1f] flex items-stretch"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface-dim border-t border-outline-variant flex items-stretch"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {NAV_ITEMS.map(item => {
@@ -79,11 +79,11 @@ export function MobileBottomNav() {
             key={item.href}
             href={item.href}
             className={`flex flex-col items-center justify-center flex-1 py-2 gap-0.5 transition-colors ${
-              isActive ? 'text-[#F5C344]' : 'text-[#444] hover:text-[#888]'
+              isActive ? 'text-accent' : 'text-outline hover:text-on-surface-variant'
             }`}
           >
             <div className="w-5 h-5">{item.icon}</div>
-            <span className="text-[9px] font-medium tracking-wide">{item.label}</span>
+            <span className="text-[9px] font-semibold tracking-wide">{item.label}</span>
           </Link>
         );
       })}

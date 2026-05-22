@@ -1,14 +1,15 @@
 interface CardProps {
   children: React.ReactNode;
   className?: string;
-  gold?: boolean;
+  /** Borde con tinte del color accent (amarillo) */
+  accent?: boolean;
 }
 
-export function Card({ children, className = '', gold = false }: CardProps) {
+export function Card({ children, className = '', accent = false }: CardProps) {
   return (
     <div
-      className={`bg-[#0f0f12] border rounded-[10px] ${
-        gold ? 'border-[#F5C34440]' : 'border-[#1a1a1f]'
+      className={`bg-surface-container-low border rounded-lg ${
+        accent ? 'border-accent/20' : 'border-outline-variant'
       } ${className}`}
     >
       {children}

@@ -1,29 +1,260 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-kotc-bg: #080809;
-  --color-kotc-surface: #0f0f12;
-  --color-kotc-dark: #0a0a0c;
-  --color-kotc-elevated: #111114;
-  --color-kotc-gold: #F5C344;
-  --color-kotc-gold-dim: #F5C34430;
-  --color-kotc-libre: #5a9e5a;
-  --color-kotc-rival: #E24B4A;
-  --color-kotc-border: #1a1a1f;
-  --color-kotc-border2: #2a2a2a;
-  --color-kotc-text: #ffffff;
-  --color-kotc-sub: #888888;
-  --color-kotc-hint: #444444;
-  --color-kotc-blue: #378ADD;
-  --color-kotc-purple: #7F77DD;
-  --color-kotc-green: #1D9E75;
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 14px;
+/*
+ * ============================================================
+ * KOTC Design System – Pro League Asphalt
+ * ============================================================
+ *
+ * Para cambiar la paleta edita lib/design-tokens.ts y
+ * luego actualiza los valores de :root y [data-theme="light"].
+ *
+ * Tema en runtime: añade data-theme="light" en <html>.
+ * ============================================================
+ */
+
+/* ── Dark Theme (default) ─────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --surface:                    #051424;
+  --surface-dim:                #051424;
+  --surface-bright:             #2c3a4c;
+  --surface-container-lowest:   #010f1f;
+  --surface-container-low:      #0d1c2d;
+  --surface-container:          #122131;
+  --surface-container-high:     #1c2b3c;
+  --surface-container-highest:  #273647;
+  --surface-variant:            #273647;
+  --surface-tint:               #b6c4ff;
+
+  /* Text */
+  --on-surface:                 #d4e4fa;
+  --on-surface-variant:         #c5c5d3;
+  --inverse-surface:            #d4e4fa;
+  --inverse-on-surface:         #233143;
+
+  /* Primary — Azul Eléctrico */
+  --primary:                    #b6c4ff;
+  --on-primary:                 #05297a;
+  --primary-container:          #1e3a8a;
+  --on-primary-container:       #90a8ff;
+  --inverse-primary:            #4059aa;
+
+  /* Secondary — MD3 Yellow tokens */
+  --secondary:                  #ffe083;
+  --on-secondary:               #3c2f00;
+  --secondary-container:        #eec200;
+  --on-secondary-container:     #645000;
+
+  /* Accent — Amarillo CTA de la marca (= secondary en dark) */
+  --accent:                     #ffe083;
+  --on-accent:                  #3c2f00;
+  --accent-dim:                 #ffe08326;
+
+  /* Tertiary — Cool Gray */
+  --tertiary:                   #c6c6c7;
+  --on-tertiary:                #2f3131;
+  --tertiary-container:         #3e4041;
+  --on-tertiary-container:      #abacac;
+
+  /* Error */
+  --error:                      #ffb4ab;
+  --on-error:                   #690005;
+  --error-container:            #93000a;
+  --on-error-container:         #ffdad6;
+
+  /* Outline */
+  --outline:                    #8f909d;
+  --outline-variant:            #444651;
+
+  /* Game status */
+  --status-libre:               #4ade80;
+  --status-rival:               #f87171;
+  --status-king:                #ffe083;
+  --status-purple:              #a78bfa;
+
+  /* Medal colors — sport convention, themed for contrast */
+  --medal-gold:                 #ffe083;
+  --medal-gold-bg:              #ffe08320;
+  --medal-gold-border:          #ffe08340;
+  --medal-silver:               #9aa8b8;
+  --medal-silver-bg:            #9aa8b820;
+  --medal-silver-border:        #9aa8b840;
+  --medal-bronze:               #cd7f32;
+  --medal-bronze-bg:            #cd7f3220;
+  --medal-bronze-border:        #cd7f3240;
+
+  /* Semantic brand text — amarillo en dark, azul en light */
+  --text-brand:                 #ffe083;
 }
 
-* {
+/* ── Light Theme ──────────────────────────────────────────── */
+[data-theme="light"] {
+  /* Surfaces */
+  --surface:                    #faf8ff;
+  --surface-dim:                #d2d9f4;
+  --surface-bright:             #faf8ff;
+  --surface-container-lowest:   #ffffff;
+  --surface-container-low:      #f2f3ff;
+  --surface-container:          #eaedff;
+  --surface-container-high:     #e2e7ff;
+  --surface-container-highest:  #dae2fd;
+  --surface-variant:            #dae2fd;
+  --surface-tint:               #4059aa;
+
+  /* Text */
+  --on-surface:                 #131b2e;
+  --on-surface-variant:         #444651;
+  --inverse-surface:            #283044;
+  --inverse-on-surface:         #eef0ff;
+
+  /* Primary — Deep Pro Blue */
+  --primary:                    #00236f;
+  --on-primary:                 #ffffff;
+  --primary-container:          #1e3a8a;
+  --on-primary-container:       #90a8ff;
+  --inverse-primary:            #b6c4ff;
+
+  /* Secondary — MD3 Yellow tokens */
+  --secondary:                  #735c00;
+  --on-secondary:               #ffffff;
+  --secondary-container:        #fed01b;
+  --on-secondary-container:     #6f5900;
+
+  /* Accent — Amarillo brillante CTA */
+  --accent:                     #fed01b;
+  --on-accent:                  #00236f;
+  --accent-dim:                 #fed01b26;
+
+  /* Tertiary */
+  --tertiary:                   #1b2b3f;
+  --on-tertiary:                #ffffff;
+  --tertiary-container:         #314156;
+  --on-tertiary-container:      #9dadc6;
+
+  /* Error */
+  --error:                      #ba1a1a;
+  --on-error:                   #ffffff;
+  --error-container:            #ffdad6;
+  --on-error-container:         #93000a;
+
+  /* Outline — corregido a #696a76 para alcanzar 5.08:1 sobre surface */
+  --outline:                    #696a76;
+  --outline-variant:            #c5c5d3;
+
+  /* Game status */
+  --status-libre:               #00852c;  /* #16a34a era 3.13:1 → #00852c = 4.54:1 */
+  --status-rival:               #dc2626;
+  --status-king:                #a06000;  /* amarillo invisible en claro → pardo 5.47:1 */
+  --status-purple:              #5b21b6;  /* 5.68:1 sobre #faf8ff */
+
+  /* Medal colors — corregidas para contraste WCAG AA en claro */
+  --medal-gold:                 #ffe083;  /* sobre fondos navy → pasa AAA */
+  --medal-gold-bg:              #fed01b20;
+  --medal-gold-border:          #fed01b40;
+  --medal-silver:               #667484;  /* #9aa8b8 era 2.30:1 → #667484 = 4.53:1 */
+  --medal-silver-bg:            #66748420;
+  --medal-silver-border:        #66748440;
+  --medal-bronze:               #ad5f12;  /* #cd7f32 era 2.99:1 → #ad5f12 = 4.51:1 */
+  --medal-bronze-bg:            #ad5f1220;
+  --medal-bronze-border:        #ad5f1240;
+
+  /* Semantic brand text — azul profundo en light (high contrast) */
+  --text-brand:                 #00236f;
+
+  /* Container tokens corregidos */
+  --on-primary-container:       #dce6ff;  /* 7.2:1 sobre #1e3a8a → AAA */
+  --on-tertiary-container:      #c8d8f0;  /* 6.1:1 sobre #314156 → AA */
+}
+
+/* ── Tailwind Theme Integration ───────────────────────────── */
+/*
+ * @theme inline indica a Tailwind que genere utilidades que
+ * referencian CSS variables en lugar de valores estáticos,
+ * permitiendo el theming dinámico sin recompilar.
+ */
+@theme inline {
+  /* Surfaces */
+  --color-surface:                    var(--surface);
+  --color-surface-dim:                var(--surface-dim);
+  --color-surface-bright:             var(--surface-bright);
+  --color-surface-container-lowest:   var(--surface-container-lowest);
+  --color-surface-container-low:      var(--surface-container-low);
+  --color-surface-container:          var(--surface-container);
+  --color-surface-container-high:     var(--surface-container-high);
+  --color-surface-container-highest:  var(--surface-container-highest);
+  --color-surface-variant:            var(--surface-variant);
+  --color-surface-tint:               var(--surface-tint);
+
+  /* Text */
+  --color-on-surface:                 var(--on-surface);
+  --color-on-surface-variant:         var(--on-surface-variant);
+  --color-inverse-surface:            var(--inverse-surface);
+  --color-inverse-on-surface:         var(--inverse-on-surface);
+
+  /* Primary */
+  --color-primary:                    var(--primary);
+  --color-on-primary:                 var(--on-primary);
+  --color-primary-container:          var(--primary-container);
+  --color-on-primary-container:       var(--on-primary-container);
+  --color-inverse-primary:            var(--inverse-primary);
+
+  /* Secondary */
+  --color-secondary:                  var(--secondary);
+  --color-on-secondary:               var(--on-secondary);
+  --color-secondary-container:        var(--secondary-container);
+  --color-on-secondary-container:     var(--on-secondary-container);
+
+  /* Accent */
+  --color-accent:                     var(--accent);
+  --color-on-accent:                  var(--on-accent);
+  --color-accent-dim:                 var(--accent-dim);
+
+  /* Tertiary */
+  --color-tertiary:                   var(--tertiary);
+  --color-on-tertiary:                var(--on-tertiary);
+  --color-tertiary-container:         var(--tertiary-container);
+  --color-on-tertiary-container:      var(--on-tertiary-container);
+
+  /* Error */
+  --color-error:                      var(--error);
+  --color-on-error:                   var(--on-error);
+  --color-error-container:            var(--error-container);
+  --color-on-error-container:         var(--on-error-container);
+
+  /* Outline */
+  --color-outline:                    var(--outline);
+  --color-outline-variant:            var(--outline-variant);
+
+  /* Game status */
+  --color-status-libre:               var(--status-libre);
+  --color-status-rival:               var(--status-rival);
+  --color-status-king:                var(--status-king);
+  --color-status-purple:              var(--status-purple);
+
+  /* Medal colors (themed — cambian en light para cumplir WCAG AA) */
+  --color-medal-gold:                 var(--medal-gold);
+  --color-medal-gold-bg:              var(--medal-gold-bg);
+  --color-medal-gold-border:          var(--medal-gold-border);
+  --color-medal-silver:               var(--medal-silver);
+  --color-medal-silver-bg:            var(--medal-silver-bg);
+  --color-medal-silver-border:        var(--medal-silver-border);
+  --color-medal-bronze:               var(--medal-bronze);
+  --color-medal-bronze-bg:            var(--medal-bronze-bg);
+  --color-medal-bronze-border:        var(--medal-bronze-border);
+
+  /* Semantic brand text — amarillo/dark, azul/light */
+  --color-text-brand:                 var(--text-brand);
+
+  /* Border radius — coincide con los valores del diseño */
+  --radius-sm:   0.125rem;   /* 2px  — badges */
+  --radius-md:   0.375rem;   /* 6px  — elementos medianos */
+  --radius-lg:   0.5rem;     /* 8px  — cards */
+  --radius-xl:   0.75rem;    /* 12px — modals, contenedores grandes */
+  --radius-full: 9999px;
+}
+
+/* ── Base Styles ──────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -32,15 +263,16 @@ html {
 }
 
 body {
-  background-color: #080809;
-  color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background-color: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-lexend, 'Lexend'), system-ui, sans-serif;
   min-height: 100%;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0a0a0c; }
-::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar-track    { background: var(--surface-dim); }
+::-webkit-scrollbar-thumb    { background: var(--outline-variant); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--outline); }

@@ -1,6 +1,19 @@
 'use client';
 
-type BadgeVariant = 'gold' | 'blue' | 'green' | 'red' | 'purple' | 'neutral' | 'king' | 'libre' | 'rival';
+type BadgeVariant =
+  | 'accent'
+  | 'primary'
+  | 'green'
+  | 'error'
+  | 'purple'
+  | 'neutral'
+  | 'king'
+  | 'libre'
+  | 'rival'
+  /* aliases legacy */
+  | 'gold'
+  | 'blue'
+  | 'red';
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -9,21 +22,27 @@ interface BadgeProps {
 }
 
 const variants: Record<BadgeVariant, string> = {
-  gold: 'bg-[#F5C34420] text-[#F5C344]',
-  blue: 'bg-[#378ADD20] text-[#378ADD]',
-  green: 'bg-[#1D9E7520] text-[#1D9E75]',
-  red: 'bg-[#E24B4A20] text-[#E24B4A]',
-  purple: 'bg-[#7F77DD20] text-[#7F77DD]',
-  neutral: 'bg-[#1e1e24] text-[#666]',
-  king: 'bg-[#F5C34420] text-[#F5C344]',
-  libre: 'bg-[#1a2a1a] text-[#5a9e5a]',
-  rival: 'bg-[#E24B4A20] text-[#E24B4A]',
+  // Semánticos nuevos
+  accent:  'bg-accent/15 text-accent',
+  primary: 'bg-primary/15 text-primary',
+  green:   'bg-status-libre/15 text-status-libre',
+  error:   'bg-error/15 text-error',
+  purple:  'bg-status-purple/15 text-status-purple',
+  neutral: 'bg-surface-container text-on-surface-variant',
+  // Game-specific
+  king:    'bg-accent/15 text-accent',
+  libre:   'bg-status-libre/15 text-status-libre',
+  rival:   'bg-status-rival/15 text-status-rival',
+  // Aliases legacy
+  gold:    'bg-accent/15 text-accent',
+  blue:    'bg-primary/15 text-primary',
+  red:     'bg-error/15 text-error',
 };
 
 export function Badge({ variant = 'neutral', children, className = '' }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-[4px] ${variants[variant]} ${className}`}
+      className={`inline-flex items-center text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-sm ${variants[variant]} ${className}`}
     >
       {children}
     </span>

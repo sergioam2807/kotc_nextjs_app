@@ -99,14 +99,24 @@ export default async function EquipoPage() {
   const equipo = equipoData;
   const isAdmin = miMembresia.rol === 'admin';
 
-  // Step 3: roster (miembros sin join)
+  // Step 3: victorias y derrotas agregadas desde cancha_dominio
+  const { data: dominio } = await supabase
+    .from('cancha_dominio')
+    .select('victorias, derrotas, es_king')
+    .eq('equipo_id', equipo.id);
+
+  const totalVictorias = dominio?.reduce((sum, d) => sum + (d.victorias ?? 0), 0) ?? 0;
+  const totalDerrotas  = dominio?.reduce((sum, d) => sum + (d.derrotas  ?? 0), 0) ?? 0;
+  const totalKing      = dominio?.filter(d => d.es_king).length ?? 0;
+
+  // Step 4: roster (miembros sin join)
   const { data: rosterMiembros } = await supabase
     .from('equipo_miembros')
     .select('id, rol, posicion, jugador_id')
     .eq('equipo_id', equipo.id)
     .order('posicion');
 
-  // Step 4: perfiles de los miembros
+  // Step 5: perfiles de los miembros
   const jugadorIds = rosterMiembros?.map(m => m.jugador_id) ?? [];
   const { data: perfiles } = jugadorIds.length > 0
     ? await supabase.from('profiles').select('id, username, display_name, avatar_url, nivel, xp').in('id', jugadorIds)
@@ -163,9 +173,9 @@ export default async function EquipoPage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2 mb-5">
         {[
-          { val: '0', label: 'Victorias' },
-          { val: '0', label: 'Derrotas' },
-          { val: '0', label: 'Canchas king' },
+          { val: String(totalVictorias), label: 'Victorias' },
+          { val: String(totalDerrotas),  label: 'Derrotas' },
+          { val: String(totalKing),      label: 'Canchas king' },
           { val: 'Sin temporada', label: 'Temporada activa', sm: true },
         ].map(s => (
           <div key={s.label} className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[10px] p-3 text-center">
@@ -212,6 +222,7 @@ export default async function EquipoPage() {
             <RosterRow
               key={miembro.id}
               miembroId={miembro.id}
+              jugadorId={jugador.id}
               nombre={nombre}
               iniciales={iniciales}
               avatarColor={color}

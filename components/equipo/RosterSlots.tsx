@@ -20,11 +20,11 @@ export function RosterSlots({ modalidad, titulares, maxTitulares, suplentes, max
   });
 
   return (
-    <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[10px] p-2.5 px-3.5 mb-2.5 flex items-center gap-2.5">
+    <div className="bg-surface-container-low border border-outline-variant rounded-lg p-2.5 px-3.5 mb-2.5 flex items-center gap-2.5">
       <div className="flex-1">
-        <div className="text-[12px] font-medium text-[#ddd]">{modalidad}</div>
-        <div className="text-[11px] text-[#555] mt-0.5">
-          Slots: <span className="text-[#F5C344]">{total} de {maxTotal}</span> · {maxTitulares} titulares + {maxSuplentes} suplentes
+        <div className="text-[12px] font-semibold text-on-surface">{modalidad}</div>
+        <div className="text-[11px] text-outline mt-0.5">
+          Slots: <span className="text-accent">{total} de {maxTotal}</span> · {maxTitulares} titulares + {maxSuplentes} suplentes
         </div>
       </div>
       <div className="flex gap-1">
@@ -32,10 +32,10 @@ export function RosterSlots({ modalidad, titulares, maxTitulares, suplentes, max
           <div
             key={i}
             className={`w-2.5 h-2.5 rounded-full ${
-              type === 'titular' ? 'bg-[#F5C344]' :
-              type === 'titular-empty' ? 'bg-[#1e1e24]' :
-              type === 'suplente' ? 'bg-[#555]' :
-              'bg-[#1e1e24]'
+              type === 'titular'       ? 'bg-accent' :
+              type === 'titular-empty' ? 'bg-surface-container-high' :
+              type === 'suplente'      ? 'bg-on-surface-variant' :
+                                         'bg-surface-container-high'
             }`}
             title={type === 'titular' ? 'Titular' : type === 'suplente' ? 'Suplente' : 'Libre'}
           />

@@ -23,13 +23,19 @@ const DEPORTES_LABELS: Record<Deporte, string> = {
 };
 
 const COLOR_OPTIONS = [
-  { value: '#F5C344', label: 'Gold' },
-  { value: '#7F77DD', label: 'Violeta' },
-  { value: '#378ADD', label: 'Azul' },
-  { value: '#1D9E75', label: 'Verde' },
-  { value: '#D85A30', label: 'Naranja' },
-  { value: '#E24B4A', label: 'Rojo' },
+  { value: '#ffe083', label: 'Amarillo' },
+  { value: '#a78bfa', label: 'Violeta' },
+  { value: '#b6c4ff', label: 'Azul' },
+  { value: '#4ade80', label: 'Verde' },
+  { value: '#fb923c', label: 'Naranja' },
+  { value: '#f87171', label: 'Rojo' },
 ];
+
+const inputClass =
+  'bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors';
+
+const labelClass =
+  'text-[11px] text-outline uppercase tracking-[0.08em] font-semibold';
 
 export function CrearEquipoForm() {
   const router = useRouter();
@@ -37,7 +43,7 @@ export function CrearEquipoForm() {
   const [deporte, setDeporte] = useState<Deporte>('basketball');
   const [modalidad, setModalidad] = useState('3v3');
   const [ciudad, setCiudad] = useState('');
-  const [color, setColor] = useState('#F5C344');
+  const [color, setColor] = useState('#ffe083');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -72,12 +78,10 @@ export function CrearEquipoForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[14px] p-5 flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col gap-4">
       {/* Nombre */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-[11px] text-[#555] uppercase tracking-[0.08em] font-medium">
-          Nombre del equipo
-        </label>
+        <label className={labelClass}>Nombre del equipo</label>
         <input
           type="text"
           placeholder="Ej: Los Cóndores"
@@ -85,20 +89,18 @@ export function CrearEquipoForm() {
           onChange={e => setNombre(e.target.value)}
           maxLength={40}
           required
-          className="bg-[#0a0a0c] border border-[#2a2a2a] rounded-[8px] px-3 py-2.5 text-[13px] text-[#ddd] placeholder-[#333] outline-none focus:border-[#F5C34460] transition-colors"
+          className={inputClass}
         />
       </div>
 
       {/* Deporte + Modalidad */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] text-[#555] uppercase tracking-[0.08em] font-medium">
-            Deporte
-          </label>
+          <label className={labelClass}>Deporte</label>
           <select
             value={deporte}
             onChange={e => handleDeporteChange(e.target.value as Deporte)}
-            className="bg-[#0a0a0c] border border-[#2a2a2a] rounded-[8px] px-3 py-2.5 text-[13px] text-[#ddd] outline-none focus:border-[#F5C34460] transition-colors cursor-pointer appearance-none"
+            className={`${inputClass} cursor-pointer appearance-none`}
           >
             {(Object.keys(DEPORTES_LABELS) as Deporte[]).map(d => (
               <option key={d} value={d}>{DEPORTES_LABELS[d]}</option>
@@ -106,13 +108,11 @@ export function CrearEquipoForm() {
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] text-[#555] uppercase tracking-[0.08em] font-medium">
-            Modalidad
-          </label>
+          <label className={labelClass}>Modalidad</label>
           <select
             value={modalidad}
             onChange={e => setModalidad(e.target.value)}
-            className="bg-[#0a0a0c] border border-[#2a2a2a] rounded-[8px] px-3 py-2.5 text-[13px] text-[#ddd] outline-none focus:border-[#F5C34460] transition-colors cursor-pointer appearance-none"
+            className={`${inputClass} cursor-pointer appearance-none`}
           >
             {MODALIDADES[deporte].map(m => (
               <option key={m} value={m}>{m}</option>
@@ -123,9 +123,7 @@ export function CrearEquipoForm() {
 
       {/* Ciudad */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-[11px] text-[#555] uppercase tracking-[0.08em] font-medium">
-          Ciudad
-        </label>
+        <label className={labelClass}>Ciudad</label>
         <input
           type="text"
           placeholder="Ej: Santiago"
@@ -133,15 +131,13 @@ export function CrearEquipoForm() {
           onChange={e => setCiudad(e.target.value)}
           maxLength={60}
           required
-          className="bg-[#0a0a0c] border border-[#2a2a2a] rounded-[8px] px-3 py-2.5 text-[13px] text-[#ddd] placeholder-[#333] outline-none focus:border-[#F5C34460] transition-colors"
+          className={inputClass}
         />
       </div>
 
       {/* Color */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-[11px] text-[#555] uppercase tracking-[0.08em] font-medium">
-          Color del equipo
-        </label>
+        <label className={labelClass}>Color del equipo</label>
         <div className="flex gap-2 flex-wrap">
           {COLOR_OPTIONS.map(c => (
             <button
@@ -149,7 +145,7 @@ export function CrearEquipoForm() {
               type="button"
               title={c.label}
               onClick={() => setColor(c.value)}
-              className="w-8 h-8 rounded-[8px] border-2 transition-all cursor-pointer"
+              className="w-8 h-8 rounded-lg border-2 transition-all cursor-pointer"
               style={{
                 backgroundColor: c.value,
                 borderColor: color === c.value ? '#fff' : 'transparent',
@@ -164,7 +160,7 @@ export function CrearEquipoForm() {
 
       {/* Error */}
       {error && (
-        <p className="text-[12px] text-[#E24B4A] bg-[#2a1515] border border-[#E24B4A30] rounded-[6px] px-3 py-2">
+        <p className="text-[12px] text-error bg-error-container border border-error/30 rounded-md px-3 py-2">
           {error}
         </p>
       )}

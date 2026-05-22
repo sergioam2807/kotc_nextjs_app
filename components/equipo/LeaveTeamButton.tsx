@@ -24,19 +24,19 @@ export function LeaveTeamButton({ miembroId }: { miembroId: string }) {
 
   if (confirmando) {
     return (
-      <div className="mt-6 bg-[#1a0f0f] border border-[#E24B4A40] rounded-[10px] p-4 flex items-center justify-between gap-3">
-        <p className="text-[13px] text-[#ddd]">¿Confirmas que quieres salir del equipo?</p>
+      <div className="mt-6 bg-error-container/50 border border-error/25 rounded-lg p-4 flex items-center justify-between gap-3">
+        <p className="text-[13px] text-on-surface">¿Confirmas que quieres salir del equipo?</p>
         <div className="flex gap-2 flex-shrink-0">
           <button
             onClick={handleLeave}
             disabled={loading}
-            className="bg-[#E24B4A] text-white border-none rounded-[6px] px-3 py-1.5 text-[12px] font-medium cursor-pointer hover:bg-[#c43a39] transition-colors disabled:opacity-50"
+            className="bg-error text-on-error border-none rounded-md px-3 py-1.5 text-[12px] font-semibold cursor-pointer hover:brightness-90 transition-all disabled:opacity-50"
           >
             {loading ? '...' : 'Confirmar salida'}
           </button>
           <button
             onClick={() => setConfirmando(false)}
-            className="bg-[#1a1a1f] text-[#888] border-none rounded-[6px] px-3 py-1.5 text-[12px] cursor-pointer hover:text-[#ccc] transition-colors"
+            className="bg-surface-container text-on-surface-variant border-none rounded-md px-3 py-1.5 text-[12px] cursor-pointer hover:text-on-surface transition-colors"
           >
             Cancelar
           </button>
@@ -48,7 +48,7 @@ export function LeaveTeamButton({ miembroId }: { miembroId: string }) {
   return (
     <button
       onClick={() => setConfirmando(true)}
-      className="mt-6 w-full bg-transparent text-[#444] border border-[#1e1e24] rounded-[8px] py-2.5 text-[12px] cursor-pointer hover:border-[#E24B4A40] hover:text-[#E24B4A] transition-colors"
+      className="mt-6 w-full bg-transparent text-outline border border-outline-variant rounded-lg py-2.5 text-[12px] cursor-pointer hover:border-error/40 hover:text-error transition-colors"
     >
       Salir del equipo
     </button>

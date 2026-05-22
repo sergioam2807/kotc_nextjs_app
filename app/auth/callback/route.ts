@@ -2,7 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const { searchParams } = requestUrl;
+  // En producción usar NEXT_PUBLIC_SITE_URL para evitar problemas con proxies/headers
+  const origin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? requestUrl.origin;
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/dashboard';
 

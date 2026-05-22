@@ -116,33 +116,35 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backdropFilter: 'blur(4px)', background: 'rgba(8,8,9,0.8)' }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/80 backdrop-blur-sm"
+    >
       <div
-        className="relative w-full max-w-md bg-[#0f0f12] border border-[#1a1a1f] rounded-[16px] p-6 shadow-[0_8px_48px_rgba(0,0,0,0.8)]"
+        className="relative w-full max-w-md bg-surface-container-low border border-outline-variant rounded-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full bg-[#1e1e24] text-[#555] hover:text-[#ddd] hover:bg-[#2a2a2a] transition-colors text-[16px] leading-none"
+          className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container text-outline hover:text-on-surface hover:bg-surface-container transition-colors text-[16px] leading-none"
         >
           ×
         </button>
 
-        <div className="text-[15px] font-semibold text-[#ddd] mb-1">Agregar cancha</div>
-        <div className="text-[11px] text-[#555] mb-5">Registra un nuevo espacio de juego en el mapa.</div>
+        <div className="text-[15px] font-semibold text-on-surface mb-1">Agregar cancha</div>
+        <div className="text-[11px] text-outline mb-5">Registra un nuevo espacio de juego en el mapa.</div>
 
         {xpMsg ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="text-[32px]">🎉</div>
-            <div className="text-[15px] font-medium text-[#F5C344]">+80 XP ganados 🎉</div>
-            <div className="text-[11px] text-[#555]">Cancha agregada exitosamente</div>
+            <div className="text-[15px] font-medium text-accent">+80 XP ganados 🎉</div>
+            <div className="text-[11px] text-outline">Cancha agregada exitosamente</div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* Nombre */}
             <div>
-              <label className="block text-[11px] text-[#555] mb-1.5 font-medium uppercase tracking-[0.08em]">
+              <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">
                 Nombre
               </label>
               <input
@@ -150,14 +152,14 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ej: Cancha Parque Bustamante"
-                className="w-full bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2 text-[12px] text-[#ccc] placeholder:text-[#333] outline-none focus:border-[#F5C34440] transition-colors"
+                className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
                 required
               />
             </div>
 
             {/* Dirección */}
             <div>
-              <label className="block text-[11px] text-[#555] mb-1.5 font-medium uppercase tracking-[0.08em]">
+              <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">
                 Dirección
               </label>
               <input
@@ -165,14 +167,14 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
                 value={direccion}
                 onChange={(e) => setDireccion(e.target.value)}
                 placeholder="Ej: Av. Providencia 1234, Santiago"
-                className="w-full bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2 text-[12px] text-[#ccc] placeholder:text-[#333] outline-none focus:border-[#F5C34440] transition-colors"
+                className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
                 required
               />
             </div>
 
             {/* Deportes */}
             <div>
-              <label className="block text-[11px] text-[#555] mb-2 font-medium uppercase tracking-[0.08em]">
+              <label className="block text-[11px] text-outline mb-2 font-medium uppercase tracking-[0.08em]">
                 Deportes
               </label>
               <div className="flex flex-wrap gap-2">
@@ -181,10 +183,10 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
                     key={d.id}
                     type="button"
                     onClick={() => toggleDeporte(d.id)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[7px] text-[11px] border transition-colors ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] border transition-colors ${
                       deportes.includes(d.id)
-                        ? 'bg-[#F5C34420] border-[#F5C34460] text-[#F5C344]'
-                        : 'bg-[#0a0a0c] border-[#1a1a1f] text-[#555] hover:border-[#2a2a2a] hover:text-[#777]'
+                        ? 'bg-accent/15 border-accent/40 text-accent'
+                        : 'bg-surface border-outline-variant text-outline hover:border-outline hover:text-on-surface-variant'
                     }`}
                   >
                     <span>{d.emoji}</span>
@@ -196,18 +198,18 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
 
             {/* Coordenadas */}
             <div>
-              <label className="block text-[11px] text-[#555] mb-1.5 font-medium uppercase tracking-[0.08em]">
+              <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">
                 Ubicación
               </label>
               {coords ? (
-                <div className="bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2 flex items-center justify-between">
-                  <span className="text-[11px] text-[#888] font-mono">
+                <div className="bg-surface border border-outline-variant rounded-lg px-3 py-2 flex items-center justify-between">
+                  <span className="text-[11px] text-on-surface-variant font-mono">
                     {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCoords(null)}
-                    className="text-[#444] hover:text-[#888] text-[12px] ml-2"
+                    className="text-outline hover:text-on-surface-variant text-[12px] ml-2"
                   >
                     cambiar
                   </button>
@@ -218,7 +220,7 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
                     <button
                       type="button"
                       onClick={onNecesitaClickMapa}
-                      className="w-full bg-[#0a0a0c] border border-dashed border-[#2a2a2a] rounded-[8px] px-3 py-2.5 text-[11px] text-[#555] hover:border-[#444] hover:text-[#777] transition-colors flex items-center justify-center gap-1.5"
+                      className="w-full bg-surface border border-dashed border-outline-variant rounded-lg px-3 py-2.5 text-[11px] text-outline hover:border-outline hover:text-on-surface-variant transition-colors flex items-center justify-center gap-1.5"
                     >
                       <span>📍</span>
                       <span>Hacer clic en el mapa para seleccionar</span>
@@ -228,7 +230,7 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
                     type="button"
                     onClick={handleUbicacionActual}
                     disabled={ubicacionLoading}
-                    className="w-full bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2 text-[11px] text-[#555] hover:border-[#2a2a2a] hover:text-[#777] transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[11px] text-outline hover:border-outline hover:text-on-surface-variant transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {ubicacionLoading ? (
                       <span>Obteniendo ubicación...</span>
@@ -245,7 +247,7 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
 
             {/* Error */}
             {error && (
-              <div className="bg-[#E24B4A20] border border-[#E24B4A40] rounded-[8px] px-3 py-2 text-[11px] text-[#E24B4A]">
+              <div className="bg-error/10 border border-error/30 rounded-lg px-3 py-2 text-[11px] text-error">
                 {error}
               </div>
             )}
@@ -254,7 +256,7 @@ export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNece
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#F5C344] text-[#080809] rounded-[8px] py-2.5 text-[13px] font-semibold cursor-pointer hover:bg-[#f0bb30] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+              className="w-full bg-accent text-on-accent rounded-lg py-2.5 text-[13px] font-semibold cursor-pointer hover:brightness-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-1"
             >
               {loading ? 'Guardando...' : 'Agregar cancha'}
             </button>

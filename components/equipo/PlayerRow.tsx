@@ -34,16 +34,16 @@ export function PlayerRow({
   onRemove,
 }: PlayerRowProps) {
   return (
-    <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[10px] p-2.5 px-3.5 flex items-center gap-3 hover:border-[#2a2a2a] transition-colors">
+    <div className="bg-surface-container-low border border-outline-variant rounded-lg p-2.5 px-3.5 flex items-center gap-3 hover:border-outline transition-colors">
       {avatarUrl ? (
         <img
           src={avatarUrl}
           alt={nombre}
-          className="w-10 h-10 rounded-[8px] object-cover flex-shrink-0"
+          className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
         />
       ) : (
         <div
-          className="w-10 h-10 rounded-[8px] flex items-center justify-center text-[13px] font-medium flex-shrink-0"
+          className="w-10 h-10 rounded-lg flex items-center justify-center text-[13px] font-semibold flex-shrink-0"
           style={{ background: `${avatarColor}20`, color: avatarColor }}
         >
           {iniciales}
@@ -51,17 +51,17 @@ export function PlayerRow({
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[13px] text-[#ddd] font-medium">{nombre}</span>
-          {roles.includes('admin') && <Badge variant="gold">Admin</Badge>}
+          <span className="text-[13px] text-on-surface font-semibold">{nombre}</span>
+          {roles.includes('admin') && <Badge variant="accent">Admin</Badge>}
           {roles.includes('capitan') && <Badge variant="purple">Capitán</Badge>}
           {roles.includes('jugador') && !roles.includes('admin') && !roles.includes('capitan') && (
             <Badge variant="neutral">Jugador</Badge>
           )}
         </div>
-        <div className="text-[11px] text-[#444] mt-0.5 flex items-center gap-2">
+        <div className="text-[11px] text-outline mt-0.5 flex items-center gap-2">
           <span>Lv.{nivel} · {xp} XP</span>
-          <span className="text-[#555]">{posicion}</span>
-          <span className="text-[#5a9e5a]">Activo</span>
+          <span className="text-on-surface-variant">{posicion}</span>
+          <span className="text-status-libre">Activo</span>
         </div>
       </div>
       {(canEdit || onViewProfile) && (
@@ -69,7 +69,7 @@ export function PlayerRow({
           {onViewProfile && (
             <button
               onClick={onViewProfile}
-              className="bg-[#1a1a1f] border-none rounded-[6px] w-7 h-7 flex items-center justify-center cursor-pointer text-[#555] hover:bg-[#2a2a2f] hover:text-[#aaa] transition-colors"
+              className="bg-surface-container border-none rounded-md w-7 h-7 flex items-center justify-center cursor-pointer text-outline hover:bg-surface-container-high hover:text-on-surface-variant transition-colors"
               title="Ver perfil"
               aria-label="Ver perfil"
             >
@@ -79,7 +79,7 @@ export function PlayerRow({
           {canEdit && onEditRole && !isCurrentUser && (
             <button
               onClick={onEditRole}
-              className="bg-[#1a1a1f] border-none rounded-[6px] w-7 h-7 flex items-center justify-center cursor-pointer text-[#555] hover:bg-[#2a2a2f] hover:text-[#aaa] transition-colors"
+              className="bg-surface-container border-none rounded-md w-7 h-7 flex items-center justify-center cursor-pointer text-outline hover:bg-surface-container-high hover:text-on-surface-variant transition-colors"
               title="Editar rol"
               aria-label="Editar rol"
             >
@@ -89,7 +89,7 @@ export function PlayerRow({
           {canEdit && onRemove && !isCurrentUser && (
             <button
               onClick={onRemove}
-              className="bg-[#1a1a1f] border-none rounded-[6px] w-7 h-7 flex items-center justify-center cursor-pointer text-[#555] hover:bg-[#3a1515] hover:text-[#E24B4A] transition-colors"
+              className="bg-surface-container border-none rounded-md w-7 h-7 flex items-center justify-center cursor-pointer text-outline hover:bg-error-container hover:text-error transition-colors"
               title="Expulsar"
               aria-label="Expulsar jugador"
             >

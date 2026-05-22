@@ -22,7 +22,7 @@ export async function PATCH(
   const body = await request.json();
   const { estado } = body;
 
-  if (!['aceptado', 'rechazado', 'jugado'].includes(estado)) {
+  if (!['aceptado', 'rechazado', 'jugado', 'resultado_pendiente', 'disputado', 'completado'].includes(estado)) {
     return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
   }
 

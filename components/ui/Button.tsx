@@ -3,20 +3,29 @@
 import { ButtonHTMLAttributes } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
 }
 
 const variantStyles = {
-  primary: 'bg-[#F5C344] text-[#080809] hover:bg-[#e8b53d] font-medium',
-  ghost: 'bg-transparent text-[#888] border border-[#2a2a2a] hover:border-[#444] hover:text-[#ccc]',
-  danger: 'bg-[#2a1515] text-[#E24B4A] hover:bg-[#3a1515]',
+  /** CTA — Amarillo eléctrico de la marca */
+  primary:
+    'bg-accent text-on-accent hover:brightness-90 font-semibold',
+  /** Outlined — Azul eléctrico */
+  secondary:
+    'bg-transparent text-primary border border-primary hover:bg-primary/10',
+  /** Sin fondo */
+  ghost:
+    'bg-transparent text-on-surface-variant border border-outline-variant hover:border-outline hover:text-on-surface',
+  /** Destructivo */
+  danger:
+    'bg-error-container text-error hover:bg-error-container/80',
 };
 
 const sizeStyles = {
-  sm: 'text-[11px] px-2.5 py-1 rounded-[6px]',
-  md: 'text-[13px] px-4 py-2 rounded-[8px]',
-  lg: 'text-[14px] px-6 py-3 rounded-[8px]',
+  sm: 'text-[11px] px-2.5 py-1 rounded-md',
+  md: 'text-[13px] px-4 py-2 rounded-md',
+  lg: 'text-[14px] px-6 py-3 rounded-md',
 };
 
 export function Button({

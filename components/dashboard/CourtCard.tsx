@@ -23,12 +23,12 @@ export function CourtCard({
 }: CourtCardProps) {
   return (
     <div
-      className={`bg-[#0f0f12] border rounded-[10px] p-3 cursor-pointer transition-colors hover:border-[#333] ${
-        estado === 'king' ? 'border-[#F5C34430]' : 'border-[#1e1e24]'
+      className={`bg-surface-container-low border rounded-lg p-3 cursor-pointer transition-colors hover:border-outline ${
+        estado === 'king' ? 'border-accent/20' : 'border-outline-variant'
       }`}
     >
       <div className="flex items-start justify-between mb-1.5">
-        <span className="text-[12px] text-[#ccc] font-medium leading-tight">{nombre}</span>
+        <span className="text-[12px] text-on-surface font-medium leading-tight">{nombre}</span>
         <Badge variant={estado === 'king' ? 'king' : estado === 'libre' ? 'libre' : 'rival'}>
           {estado === 'king' ? 'KING' : estado === 'libre' ? 'LIBRE' : 'RIVAL'}
         </Badge>
@@ -39,11 +39,11 @@ export function CourtCard({
             className="w-2 h-2 rounded-full"
             style={{ background: equipoColor }}
           />
-          <span className="text-[11px] text-[#666]">{equipoNombre}</span>
+          <span className="text-[11px] text-on-surface-variant">{equipoNombre}</span>
         </div>
       )}
       {(record || modalidad || deporte) && (
-        <div className="text-[10px] text-[#444]">
+        <div className="text-[10px] text-outline">
           {[record, modalidad, deporte].filter(Boolean).join(' · ')}
         </div>
       )}

@@ -23,6 +23,12 @@ const DEPORTES = [
 
 const FORMATOS = ['1v1', '2v2', '3v3', '5v5', '7v7', '11v11'];
 
+const inputClass =
+  'w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors';
+
+const labelClass =
+  'block text-[11px] text-outline mb-1.5 font-semibold uppercase tracking-[0.08em]';
+
 export function NuevoDesafioModal({
   equipoId,
   equipos,
@@ -96,46 +102,39 @@ export function NuevoDesafioModal({
     }
   }
 
-  const inputClass = 'w-full bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2 text-[12px] text-[#ccc] placeholder:text-[#333] outline-none focus:border-[#F5C34440] transition-colors';
-  const labelClass = 'block text-[11px] text-[#555] mb-1.5 font-medium uppercase tracking-[0.08em]';
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backdropFilter: 'blur(4px)', background: 'rgba(8,8,9,0.8)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-[#0f0f12] border border-[#1a1a1f] rounded-[16px] p-6 shadow-[0_8px_48px_rgba(0,0,0,0.8)] overflow-y-auto max-h-[90vh]"
+        className="w-full max-w-lg bg-surface-container border border-outline-variant rounded-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)] overflow-y-auto max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full bg-[#1e1e24] text-[#555] hover:text-[#ddd] hover:bg-[#2a2a2a] transition-colors text-[16px] leading-none"
-          style={{ position: 'relative', float: 'right', marginTop: '-8px', marginRight: '-8px' }}
+          className="float-right -mt-2 -mr-2 w-7 h-7 flex items-center justify-center rounded-full bg-surface-container-high text-outline hover:text-on-surface hover:bg-surface-container-highest transition-colors text-[16px] leading-none"
         >
           ×
         </button>
 
-        <div className="text-[15px] font-semibold text-[#ddd] mb-1">Nuevo desafío</div>
-        <div className="text-[11px] text-[#555] mb-5">Reta a otro equipo en una cancha.</div>
+        <div className="text-[15px] font-bold text-on-surface mb-1">Nuevo desafío</div>
+        <div className="text-[11px] text-outline mb-5">Reta a otro equipo en una cancha.</div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Equipo rival */}
           <div>
             <label className={labelClass}>Equipo rival</label>
             {equipoSeleccionado ? (
-              <div className="flex items-center justify-between bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2">
+              <div className="flex items-center justify-between bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ background: equipoSeleccionado.color }}
-                  />
-                  <span className="text-[12px] text-[#ccc]">{equipoSeleccionado.nombre}</span>
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: equipoSeleccionado.color }} />
+                  <span className="text-[12px] text-on-surface">{equipoSeleccionado.nombre}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => { setEquipoRetadoId(''); setBusquedaEquipo(''); }}
-                  className="text-[#444] hover:text-[#888] text-[12px]"
+                  className="text-outline hover:text-on-surface-variant text-[12px] transition-colors"
                 >
                   cambiar
                 </button>
@@ -150,13 +149,13 @@ export function NuevoDesafioModal({
                   className={inputClass}
                 />
                 {equiposFiltrados.length > 0 && (
-                  <div className="bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] overflow-y-auto max-h-[140px]">
+                  <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-y-auto max-h-[140px]">
                     {equiposFiltrados.map((eq) => (
                       <button
                         key={eq.id}
                         type="button"
                         onClick={() => { setEquipoRetadoId(eq.id); setBusquedaEquipo(''); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-[#888] hover:text-[#ccc] hover:bg-[#1a1a1f] transition-colors text-left"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors text-left"
                       >
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: eq.color }} />
                         {eq.nombre}
@@ -168,18 +167,19 @@ export function NuevoDesafioModal({
             )}
           </div>
 
+          {/* Cancha */}
           <div>
             <label className={labelClass}>Cancha</label>
             {canchaSeleccionada ? (
-              <div className="flex items-center justify-between bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2">
+              <div className="flex items-center justify-between bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2">
                 <div className="flex flex-col">
-                  <span className="text-[12px] text-[#ccc]">{canchaSeleccionada.nombre}</span>
-                  <span className="text-[10px] text-[#555]">{canchaSeleccionada.direccion}</span>
+                  <span className="text-[12px] text-on-surface">{canchaSeleccionada.nombre}</span>
+                  <span className="text-[10px] text-outline">{canchaSeleccionada.direccion}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => { setCanchaId(''); setBusquedaCancha(''); }}
-                  className="text-[#444] hover:text-[#888] text-[12px] ml-2 flex-shrink-0"
+                  className="text-outline hover:text-on-surface-variant text-[12px] ml-2 flex-shrink-0 transition-colors"
                 >
                   cambiar
                 </button>
@@ -194,16 +194,16 @@ export function NuevoDesafioModal({
                   className={inputClass}
                 />
                 {canchasFiltradas.length > 0 && (
-                  <div className="bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] overflow-y-auto max-h-[140px]">
+                  <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-y-auto max-h-[140px]">
                     {canchasFiltradas.map((c) => (
                       <button
                         key={c.id}
                         type="button"
                         onClick={() => { setCanchaId(c.id); setBusquedaCancha(''); }}
-                        className="w-full flex flex-col px-3 py-2 text-left hover:bg-[#1a1a1f] transition-colors"
+                        className="w-full flex flex-col px-3 py-2 text-left hover:bg-surface-container transition-colors"
                       >
-                        <span className="text-[12px] text-[#888] hover:text-[#ccc]">{c.nombre}</span>
-                        <span className="text-[10px] text-[#444]">{c.direccion}</span>
+                        <span className="text-[12px] text-on-surface-variant hover:text-on-surface">{c.nombre}</span>
+                        <span className="text-[10px] text-outline">{c.direccion}</span>
                       </button>
                     ))}
                   </div>
@@ -212,6 +212,7 @@ export function NuevoDesafioModal({
             )}
           </div>
 
+          {/* Deporte */}
           <div>
             <label className={labelClass}>Deporte</label>
             <div className="flex flex-wrap gap-2">
@@ -220,10 +221,10 @@ export function NuevoDesafioModal({
                   key={d.id}
                   type="button"
                   onClick={() => setDeporte(d.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[7px] text-[11px] border transition-colors ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] border transition-colors ${
                     deporte === d.id
-                      ? 'bg-[#F5C34420] border-[#F5C34460] text-[#F5C344]'
-                      : 'bg-[#0a0a0c] border-[#1a1a1f] text-[#555] hover:border-[#2a2a2a] hover:text-[#777]'
+                      ? 'bg-accent/15 border-accent/40 text-accent'
+                      : 'bg-surface-container-lowest border-outline-variant text-outline hover:border-outline hover:text-on-surface-variant'
                   }`}
                 >
                   <span>{d.emoji}</span>
@@ -233,6 +234,7 @@ export function NuevoDesafioModal({
             </div>
           </div>
 
+          {/* Formato */}
           <div>
             <label className={labelClass}>Formato</label>
             <div className="flex flex-wrap gap-2">
@@ -241,10 +243,10 @@ export function NuevoDesafioModal({
                   key={f}
                   type="button"
                   onClick={() => setFormato(f)}
-                  className={`px-3 py-1.5 rounded-[7px] text-[11px] border transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-[11px] border transition-colors ${
                     formato === f
-                      ? 'bg-[#F5C34420] border-[#F5C34460] text-[#F5C344]'
-                      : 'bg-[#0a0a0c] border-[#1a1a1f] text-[#555] hover:border-[#2a2a2a] hover:text-[#777]'
+                      ? 'bg-accent/15 border-accent/40 text-accent'
+                      : 'bg-surface-container-lowest border-outline-variant text-outline hover:border-outline hover:text-on-surface-variant'
                   }`}
                 >
                   {f}
@@ -253,29 +255,34 @@ export function NuevoDesafioModal({
             </div>
           </div>
 
+          {/* Fecha */}
           <div>
             <label className={labelClass}>Fecha y hora</label>
             <input
               type="datetime-local"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
-              className="w-full bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2 text-[12px] text-[#ccc] outline-none focus:border-[#F5C34440] transition-colors [color-scheme:dark]"
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface outline-none focus:border-accent/40 transition-colors [color-scheme:light_dark]"
             />
           </div>
 
+          {/* Mensaje */}
           <div>
-            <label className={labelClass}>Mensaje <span className="normal-case text-[#333]">(opcional)</span></label>
+            <label className={labelClass}>
+              Mensaje <span className="normal-case text-outline/50">(opcional)</span>
+            </label>
             <textarea
               value={mensaje}
               onChange={(e) => setMensaje(e.target.value)}
               rows={3}
               placeholder="Mensaje opcional..."
-              className="w-full bg-[#0a0a0c] border border-[#1a1a1f] rounded-[8px] px-3 py-2 text-[12px] text-[#ccc] placeholder:text-[#333] outline-none focus:border-[#F5C34440] transition-colors resize-none"
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors resize-none"
             />
           </div>
 
+          {/* Error */}
           {error && (
-            <div className="bg-[#E24B4A20] border border-[#E24B4A40] rounded-[8px] px-3 py-2 text-[11px] text-[#E24B4A]">
+            <div className="bg-error/15 border border-error/30 rounded-lg px-3 py-2 text-[11px] text-error">
               {error}
             </div>
           )}
@@ -283,7 +290,7 @@ export function NuevoDesafioModal({
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#F5C344] text-[#080809] rounded-[8px] py-2.5 text-[13px] font-semibold hover:bg-[#f0bb30] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+            className="w-full bg-accent text-on-accent rounded-lg py-2.5 text-[13px] font-bold hover:brightness-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-1"
           >
             {loading ? 'Enviando...' : 'Enviar desafío'}
           </button>

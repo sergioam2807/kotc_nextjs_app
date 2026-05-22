@@ -65,10 +65,10 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-[200px] bg-[#0a0a0c] border-r border-[#1a1a1f] py-4 flex-shrink-0">
+    <aside className="w-[200px] bg-surface-dim border-r border-outline-variant py-4 flex-shrink-0">
       {sections.map((section, si) => (
         <div key={si} className="mb-5">
-          <div className="text-[10px] text-[#333] tracking-[0.1em] px-4 mb-1.5 font-medium uppercase">
+          <div className="text-[10px] text-outline tracking-[0.1em] px-4 mb-1.5 font-semibold uppercase">
             {section.label}
           </div>
           {section.items.map(item => (
@@ -77,21 +77,21 @@ export function Sidebar() {
               href={item.href}
               className={`flex items-center gap-2.5 px-4 py-2 text-[13px] no-underline border-l-2 transition-colors ${
                 pathname === item.href || (item.href !== '/equipo' && pathname.startsWith(item.href))
-                  ? 'text-[#F5C344] border-l-[#F5C344] bg-[#18180f]'
-                  : 'text-[#555] border-l-transparent hover:text-[#888] hover:bg-[#0f0f12]'
+                  ? 'text-accent border-l-accent bg-accent-dim'
+                  : 'text-outline border-l-transparent hover:text-on-surface-variant hover:bg-surface-container'
               }`}
             >
               {item.icon}
               <span className="flex-1">{item.label}</span>
               {item.badge && (
-                <span className="bg-[#378ADD] text-white text-[9px] rounded-full px-1.5 py-0.5">
+                <span className="bg-primary text-on-primary text-[9px] rounded-full px-1.5 py-0.5">
                   {item.badge}
                 </span>
               )}
             </Link>
           ))}
           {si < sections.length - 1 && (
-            <div className="h-px bg-[#1a1a1f] my-2.5 mx-0" />
+            <div className="h-px bg-outline-variant my-2.5 mx-0" />
           )}
         </div>
       ))}
