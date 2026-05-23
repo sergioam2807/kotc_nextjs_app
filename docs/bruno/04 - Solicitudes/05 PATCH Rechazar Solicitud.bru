@@ -1,0 +1,22 @@
+meta {
+  name: PATCH Rechazar Solicitud
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/solicitudes/{{solicitudId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "estado": "rechazada"
+  }
+}

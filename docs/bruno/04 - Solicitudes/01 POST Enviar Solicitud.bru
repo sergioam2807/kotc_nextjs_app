@@ -1,0 +1,23 @@
+meta {
+  name: POST Enviar Solicitud de Ingreso
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/solicitudes
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "equipo_id": "{{equipoId}}",
+    "mensaje": "Soy jugador de basketball con 5 años de experiencia, me interesa unirme."
+  }
+}

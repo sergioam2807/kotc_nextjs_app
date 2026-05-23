@@ -1,0 +1,19 @@
+meta {
+  name: GET Mis Solicitudes (como jugador)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/solicitudes
+  body: none
+  auth: none
+}
+
+params:query {
+  tipo: mias
+}
+
+headers {
+  Cookie: {{authCookie}}
+}

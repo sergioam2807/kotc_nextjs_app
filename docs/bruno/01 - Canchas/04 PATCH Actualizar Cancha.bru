@@ -1,0 +1,30 @@
+meta {
+  name: PATCH Actualizar Cancha
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/canchas/{{canchaId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "nombre": "Cancha Los Leones (Renovada)",
+    "direccion": "Av. Los Leones 1234, Providencia",
+    "lat": -33.4334,
+    "lng": -70.6152,
+    "deporte": ["basketball", "futbol"],
+    "es_publica": false,
+    "precio_hora": 12000,
+    "telefono_contacto": "+56912345678",
+    "nombre_recinto": "Complejo Deportivo Los Leones"
+  }
+}

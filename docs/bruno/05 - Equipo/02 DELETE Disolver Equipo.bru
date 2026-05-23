@@ -1,0 +1,15 @@
+meta {
+  name: DELETE Disolver Equipo (solo admin)
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{baseUrl}}/equipo/disolver
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{authCookie}}
+}

@@ -1,0 +1,26 @@
+meta {
+  name: POST Crear Equipo
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/equipos
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "nombre": "Los Tigres",
+    "deporte": "basketball",
+    "ciudad": "Santiago",
+    "color": "#F5C344",
+    "descripcion": "Equipo de basketball de Providencia"
+  }
+}

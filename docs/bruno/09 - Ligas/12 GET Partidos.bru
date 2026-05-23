@@ -1,0 +1,18 @@
+meta {
+  name: GET Partidos de la Liga
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/ligas/{{ligaId}}/partidos
+  body: none
+  auth: none
+}
+
+params:query {
+  ~fase: grupos
+  ~grupo: A
+  ~ronda: 1
+  ~estado: pendiente
+}

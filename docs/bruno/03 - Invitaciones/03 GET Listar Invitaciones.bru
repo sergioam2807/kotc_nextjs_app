@@ -1,0 +1,19 @@
+meta {
+  name: GET Listar Invitaciones del Equipo
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/invitaciones
+  body: none
+  auth: none
+}
+
+params:query {
+  equipo_id: {{equipoId}}
+}
+
+headers {
+  Cookie: {{authCookie}}
+}

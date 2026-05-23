@@ -1,0 +1,34 @@
+meta {
+  name: POST Crear Liga Grupos + Playoffs
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/ligas
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "nombre": "Copa Santiago 2026",
+    "deporte": "futbol",
+    "modalidad": "5v5",
+    "formato": "grupos_playoffs",
+    "max_equipos": 16,
+    "inscripcion_publica": false,
+    "fecha_inicio": "2026-08-01",
+    "fecha_fin": "2026-10-31",
+    "num_grupos": 4,
+    "equipos_clasifican": 2,
+    "puntos_victoria": 3,
+    "puntos_empate": 1,
+    "puntos_derrota": 0
+  }
+}

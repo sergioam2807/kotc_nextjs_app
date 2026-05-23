@@ -1,0 +1,24 @@
+meta {
+  name: PATCH Gestionar Inscripción (organizer - seed, grupo, estado)
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/ligas/{{ligaId}}/equipos/{{equipoId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "estado": "aceptado",
+    "grupo": "A",
+    "seed": 1
+  }
+}

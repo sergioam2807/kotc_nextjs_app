@@ -1,0 +1,32 @@
+meta {
+  name: PATCH Actualizar Perfil
+  type: http
+  seq: 1
+}
+
+patch {
+  url: {{baseUrl}}/perfil
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "display_name": "Carlos Pérez",
+    "bio": "Jugador de basketball desde los 15. Especialista en tiro de 3 puntos.",
+    "posicion_principal": "alero",
+    "posiciones_adicionales": ["base", "escolta"],
+    "especialidades": ["tiro_3", "defensa"],
+    "altura_cm": 185,
+    "peso_kg": 80,
+    "mano_habil": "derecha",
+    "anos_experiencia": 8,
+    "disponible_reclutamiento": true,
+    "ciudad": "Santiago"
+  }
+}

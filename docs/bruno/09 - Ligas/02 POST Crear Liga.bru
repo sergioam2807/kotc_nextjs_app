@@ -1,0 +1,33 @@
+meta {
+  name: POST Crear Liga (requiere suscripción)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/ligas
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "nombre": "Liga Santiago Basketball 2026",
+    "descripcion": "Liga oficial de basketball amateur en Santiago",
+    "deporte": "basketball",
+    "modalidad": "5v5",
+    "formato": "round_robin",
+    "max_equipos": 8,
+    "inscripcion_publica": true,
+    "fecha_inicio": "2026-07-01",
+    "fecha_fin": "2026-09-30",
+    "puntos_victoria": 3,
+    "puntos_empate": 1,
+    "puntos_derrota": 0
+  }
+}
