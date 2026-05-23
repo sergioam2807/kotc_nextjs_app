@@ -54,10 +54,13 @@ export default async function LigasPage() {
             + Crear liga
           </Link>
         ) : user ? (
-          <div className="text-right">
-            <div className="text-[12px] text-on-surface-variant">Para crear ligas necesitas</div>
-            <div className="text-[12px] text-accent font-medium">una suscripción de organizador</div>
-          </div>
+          <Link
+            href="/planes"
+            className="text-right group"
+          >
+            <div className="text-[11px] text-on-surface-variant group-hover:text-on-surface transition-colors">Organizar ligas</div>
+            <div className="text-[11px] text-accent font-medium group-hover:underline">Ver planes →</div>
+          </Link>
         ) : null}
       </div>
 

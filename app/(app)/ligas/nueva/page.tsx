@@ -32,12 +32,18 @@ export default async function NuevaLigaPage() {
             Suscripción requerida
           </h2>
           <p className="text-[13px] text-on-surface-variant leading-relaxed mb-4">
-            Para crear ligas necesitas una suscripción de organizador activa.
-            Contacta al administrador de la plataforma para obtener acceso.
+            Para crear ligas necesitas un plan Organizador activo.
           </p>
           <Link
+            href="/planes"
+            className="inline-block bg-accent text-on-accent rounded-lg px-5 py-2.5 text-[13px] font-semibold hover:brightness-95 transition-all mb-3"
+          >
+            Ver planes →
+          </Link>
+          <br />
+          <Link
             href="/ligas"
-            className="text-[13px] text-accent hover:underline"
+            className="text-[12px] text-on-surface-variant hover:text-on-surface transition-colors"
           >
             ← Ver ligas disponibles
           </Link>

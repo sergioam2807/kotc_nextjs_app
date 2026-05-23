@@ -107,6 +107,23 @@ export default async function DashboardPage() {
     : { data: null };
   const desafiosPendientes: DesafioRow[] = (desafiosRaw as DesafioRow[] | null) ?? [];
 
+  // Check ligas subscription
+  const { data: suscripcion } = await supabase
+    .from('suscripciones')
+    .select('plan, fecha_fin')
+    .eq('user_id', user!.id)
+    .eq('estado', 'activa')
+    .gte('fecha_fin', new Date().toISOString().split('T')[0])
+    .maybeSingle();
+
+  // Mis ligas (si es organizador)
+  const { count: misLigasCount } = suscripcion
+    ? await supabase
+        .from('ligas')
+        .select('id', { count: 'exact', head: true })
+        .eq('organizador_id', user!.id)
+    : { count: null };
+
   const displayName = user?.user_metadata?.full_name ?? profile?.username ?? 'Player';
   const nivel = profile?.nivel ?? 1;
   const xp = profile?.xp ?? 0;
@@ -248,6 +265,52 @@ export default async function DashboardPage() {
             <p className="text-[28px] mb-2">⚔️</p>
             <p className="text-[13px] text-[#555] mb-1">Sin desafíos pendientes.</p>
             <p className="text-[12px] text-[#444]">Ve al mapa y reta a los equipos que dominan una cancha.</p>
+          </div>
+        )}
+
+        {/* Ligas */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[10px] text-[#888] tracking-[0.06em] font-medium uppercase">Ligas</span>
+          <Link href="/ligas" className="text-[11px] text-[#F5C344] hover:underline">Ver ligas</Link>
+        </div>
+        {suscripcion ? (
+          <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-[13px] font-medium text-on-surface mb-0.5">
+                  Plan Organizador activo
+                </div>
+                <div className="text-[11px] text-on-surface-variant">
+                  {misLigasCount != null && misLigasCount > 0
+                    ? `${misLigasCount} liga${misLigasCount !== 1 ? 's' : ''} creada${misLigasCount !== 1 ? 's' : ''}`
+                    : 'Aún no creaste ninguna liga'}
+                </div>
+              </div>
+              <Link
+                href={misLigasCount ? '/ligas' : '/ligas/nueva'}
+                className="bg-accent text-on-accent text-[11px] font-semibold px-3 py-1.5 rounded-lg hover:brightness-95 transition-all flex-shrink-0"
+              >
+                {misLigasCount ? 'Ver ligas →' : '+ Crear'}
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-5">
+            <div className="flex items-start gap-3">
+              <div className="text-[24px] flex-shrink-0">🏆</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium text-on-surface mb-1">Crea y gestiona ligas</div>
+                <div className="text-[11px] text-on-surface-variant mb-3 leading-relaxed">
+                  Organiza torneos con rankings, brackets y calendarios automáticos.
+                </div>
+                <Link
+                  href="/planes"
+                  className="inline-block text-[11px] text-accent hover:underline font-medium"
+                >
+                  Ver plan Organizador →
+                </Link>
+              </div>
+            </div>
           </div>
         )}
 

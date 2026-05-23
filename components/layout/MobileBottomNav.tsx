@@ -33,12 +33,11 @@ function SwordIcon() {
   );
 }
 
-function TrophyIcon() {
+function LigasIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="8 12 3 5 21 5 16 12"/>
-      <path d="M12 12v9"/>
-      <path d="M8 21h8"/>
+      <circle cx="12" cy="8" r="6"/>
+      <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
     </svg>
   );
 }
@@ -55,11 +54,11 @@ function UsersIcon() {
 }
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Inicio', icon: <HomeIcon /> },
-  { href: '/mapa', label: 'Mapa', icon: <MapIcon /> },
-  { href: '/desafios', label: 'Desafíos', icon: <SwordIcon /> },
-  { href: '/ranking', label: 'Ranking', icon: <TrophyIcon /> },
-  { href: '/equipo', label: 'Equipo', icon: <UsersIcon /> },
+  { href: '/dashboard', label: 'Inicio',    icon: <HomeIcon /> },
+  { href: '/mapa',      label: 'Mapa',      icon: <MapIcon /> },
+  { href: '/desafios',  label: 'Desafíos',  icon: <SwordIcon /> },
+  { href: '/ligas',     label: 'Ligas',     icon: <LigasIcon /> },
+  { href: '/equipo',    label: 'Equipo',    icon: <UsersIcon /> },
 ];
 
 export function MobileBottomNav() {
