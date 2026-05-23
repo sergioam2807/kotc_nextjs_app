@@ -35,9 +35,25 @@ export async function PATCH(request: Request, { params }: Params) {
   const updates: Record<string, unknown> = {};
 
   if (esOrganizador) {
-    if ('estado' in body) updates.estado = body.estado;
-    if ('grupo'  in body) updates.grupo  = body.grupo;
-    if ('seed'   in body) updates.seed   = body.seed;
+    const ESTADOS_VALIDOS_ORGANIZADOR = ['invitado', 'aceptado', 'rechazado', 'retirado'];
+    if ('estado' in body) {
+      if (!ESTADOS_VALIDOS_ORGANIZADOR.includes(body.estado)) {
+        return NextResponse.json({ error: 'estado inválido' }, { status: 400 });
+      }
+      updates.estado = body.estado;
+    }
+    if ('grupo' in body) {
+      if (body.grupo !== null && (typeof body.grupo !== 'string' || body.grupo.length > 10)) {
+        return NextResponse.json({ error: 'grupo inválido (máx 10 caracteres)' }, { status: 400 });
+      }
+      updates.grupo = body.grupo;
+    }
+    if ('seed' in body) {
+      if (body.seed !== null && (typeof body.seed !== 'number' || !Number.isInteger(body.seed) || body.seed < 1 || body.seed > 128)) {
+        return NextResponse.json({ error: 'seed inválido (debe ser entero entre 1 y 128)' }, { status: 400 });
+      }
+      updates.seed = body.seed;
+    }
   } else {
     // Team admin/captain can only accept/reject their own invite
     const { data: esAdmin } = await supabase

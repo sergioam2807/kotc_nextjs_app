@@ -41,6 +41,40 @@ export async function PATCH(
     return Response.json({ error: 'Campos requeridos faltantes' }, { status: 400 });
   }
 
+  // Range and content validation
+  if (nombre.trim().length > 120) {
+    return Response.json({ error: 'nombre demasiado largo (máx 120 caracteres)' }, { status: 400 });
+  }
+  if (direccion.trim().length > 250) {
+    return Response.json({ error: 'direccion demasiado larga (máx 250 caracteres)' }, { status: 400 });
+  }
+  if (lat < -90 || lat > 90) {
+    return Response.json({ error: 'lat fuera de rango (-90 a 90)' }, { status: 400 });
+  }
+  if (lng < -180 || lng > 180) {
+    return Response.json({ error: 'lng fuera de rango (-180 a 180)' }, { status: 400 });
+  }
+  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  if (!deporte.every((d: unknown) => typeof d === 'string' && DEPORTES_VALIDOS.includes(d))) {
+    return Response.json({ error: 'deporte contiene valores inválidos' }, { status: 400 });
+  }
+  // Recinto fields validation
+  if (precio_hora !== undefined && precio_hora !== null) {
+    if (typeof precio_hora !== 'number' || !Number.isInteger(precio_hora) || precio_hora < 0 || precio_hora > 10_000_000) {
+      return Response.json({ error: 'precio_hora inválido' }, { status: 400 });
+    }
+  }
+  if (telefono_contacto !== undefined && telefono_contacto !== null) {
+    if (typeof telefono_contacto !== 'string' || telefono_contacto.length > 50) {
+      return Response.json({ error: 'telefono_contacto inválido (máx 50 caracteres)' }, { status: 400 });
+    }
+  }
+  if (nombre_recinto !== undefined && nombre_recinto !== null) {
+    if (typeof nombre_recinto !== 'string' || nombre_recinto.length > 120) {
+      return Response.json({ error: 'nombre_recinto inválido (máx 120 caracteres)' }, { status: 400 });
+    }
+  }
+
   // [S-1] Verify ownership before updating — any authenticated user could
   // otherwise edit coordinates/name of any cancha (vandalism attack).
   const { data: canchaExistente } = await supabase

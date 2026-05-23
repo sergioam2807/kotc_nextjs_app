@@ -29,10 +29,17 @@ export async function GET(request: Request, { params }: Params) {
   const ronda  = url.searchParams.get('ronda');
   const estado = url.searchParams.get('estado');
 
-  if (fase)   query = query.eq('fase', fase);
-  if (grupo)  query = query.eq('grupo', grupo);
-  if (ronda)  query = query.eq('ronda', parseInt(ronda));
-  if (estado) query = query.eq('estado', estado);
+  // [B-6] Validate query params before using them — parseInt('abc') = NaN silently
+  const FASES_VALIDAS = ['regular', 'grupos', 'octavos', 'cuartos', 'semifinal', '3er_lugar', 'final'];
+  const ESTADOS_VALIDOS = ['pendiente', 'completado', 'cancelado'];
+
+  if (fase && FASES_VALIDAS.includes(fase))     query = query.eq('fase', fase);
+  if (grupo && typeof grupo === 'string')        query = query.eq('grupo', grupo.slice(0, 10));
+  if (ronda) {
+    const rondaNum = parseInt(ronda, 10);
+    if (!isNaN(rondaNum) && rondaNum > 0 && rondaNum <= 999) query = query.eq('ronda', rondaNum);
+  }
+  if (estado && ESTADOS_VALIDOS.includes(estado)) query = query.eq('estado', estado);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

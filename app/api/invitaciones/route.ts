@@ -14,7 +14,46 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
 
-  const { equipo_id, metodo, valor, jugador_id } = await request.json();
+  const body = await request.json();
+  const { equipo_id, metodo, valor, jugador_id } = body;
+
+  // --- Input validation ---
+  if (!equipo_id || typeof equipo_id !== 'string') {
+    return NextResponse.json({ error: 'equipo_id requerido' }, { status: 400 });
+  }
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(equipo_id)) {
+    return NextResponse.json({ error: 'equipo_id inválido' }, { status: 400 });
+  }
+  if (!['email', 'whatsapp', 'link'].includes(metodo)) {
+    return NextResponse.json({ error: 'metodo inválido' }, { status: 400 });
+  }
+  if (metodo === 'email' && valor && typeof valor === 'string') {
+    // Basic email format check
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) {
+      return NextResponse.json({ error: 'Email inválido' }, { status: 400 });
+    }
+  }
+  if (jugador_id !== undefined && jugador_id !== null) {
+    if (typeof jugador_id !== 'string' || !UUID_RE.test(jugador_id)) {
+      return NextResponse.json({ error: 'jugador_id inválido' }, { status: 400 });
+    }
+  }
+
+  // --- Authorization: caller must be admin of the team ---
+  // (RLS also enforces this, but explicit check returns a clear 403 instead of
+  //  a cryptic RLS violation error.)
+  const { data: esAdmin } = await supabase
+    .from('equipo_miembros')
+    .select('id')
+    .eq('equipo_id', equipo_id)
+    .eq('jugador_id', user.id)
+    .eq('rol', 'admin')
+    .maybeSingle();
+
+  if (!esAdmin) {
+    return NextResponse.json({ error: 'Solo el administrador del equipo puede crear invitaciones' }, { status: 403 });
+  }
 
   const { data: invitacion, error } = await supabase
     .from('invitaciones')
@@ -133,9 +172,23 @@ export async function GET(request: Request) {
   // ---------- invitaciones enviadas por un equipo (admin view) ----------
   if (!equipoId) return NextResponse.json({ error: 'equipo_id o tipo=recibidas requerido' }, { status: 400 });
 
+  // Authorization: caller must be admin of this team
+  const { data: esAdmin } = await supabase
+    .from('equipo_miembros')
+    .select('id')
+    .eq('equipo_id', equipoId)
+    .eq('jugador_id', user.id)
+    .eq('rol', 'admin')
+    .maybeSingle();
+
+  if (!esAdmin) {
+    return NextResponse.json({ error: 'Sin permisos para ver las invitaciones de este equipo' }, { status: 403 });
+  }
+
+  // Select only the fields needed for the admin view — omit raw token
   const { data, error } = await supabase
     .from('invitaciones')
-    .select('*')
+    .select('id, equipo_id, metodo, estado, expira_at, created_at, jugador_id')
     .eq('equipo_id', equipoId)
     .order('created_at', { ascending: false });
 
