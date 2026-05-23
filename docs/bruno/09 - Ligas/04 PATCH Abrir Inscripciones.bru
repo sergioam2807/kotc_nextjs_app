@@ -1,0 +1,22 @@
+meta {
+  name: PATCH Abrir Inscripciones (borrador → inscripciones)
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/ligas/{{ligaId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "estado": "inscripciones"
+  }
+}

@@ -1,0 +1,23 @@
+meta {
+  name: PATCH Disputar Resultado
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/resultados
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "id": "{{resultadoId}}",
+    "accion": "disputar"
+  }
+}

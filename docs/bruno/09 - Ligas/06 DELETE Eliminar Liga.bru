@@ -1,0 +1,15 @@
+meta {
+  name: DELETE Eliminar Liga
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/ligas/{{ligaId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{authCookie}}
+}

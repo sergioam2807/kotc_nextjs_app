@@ -1,0 +1,22 @@
+meta {
+  name: PATCH Aceptar Invitación Liga (capitán de equipo)
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/ligas/{{ligaId}}/equipos/{{equipoId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "estado": "aceptado"
+  }
+}

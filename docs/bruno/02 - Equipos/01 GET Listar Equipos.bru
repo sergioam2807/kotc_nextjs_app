@@ -1,0 +1,16 @@
+meta {
+  name: GET Listar Equipos
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/equipos
+  body: none
+  auth: none
+}
+
+params:query {
+  ~ciudad: Santiago
+  ~deporte: basketball
+}

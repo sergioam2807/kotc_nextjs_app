@@ -1,0 +1,22 @@
+meta {
+  name: PATCH Rechazar Desafío
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/desafios/{{desafioId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "estado": "rechazado"
+  }
+}

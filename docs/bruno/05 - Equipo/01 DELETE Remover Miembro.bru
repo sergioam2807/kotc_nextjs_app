@@ -1,0 +1,22 @@
+meta {
+  name: DELETE Remover Miembro del Equipo
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/equipo/miembros
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "miembro_id": "{{membresiaId}}"
+  }
+}

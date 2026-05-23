@@ -1,0 +1,27 @@
+meta {
+  name: PATCH Actualizar Datos Liga
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/ligas/{{ligaId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "nombre": "Liga Santiago Basketball 2026 (Actualizada)",
+    "descripcion": "Descripción actualizada",
+    "max_equipos": 10,
+    "fecha_inicio": "2026-07-15",
+    "fecha_fin": "2026-10-15",
+    "inscripcion_publica": true
+  }
+}

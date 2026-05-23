@@ -1,0 +1,22 @@
+meta {
+  name: POST Generar Fase Grupos (grupos_playoffs)
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/ligas/{{ligaId}}/generar
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "fase": "grupos"
+  }
+}

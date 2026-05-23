@@ -1,0 +1,22 @@
+meta {
+  name: PATCH Aceptar Desafío
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/desafios/{{desafioId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "estado": "aceptado"
+  }
+}

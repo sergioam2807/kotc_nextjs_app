@@ -1,0 +1,22 @@
+meta {
+  name: PATCH Aceptar Solicitud
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/solicitudes/{{solicitudId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "estado": "aceptada"
+  }
+}

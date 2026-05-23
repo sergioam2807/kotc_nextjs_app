@@ -1,0 +1,15 @@
+meta {
+  name: GET Listar Desafíos (mi equipo)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/desafios
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{authCookie}}
+}

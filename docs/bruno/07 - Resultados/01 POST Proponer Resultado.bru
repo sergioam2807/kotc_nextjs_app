@@ -1,0 +1,25 @@
+meta {
+  name: POST Proponer Resultado
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/resultados
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "desafio_id": "{{desafioId}}",
+    "ganador_id": "{{equipoId}}",
+    "puntos_retador": 21,
+    "puntos_retado": 14
+  }
+}

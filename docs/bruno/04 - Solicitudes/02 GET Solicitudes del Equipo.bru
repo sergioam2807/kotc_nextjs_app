@@ -1,0 +1,15 @@
+meta {
+  name: GET Solicitudes Pendientes (como admin)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/solicitudes
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{authCookie}}
+}

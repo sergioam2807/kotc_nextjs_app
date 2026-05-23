@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Badge } from '@/components/ui/Badge';
 import { XPBar } from '@/components/ui/XPBar';
 import { nombreNivel } from '@/lib/levels';
+import { SolicitarEquipoButton } from '@/components/perfil/SolicitarEquipoButton';
 import Link from 'next/link';
 
 // ---------------------------------------------------------------------------
@@ -48,6 +49,20 @@ function getEquipoIniciales(nombre: string): string {
 export default async function EquipoPublicoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
+
+  // Logged-in user info (for solicitar button logic)
+  const { data: { user } } = await supabase.auth.getUser();
+  // Check if viewer already has a team
+  const { data: viwerMembresia } = user
+    ? await supabase
+        .from('equipo_miembros')
+        .select('equipo_id')
+        .eq('jugador_id', user.id)
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+  const viewerHasTeam = !!viwerMembresia?.equipo_id;
+  const viewerIsInThisTeam = viwerMembresia?.equipo_id === id;
 
   // 1. Equipo
   const { data: equipo } = await supabase
@@ -285,6 +300,7 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
                       src={jugador.avatar_url}
                       alt={nombre}
                       className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div
@@ -309,6 +325,13 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
           </div>
         )}
       </div>
+
+      {/* Solicitar unirme — shown to logged-in users who don't have a team (and aren't already in this team) */}
+      {user && !viewerHasTeam && !viewerIsInThisTeam && (
+        <div className="mt-4">
+          <SolicitarEquipoButton equipoId={equipo.id} equipoNombre={equipo.nombre} />
+        </div>
+      )}
 
     </div>
   );

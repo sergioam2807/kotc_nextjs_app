@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { RosterRow } from '@/components/equipo/RosterRow';
 import { RosterSlots } from '@/components/equipo/RosterSlots';
 import { LeaveTeamButton } from '@/components/equipo/LeaveTeamButton';
+import { DisolverEquipoButton } from '@/components/equipo/DisolverEquipoButton';
 import { CrearEquipoForm } from '@/components/equipo/CrearEquipoForm';
 import { Badge } from '@/components/ui/Badge';
 
@@ -99,7 +100,17 @@ export default async function EquipoPage() {
   const equipo = equipoData;
   const isAdmin = miMembresia.rol === 'admin';
 
-  // Step 3: victorias y derrotas agregadas desde cancha_dominio
+  // Step 3: solicitudes pendientes (for admins)
+  const { data: solicitudesPendientes } = isAdmin
+    ? await supabase
+        .from('solicitudes_equipo')
+        .select('id')
+        .eq('equipo_id', equipo.id)
+        .eq('estado', 'pendiente')
+    : { data: null };
+  const solicitudesCount = solicitudesPendientes?.length ?? 0;
+
+  // Step 4: victorias y derrotas agregadas desde cancha_dominio
   const { data: dominio } = await supabase
     .from('cancha_dominio')
     .select('victorias, derrotas, es_king')
@@ -109,14 +120,14 @@ export default async function EquipoPage() {
   const totalDerrotas  = dominio?.reduce((sum, d) => sum + (d.derrotas  ?? 0), 0) ?? 0;
   const totalKing      = dominio?.filter(d => d.es_king).length ?? 0;
 
-  // Step 4: roster (miembros sin join)
+  // Step 5: roster (miembros sin join)
   const { data: rosterMiembros } = await supabase
     .from('equipo_miembros')
     .select('id, rol, posicion, jugador_id')
     .eq('equipo_id', equipo.id)
     .order('posicion');
 
-  // Step 5: perfiles de los miembros
+  // Step 6: perfiles de los miembros
   const jugadorIds = rosterMiembros?.map(m => m.jugador_id) ?? [];
   const { data: perfiles } = jugadorIds.length > 0
     ? await supabase.from('profiles').select('id, username, display_name, avatar_url, nivel, xp').in('id', jugadorIds)
@@ -171,6 +182,39 @@ export default async function EquipoPage() {
           </div>
         )}
       </div>
+
+      {/* Admin quick actions */}
+      {isAdmin && (
+        <div className="flex gap-2 mb-4">
+          <Link
+            href="/equipo/solicitudes"
+            className="flex-1 flex items-center justify-between bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 hover:border-outline transition-colors"
+          >
+            <div>
+              <div className="text-[13px] font-medium text-on-surface">Solicitudes de ingreso</div>
+              <div className="text-[11px] text-on-surface-variant mt-0.5">
+                {solicitudesCount > 0
+                  ? `${solicitudesCount} solicitud${solicitudesCount !== 1 ? 'es' : ''} pendiente${solicitudesCount !== 1 ? 's' : ''}`
+                  : 'Sin solicitudes pendientes'}
+              </div>
+            </div>
+            {solicitudesCount > 0 && (
+              <span className="ml-2 bg-error text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center flex-shrink-0">
+                {solicitudesCount}
+              </span>
+            )}
+          </Link>
+          <Link
+            href="/jugadores"
+            className="flex items-center justify-center bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 hover:border-outline transition-colors flex-shrink-0"
+          >
+            <div className="text-center">
+              <div className="text-[13px] font-medium text-accent">Buscar</div>
+              <div className="text-[10px] text-on-surface-variant mt-0.5">jugadores</div>
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
@@ -240,10 +284,11 @@ export default async function EquipoPage() {
         })}
       </div>
 
-      {/* Admin también puede salir si quiere */}
-      {isAdmin && (
-        <LeaveTeamButton miembroId={miMembresia.id} />
-      )}
+      {/* Admin: disolver equipo (con doble confirmación) */}
+      {isAdmin && <DisolverEquipoButton equipoNombre={equipo.nombre} />}
+
+      {/* Jugador regular: salir del equipo */}
+      {!isAdmin && <LeaveTeamButton miembroId={miMembresia.id} />}
     </div>
   );
 }

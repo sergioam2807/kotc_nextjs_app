@@ -1,0 +1,36 @@
+meta {
+  name: POST Crear Cancha
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/canchas
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{authCookie}}
+}
+
+body:json {
+  {
+    "nombre": "Cancha Los Leones",
+    "direccion": "Av. Los Leones 1234, Providencia",
+    "lat": -33.4334,
+    "lng": -70.6152,
+    "deporte": ["basketball"],
+    "es_publica": true,
+    "precio_hora": null,
+    "telefono_contacto": null,
+    "nombre_recinto": null,
+    "horarios": {
+      "lunes":   { "apertura": "08:00", "cierre": "22:00" },
+      "martes":  { "apertura": "08:00", "cierre": "22:00" },
+      "sabado":  { "apertura": "09:00", "cierre": "18:00" },
+      "domingo": { "apertura": "09:00", "cierre": "18:00" }
+    }
+  }
+}
