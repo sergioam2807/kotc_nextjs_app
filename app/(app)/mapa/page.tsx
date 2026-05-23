@@ -23,11 +23,11 @@ export default async function MapaPage() {
     equipoId = membresia?.equipo_id ?? null;
   }
 
-  // Obtener canchas con dominio
+  // Obtener canchas con dominio + nueva info de recinto
   const { data: canchasRaw } = await supabase
     .from('canchas')
     .select(
-      'id, nombre, direccion, lat, lng, deporte, cancha_dominio(id, equipo_id, victorias, derrotas, es_king, equipos(id, nombre, color))'
+      'id, nombre, direccion, lat, lng, deporte, es_publica, precio_hora, telefono_contacto, nombre_recinto, cancha_dominio(id, equipo_id, victorias, derrotas, es_king, equipos(id, nombre, color))'
     )
     .order('created_at', { ascending: false });
 
@@ -39,7 +39,6 @@ export default async function MapaPage() {
         ? [c.cancha_dominio as Record<string, unknown>]
         : [];
 
-    // El King real es la única fila con es_king = true
     const kingEntry = dominioArr.find(d => d.es_king === true) ?? null;
 
     let estado: 'libre' | 'king' | 'rival' = 'libre';
@@ -51,7 +50,6 @@ export default async function MapaPage() {
 
     if (kingEntry) {
       dominioEquipoId = kingEntry.equipo_id as string;
-      // 'king' = mi equipo es el King · 'rival' = otro equipo es el King
       estado = equipoId && dominioEquipoId === equipoId ? 'king' : 'rival';
 
       const equipo = kingEntry.equipos as Record<string, unknown> | undefined;
@@ -62,23 +60,26 @@ export default async function MapaPage() {
     }
 
     return {
-      id: c.id as string,
-      nombre: c.nombre as string,
-      direccion: c.direccion as string,
-      lat: c.lat as number,
-      lng: c.lng as number,
-      deporte: (c.deporte as string[]) ?? [],
+      id:                 c.id               as string,
+      nombre:             c.nombre           as string,
+      direccion:          c.direccion        as string,
+      lat:                c.lat              as number,
+      lng:                c.lng              as number,
+      deporte:           (c.deporte          as string[]) ?? [],
       estado,
-      equipoId: dominioEquipoId,
+      equipoId:           dominioEquipoId,
       equipoNombre,
       equipoColor,
       victorias,
       derrotas,
+      es_publica:         c.es_publica       as boolean  ?? true,
+      precio_hora:        c.precio_hora      as number   ?? null,
+      telefono_contacto:  c.telefono_contacto as string  ?? null,
+      nombre_recinto:     c.nombre_recinto   as string   ?? null,
     };
   });
 
-  // Calcular stats del equipo del usuario
-  const misKing = canchas.filter((c) => c.estado === 'king').length;
+  const misKing  = canchas.filter((c) => c.estado === 'king').length;
   const partidos = equipoId
     ? canchas
         .filter((c) => c.estado === 'king')
@@ -86,13 +87,11 @@ export default async function MapaPage() {
     : 0;
   const total = canchas.length;
 
-  const stats = { misKing, partidos, total };
-
   return (
     <MapaClientWrapper
       canchas={canchas}
       equipoId={equipoId}
-      stats={stats}
+      stats={{ misKing, partidos, total }}
     />
   );
 }

@@ -31,15 +31,32 @@ export async function PATCH(
   if (!user) return Response.json({ error: 'No autenticado' }, { status: 401 });
 
   const body = await request.json();
-  const { nombre, direccion, lat, lng, deporte } = body;
+  const {
+    nombre, direccion, lat, lng, deporte,
+    es_publica, precio_hora, telefono_contacto, nombre_recinto,
+  } = body;
 
   if (!nombre?.trim() || !direccion?.trim() || typeof lat !== 'number' || typeof lng !== 'number' || !Array.isArray(deporte) || deporte.length === 0) {
     return Response.json({ error: 'Campos requeridos faltantes' }, { status: 400 });
   }
 
+  const updatePayload: Record<string, unknown> = {
+    nombre: nombre.trim(),
+    direccion: direccion.trim(),
+    lat,
+    lng,
+    deporte,
+  };
+
+  // Optional info fields — only update if present in the request body
+  if (typeof es_publica === 'boolean')      updatePayload.es_publica         = es_publica;
+  if (precio_hora     !== undefined)        updatePayload.precio_hora         = precio_hora ?? null;
+  if (telefono_contacto !== undefined)      updatePayload.telefono_contacto   = telefono_contacto?.trim() ?? null;
+  if (nombre_recinto    !== undefined)      updatePayload.nombre_recinto      = nombre_recinto?.trim()    ?? null;
+
   const { data, error } = await supabase
     .from('canchas')
-    .update({ nombre: nombre.trim(), direccion: direccion.trim(), lat, lng, deporte })
+    .update(updatePayload)
     .eq('id', id)
     .select()
     .maybeSingle();

@@ -19,6 +19,11 @@ export interface CanchaConEstado {
   equipoColor?: string;
   victorias?: number;
   derrotas?: number;
+  // Información del recinto (migración 023)
+  es_publica?: boolean;
+  precio_hora?: number | null;
+  telefono_contacto?: string | null;
+  nombre_recinto?: string | null;
 }
 
 interface Props {
@@ -396,10 +401,39 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
                 ×
               </button>
             </div>
-            <div className="text-[13px] font-medium text-on-surface mb-1">{canchaSeleccionada.nombre}</div>
+            <div className="text-[13px] font-medium text-on-surface mb-0.5">{canchaSeleccionada.nombre}</div>
+            {canchaSeleccionada.nombre_recinto && (
+              <div className="text-[10px] text-on-surface-variant mb-0.5">{canchaSeleccionada.nombre_recinto}</div>
+            )}
             <div className="text-[11px] text-outline mb-2">{canchaSeleccionada.direccion}</div>
+
+            {/* Acceso + precio */}
+            <div className="flex items-center gap-1.5 mb-1.5">
+              {canchaSeleccionada.es_publica === false ? (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-accent/15 text-accent font-medium">💰 De pago</span>
+              ) : (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-status-libre/15 text-status-libre font-medium">🆓 Pública</span>
+              )}
+              {canchaSeleccionada.precio_hora && (
+                <span className="text-[10px] text-on-surface-variant">
+                  ~${canchaSeleccionada.precio_hora.toLocaleString('es-CL')}/hr
+                </span>
+              )}
+            </div>
+
+            {/* Teléfono */}
+            {canchaSeleccionada.telefono_contacto && (
+              <a
+                href={`tel:${canchaSeleccionada.telefono_contacto.replace(/\s/g, '')}`}
+                className="flex items-center gap-1 text-[10px] text-accent hover:underline mb-1.5"
+              >
+                📞 {canchaSeleccionada.telefono_contacto}
+              </a>
+            )}
+
+            {/* Equipo King */}
             {canchaSeleccionada.equipoNombre && (
-              <div className="text-[11px] mb-1" style={{ color: canchaSeleccionada.equipoColor ?? '#8f909d' }}>
+              <div className="text-[11px] mb-0.5" style={{ color: canchaSeleccionada.equipoColor ?? '#8f909d' }}>
                 {canchaSeleccionada.equipoNombre}
               </div>
             )}
@@ -408,6 +442,8 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
                 {canchaSeleccionada.victorias ?? 0}V - {canchaSeleccionada.derrotas ?? 0}D
               </div>
             )}
+
+            {/* Deportes */}
             {canchaSeleccionada.deporte.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {canchaSeleccionada.deporte.map((d) => (
