@@ -4,6 +4,7 @@ import { XPBar } from '@/components/ui/XPBar';
 import Link from 'next/link';
 import { nombreNivel } from '@/lib/levels';
 import { DEPORTES_MAP } from '@/lib/player-constants';
+import { InvitarJugadorButton } from '@/components/jugadores/InvitarJugadorButton';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -58,9 +59,24 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const supabase = await createClient();
 
-  // Logged-in user (for edit/solicitar logic)
+  // Logged-in user (for edit/invitar logic)
   const { data: { user } } = await supabase.auth.getUser();
   const isOwnProfile = user?.id === id;
+
+  // Check if the viewer is admin/captain of a team (for invite button)
+  const { data: viewerMembresia } = user && !isOwnProfile
+    ? await supabase
+        .from('equipo_miembros')
+        .select('equipo_id, rol, equipos(id, nombre)')
+        .eq('jugador_id', user.id)
+        .in('rol', ['admin', 'capitan'])
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const viewerEquipo = viewerMembresia?.equipo_id
+    ? { id: viewerMembresia.equipo_id, nombre: (viewerMembresia as any).equipos?.nombre ?? 'Mi equipo' }
+    : null;
 
   // 1. Profile (all fields)
   const { data: profile } = await supabase
@@ -186,10 +202,10 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
 
       {/* Back */}
       <Link
-        href="/equipo"
+        href="/jugadores"
         className="inline-flex items-center gap-1.5 text-[13px] text-on-surface-variant hover:text-on-surface transition-colors mb-5"
       >
-        ← Volver
+        ← Jugadores
       </Link>
 
       {/* Hero */}
@@ -388,6 +404,17 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       </div>
+
+      {/* Invitar al equipo — visible para admins/capitanes si el jugador no tiene equipo */}
+      {viewerEquipo && !membresia && (
+        <div className="mb-4">
+          <InvitarJugadorButton
+            equipoId={viewerEquipo.id}
+            equipoNombre={viewerEquipo.nombre}
+            jugadorNombre={displayName}
+          />
+        </div>
+      )}
 
       {/* Historial de equipos */}
       <div className="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden">

@@ -76,7 +76,7 @@ export default async function EquipoPage() {
   if (!miMembresia || !equipoData) {
     return (
       <div className="p-5 max-w-lg mx-auto">
-        <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[14px] p-6 text-center mb-6">
+        <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[14px] p-6 text-center mb-4">
           <div
             className="w-14 h-14 rounded-[12px] mx-auto mb-4 flex items-center justify-center text-[24px]"
             style={{ background: '#F5C34420', color: '#F5C344' }}
@@ -89,6 +89,21 @@ export default async function EquipoPage() {
             competir por territorio y subir en el ranking.
           </p>
         </div>
+
+        {/* Opción alternativa: unirse a un equipo existente */}
+        <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-4 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[13px] font-medium text-on-surface mb-0.5">¿Prefieres unirte?</div>
+            <div className="text-[11px] text-on-surface-variant">Busca equipos que aceptan solicitudes.</div>
+          </div>
+          <Link
+            href="/equipos"
+            className="flex-shrink-0 text-[12px] text-accent font-semibold hover:underline whitespace-nowrap"
+          >
+            Ver equipos →
+          </Link>
+        </div>
+
         <CrearEquipoForm />
       </div>
     );
