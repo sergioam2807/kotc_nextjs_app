@@ -36,6 +36,11 @@ app/
     jugadores/page.tsx          ← Lista de jugadores disponibles para reclutamiento (sin equipo)
     jugadores/[id]/page.tsx     ← Perfil público de jugador (bio, posición, especialidades, datos físicos, disponible badge)
     equipos/[id]/page.tsx       ← Perfil público de equipo (canchas, stats, roster, botón "Solicitar unirme")
+    ligas/page.tsx              ← Lista de ligas (mis ligas + otras); botón "Crear liga" si tiene suscripción
+    ligas/nueva/page.tsx        ← Formulario crear liga (requiere suscripción activa)
+    ligas/[id]/page.tsx         ← Vista pública de liga: hero, tabla/grupos/bracket, próximos, recientes, equipos
+    ligas/[id]/admin/page.tsx   ← Panel admin: estado, stats, generar calendario, cargar resultados, equipos
+    ligas/[id]/admin/partidos/  ← Carga de resultados agrupada por fase/grupo/ronda
   auth/callback/route.ts        ← OAuth callback
   api/
     equipos/route.ts            ← POST crear equipo
@@ -50,6 +55,14 @@ app/
     perfil/route.ts             ← PATCH actualizar perfil propio (bio, posición, especialidades, datos físicos, reclutamiento)
     solicitudes/route.ts        ← POST crear solicitud / GET listar (admin: equipo | jugador: ?tipo=mias)
     solicitudes/[id]/route.ts   ← PATCH aceptar/rechazar/cancelar solicitud; DELETE cancelar
+    ligas/route.ts              ← GET listar ligas / POST crear liga (requiere suscripción)
+    ligas/[id]/route.ts         ← GET detalle / PATCH actualizar+transición estado / DELETE eliminar
+    ligas/[id]/equipos/route.ts         ← GET listar equipos / POST invitar o inscribir equipo
+    ligas/[id]/equipos/[equipoId]/route.ts ← PATCH estado/grupo/seed; DELETE retirar equipo
+    ligas/[id]/generar/route.ts         ← POST generar calendario (round_robin, eliminacion_directa, grupos+playoffs)
+    ligas/[id]/partidos/route.ts        ← GET listar partidos (?fase&grupo&ronda&estado)
+    ligas/[id]/partidos/[partidoId]/route.ts ← PATCH cargar resultado (puntos + ganador)
+    ligas/[id]/tabla/route.ts           ← GET standings computados (tabla o grupos)
 ```
 
 ---
@@ -70,6 +83,19 @@ resultados        (id, desafio_id, ganador_id, propuesto_por→equipos, puntos_r
 invitaciones      (id, equipo_id, token, email, metodo, estado, expira_at)
 solicitudes_equipo (id, equipo_id, jugador_id→auth.users, mensaje, estado [pendiente|aceptada|rechazada|cancelada], created_at, updated_at)
 historial_equipos  (id, jugador_id→auth.users, equipo_id nullable→equipos, equipo_nombre, equipo_color, deporte, ciudad, rol, posicion, fecha_ingreso, fecha_salida nullable)
+
+-- Ligas (feature/ligas branch, migración 022)
+suscripciones     (id, user_id→auth.users, plan, estado [activa|cancelada|expirada], fecha_inicio, fecha_fin)
+ligas             (id, organizador_id→auth.users, nombre, descripcion, deporte, modalidad,
+                   formato CHECK('round_robin','eliminacion_directa','grupos_playoffs'),
+                   estado CHECK('borrador','inscripciones','en_curso','finalizada','cancelada'),
+                   max_equipos, num_grupos, equipos_clasifican, inscripcion_publica,
+                   puntos_victoria, puntos_empate, puntos_derrota, fecha_inicio, fecha_fin)
+liga_equipos      (id, liga_id→ligas, equipo_id→equipos, estado CHECK('invitado','aceptado','rechazado','retirado'),
+                   grupo, seed, UNIQUE(liga_id, equipo_id))
+liga_partidos     (id, liga_id→ligas, equipo_local_id→equipos nullable, equipo_visitante_id→equipos nullable,
+                   fase, grupo, ronda, estado CHECK('pendiente','completado','cancelado'),
+                   fecha, cancha_id, puntos_local, puntos_visitante, ganador_id→equipos nullable)
 ```
 
 **Triggers automáticos en `equipo_miembros`:**
@@ -136,6 +162,19 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `components/equipo/DisolverEquipoButton` — panel de disolución con doble confirmación (input con nombre del equipo). Props: `equipoNombre`. Llama DELETE `/api/equipo/disolver`.
 - `components/equipo/RosterRow` — fila de miembro del roster. Admin puede hacer clic en el chip Titular/Suplente para cambiar posición (optimistic update, PATCH `/api/equipo/miembros`). Admin puede expulsar no-admins; jugadores pueden salirse. Props: `miembroId, jugadorId, nombre, iniciales, avatarColor, avatarUrl?, roles[], posicion, nivel, xp, isCurrentUser, isAdmin`.
 
+**Componentes de ligas (`components/ligas/`):**
+- `TablaLiga` — tabla de posiciones con columnas PJ/PG/PE/PP/DP/Pts. Props: `rows: StandingRow[], titulo?, equiposClasifican?`. Filas sobre el umbral de clasificación se resaltan con `↑`.
+- `PartidoCard` — card de partido con equipos (iniciales + color), resultado, ganador resaltado, badge estado. Props: `partido, compact?`.
+- `BracketView` — bracket de eliminación: agrupa partidos por fase (octavos→cuartos→semifinal→3er_lugar→final). Props: `partidos`.
+- `LigaCard` — card de liga en la lista: emoji deporte, nombre, badges estado/formato, equipos/max, fechas. Link a `/ligas/[id]`.
+- `CrearLigaForm` ('use client') — formulario completo: nombre, descripcion, deporte, modalidad, formato (radio con descripciones), max_equipos, inscripcion_publica, fechas, puntos (collapsible); campos extra para grupos_playoffs (num_grupos, equipos_clasifican). POST `/api/ligas` → redirect a `/ligas/[id]/admin`.
+
+**Componentes admin de ligas (`components/ligas/admin/`):**
+- `AdminEstadoPanel` ('use client') — muestra estado actual con badge; botones de transición (borrador→inscripciones→en_curso→finalizada). Doble confirmación para finalizar.
+- `AdminEquiposPanel` ('use client') — lista invitados pendientes (aceptar/rechazar), equipos aceptados con selector de grupo (para grupos_playoffs), input para invitar por equipo_id.
+- `GenerarCalendarioButton` ('use client') — POST `/api/ligas/[id]/generar` con body opcional `{ fase }`. Props: `ligaId, formato, fase?, label?`.
+- `ResultadoForm` ('use client') — inputs de puntos local/visitante con PATCH `/api/ligas/[id]/partidos/[partidoId]`. Props: `ligaId, partidoId, equipoLocal, equipoVisitante, puntosLocalActual?, puntosVisitanteActual?`.
+
 **Constantes de jugador (`lib/player-constants.ts`):**
 - `POSICIONES_POR_DEPORTE` — mapa deporte → array de posiciones
 - `ESPECIALIDADES_POR_DEPORTE` — mapa deporte → array de especialidades
@@ -188,6 +227,7 @@ En `DesafioCard`: actualizar estado local inmediatamente + llamar `router.refres
 | 019 | Tabla `solicitudes_equipo` con RLS; política de inserción en `equipo_miembros` para admins |
 | 020 | Tabla `historial_equipos` + triggers automáticos `trg_equipo_miembro_insert/delete`; backfill de miembros actuales |
 | 021 | `historial_equipos` + columnas `temporada_id/temporada_nombre`; trigger actualizado captura temporada al ingreso; backfill activos |
+| 022 | **Ligas** (feature/ligas): tablas `suscripciones`, `ligas`, `liga_equipos`, `liga_partidos` con RLS completo. Políticas: crear liga requiere suscripción activa; editar/generar solo organizador; ver ligas: públicas o propias |
 
 ---
 
@@ -314,6 +354,63 @@ RESEND_API_KEY=...
 - Body: `{ miembro_id, posicion: 'titular' | 'suplente' }`.
 - Solo admin o capitán del equipo puede cambiar la posición de cualquier miembro.
 - En el roster, el chip Titular/Suplente es clickeable solo para el admin (toggle optimista).
+
+---
+
+## Sistema de ligas (feature/ligas)
+
+> Rama: `feature/ligas` — pendiente de merge a main.
+> Para aplicar: `supabase db push` o ejecutar `supabase/migrations/022_ligas.sql`.
+
+### Suscripciones
+
+- La tabla `suscripciones` se gestiona manualmente (admin SQL o panel Supabase).
+- Para habilitar a un usuario: `INSERT INTO suscripciones (user_id, plan, estado, fecha_inicio, fecha_fin) VALUES ('<uid>', 'organizador', 'activa', now(), now() + interval '1 year')`.
+- El endpoint POST `/api/ligas` y la página `/ligas/nueva` verifican `suscripciones` (estado=activa, fecha_fin≥hoy) antes de permitir crear.
+
+### Formatos de liga
+
+| Formato | Descripción | Generación |
+|---------|-------------|------------|
+| `round_robin` | Todos contra todos (Berger circle) | Una sola llamada genera todas las rondas |
+| `eliminacion_directa` | Bracket de eliminación directa | Llamada por ronda; avanza ganadores |
+| `grupos_playoffs` | Fase de grupos + bracket playoffs | Dos llamadas: `fase=grupos` y luego `fase=playoffs` |
+
+### Estado de liga (FSM)
+
+`borrador → inscripciones → en_curso → finalizada | cancelada`
+
+- La transición `inscripciones → en_curso` ocurre automáticamente al generar el primer calendario.
+- Solo el organizador puede cambiar el estado.
+
+### Generación de calendario (`lib/ligas/generar.ts`)
+
+- **`generarRoundRobin(equipoIds)`** — algoritmo de Berger (circle method); fixture completo, n-1 rondas, n/2 partidos por ronda. Bye con `__bye__` si número impar de equipos.
+- **`generarRondaEliminacion(equipoIds, rondaNum, faseOverride?)`** — una ronda seedeada: #1 vs #N, #2 vs #N-1, etc. Determina la fase automáticamente según el número de equipos (octavos/cuartos/semifinal/final) si no se pasa `faseOverride`.
+- **`generarPartidosGrupos(equiposPorGrupo)`** — round-robin por grupo, con campo `grupo` en cada partido.
+
+### Standings (`lib/ligas/tabla.ts`)
+
+- **`computeTabla(equipos, partidos, config, grupoFilter?)`** — calcula standings. Ordena por Pts DESC, GD DESC, GF DESC.
+- **`computeTablaByGrupo(equipos, partidos, config)`** — llama `computeTabla` por grupo; retorna `Record<string, StandingRow[]>`.
+- Config: `{ puntos_victoria, puntos_empate, puntos_derrota }` — configurable por liga.
+
+### Normalización de FK joins de Supabase
+
+Supabase JS sin generated types infiere los FK joins como arrays. Todos los archivos que hacen joins usan el helper:
+
+```typescript
+function unwrap<T>(v: T | T[]): T | null {
+  if (Array.isArray(v)) return (v as T[])[0] ?? null;
+  return v ?? null;
+}
+```
+
+Para API routes que no pueden usar el helper (distintas shapes), se usa `as any` con `Array.isArray` guard:
+```typescript
+const eqRaw = le.equipos as any;
+const eqObj = Array.isArray(eqRaw) ? eqRaw[0] : eqRaw;
+```
 
 ---
 
