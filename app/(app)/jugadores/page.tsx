@@ -161,6 +161,7 @@ export default async function JugadoresPage() {
                     <InvitarJugadorButton
                       equipoId={viewerEquipo.id}
                       equipoNombre={viewerEquipo.nombre}
+                      jugadorId={jugador.id}
                       jugadorNombre={nombre}
                     />
                   </div>

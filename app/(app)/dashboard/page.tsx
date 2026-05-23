@@ -107,6 +107,15 @@ export default async function DashboardPage() {
     : { data: null };
   const desafiosPendientes: DesafioRow[] = (desafiosRaw as DesafioRow[] | null) ?? [];
 
+  // Invitaciones recibidas (solo si no tiene equipo)
+  const { count: invitacionesCount } = !equipoId
+    ? await supabase
+        .from('invitaciones')
+        .select('id', { count: 'exact', head: true })
+        .eq('jugador_id', user!.id)
+        .is('usado_at', null)
+    : { count: null };
+
   // Check ligas subscription
   const { data: suscripcion } = await supabase
     .from('suscripciones')
@@ -188,6 +197,24 @@ export default async function DashboardPage() {
             </Link>
           </div>
         )}
+
+        {/* Banner invitaciones — solo si no tiene equipo y tiene invitaciones */}
+        {!miEquipo && invitacionesCount && invitacionesCount > 0 ? (
+          <Link
+            href="/equipo"
+            className="flex items-center gap-3 bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 mb-5 hover:bg-accent/15 transition-colors"
+          >
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-error text-white text-[11px] font-bold flex-shrink-0">
+              {invitacionesCount}
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-semibold text-on-surface">
+                {invitacionesCount === 1 ? 'Tienes una invitación' : `Tienes ${invitacionesCount} invitaciones`} de equipo
+              </div>
+              <div className="text-[11px] text-on-surface-variant">Toca para ver y aceptar →</div>
+            </div>
+          </Link>
+        ) : null}
 
         {/* Canchas */}
         <div className="flex items-center justify-between mb-3">

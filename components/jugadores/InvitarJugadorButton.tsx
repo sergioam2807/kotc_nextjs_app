@@ -5,10 +5,11 @@ import { useState, useTransition } from 'react';
 interface Props {
   equipoId: string;
   equipoNombre: string;
+  jugadorId: string;
   jugadorNombre: string;
 }
 
-export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorNombre }: Props) {
+export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorId, jugadorNombre }: Props) {
   const [isPending, startTransition] = useTransition();
   const [step, setStep] = useState<'idle' | 'loading' | 'done'>('idle');
   const [link, setLink] = useState<string | null>(null);
@@ -22,7 +23,12 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorNombre }: 
     const res = await fetch('/api/invitaciones', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ equipo_id: equipoId, metodo: 'link', valor: '' }),
+      body: JSON.stringify({
+        equipo_id: equipoId,
+        metodo: 'directo',
+        valor: '',
+        jugador_id: jugadorId,
+      }),
     });
 
     const data = await res.json().catch(() => ({}));
@@ -33,7 +39,7 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorNombre }: 
       return;
     }
 
-    const joinUrl = `${window.location.origin}/join/${equipoId}/${data.token}`;
+    const joinUrl = data.joinUrl ?? `${window.location.origin}/join/${equipoId}/${data.token}`;
     setLink(joinUrl);
     startTransition(() => setStep('done'));
   };
@@ -59,27 +65,40 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorNombre }: 
 
   if (step === 'done' && link) {
     return (
-      <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
-        <div className="text-[12px] font-semibold text-on-surface mb-1">
-          ✅ Invitación generada para {jugadorNombre}
+      <div className="bg-status-libre/8 border border-status-libre/25 rounded-xl p-4">
+        <div className="flex items-start gap-2 mb-3">
+          <span className="text-[16px] flex-shrink-0">✅</span>
+          <div>
+            <div className="text-[12px] font-semibold text-on-surface">
+              Invitación enviada a {jugadorNombre}
+            </div>
+            <p className="text-[11px] text-on-surface-variant mt-0.5">
+              Verá la invitación la próxima vez que abra la app.
+              Si quieres avisarle ya, comparte el link por WhatsApp.
+            </p>
+          </div>
         </div>
-        <p className="text-[11px] text-on-surface-variant mb-3">
-          Comparte este link. Expira en 48 horas.
-        </p>
-        {/* Link display */}
-        <div className="bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-[11px] text-on-surface-variant font-mono break-all mb-3 select-all">
-          {link}
-        </div>
+
+        {/* Link colapsable */}
+        <details className="mb-3">
+          <summary className="text-[11px] text-accent cursor-pointer hover:underline select-none">
+            Ver link de invitación
+          </summary>
+          <div className="mt-2 bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-[11px] text-on-surface-variant font-mono break-all select-all">
+            {link}
+          </div>
+        </details>
+
         <div className="flex gap-2">
           <button
             onClick={handleCopy}
-            className="flex-1 bg-accent text-on-accent font-semibold text-[12px] py-2.5 rounded-lg hover:opacity-90 transition-opacity cursor-pointer min-h-[40px]"
+            className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant font-semibold text-[12px] py-2 rounded-lg hover:border-outline transition-colors cursor-pointer"
           >
             {copied ? '✓ Copiado' : 'Copiar link'}
           </button>
           <button
             onClick={handleWhatsApp}
-            className="flex-1 bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-semibold text-[12px] py-2.5 rounded-lg hover:bg-[#25D366]/25 transition-colors cursor-pointer min-h-[40px]"
+            className="flex-1 bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-semibold text-[12px] py-2 rounded-lg hover:bg-[#25D366]/25 transition-colors cursor-pointer"
           >
             WhatsApp
           </button>
@@ -95,10 +114,10 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorNombre }: 
       )}
       <button
         onClick={handleInvitar}
-        disabled={step === 'loading'}
+        disabled={step === 'loading' || isPending}
         className="w-full bg-accent text-on-accent font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer min-h-[44px]"
       >
-        {step === 'loading' ? 'Generando...' : `Invitar a ${equipoNombre}`}
+        {step === 'loading' ? 'Enviando invitación...' : `Invitar a ${equipoNombre}`}
       </button>
     </div>
   );
