@@ -10,6 +10,8 @@ CREATE INDEX IF NOT EXISTS invitaciones_jugador_id_idx ON invitaciones (jugador_
   WHERE jugador_id IS NOT NULL;
 
 -- RLS: let the invited player read their own invitations
-CREATE POLICY IF NOT EXISTS "Jugador puede ver sus invitaciones recibidas"
+-- (DROP first to make idempotent — safe to re-run)
+DROP POLICY IF EXISTS "Jugador puede ver sus invitaciones recibidas" ON invitaciones;
+CREATE POLICY "Jugador puede ver sus invitaciones recibidas"
   ON invitaciones FOR SELECT
   USING (jugador_id = auth.uid());
