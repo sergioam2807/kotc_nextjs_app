@@ -75,7 +75,7 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
     return (
       <div className="p-6 text-center">
         <p className="text-[15px] text-on-surface-variant">Equipo no encontrado.</p>
-        <Link href="/ranking" className="text-[13px] text-accent hover:underline mt-3 inline-block">
+        <Link href="/equipos" className="text-[13px] text-accent hover:underline mt-3 inline-block">
           ← Volver
         </Link>
       </div>
@@ -166,10 +166,10 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
 
       {/* Back */}
       <Link
-        href="/ranking"
+        href="/equipos"
         className="inline-flex items-center gap-1.5 text-[13px] text-on-surface-variant hover:text-on-surface transition-colors mb-5"
       >
-        ← Volver
+        ← Equipos
       </Link>
 
       {/* Hero */}

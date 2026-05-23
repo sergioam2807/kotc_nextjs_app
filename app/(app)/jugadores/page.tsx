@@ -3,10 +3,27 @@ import { Badge } from '@/components/ui/Badge';
 import { XPBar } from '@/components/ui/XPBar';
 import { nombreNivel } from '@/lib/levels';
 import { DEPORTES_MAP } from '@/lib/player-constants';
+import { InvitarJugadorButton } from '@/components/jugadores/InvitarJugadorButton';
 import Link from 'next/link';
 
 export default async function JugadoresPage() {
   const supabase = await createClient();
+
+  // Current viewer — check if they're admin/captain
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: viewerMembresia } = user
+    ? await supabase
+        .from('equipo_miembros')
+        .select('equipo_id, rol, equipos(id, nombre)')
+        .eq('jugador_id', user.id)
+        .in('rol', ['admin', 'capitan'])
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const viewerEquipo = viewerMembresia?.equipo_id
+    ? { id: viewerMembresia.equipo_id, nombre: (viewerMembresia as any).equipos?.nombre ?? 'Mi equipo' }
+    : null;
 
   const { data: jugadores } = await supabase
     .from('profiles')
@@ -23,7 +40,7 @@ export default async function JugadoresPage() {
     .select('jugador_id');
 
   const conEquipo = new Set((miembros ?? []).map(m => m.jugador_id));
-  const disponibles = (jugadores ?? []).filter(j => !conEquipo.has(j.id));
+  const disponibles = (jugadores ?? []).filter(j => !conEquipo.has(j.id) && j.id !== user?.id);
 
   return (
     <div className="p-5 max-w-2xl mx-auto">
@@ -34,6 +51,12 @@ export default async function JugadoresPage() {
             {disponibles.length} jugador{disponibles.length !== 1 ? 'es' : ''} buscando equipo
           </p>
         </div>
+        <Link
+          href="/equipos"
+          className="text-[11px] text-accent hover:underline font-medium"
+        >
+          Ver equipos →
+        </Link>
       </div>
 
       {disponibles.length === 0 ? (
@@ -60,8 +83,9 @@ export default async function JugadoresPage() {
                 : nombre.slice(0, 2).toUpperCase();
 
             return (
-              <Link key={jugador.id} href={`/jugadores/${jugador.id}`} className="block">
-                <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 hover:border-outline transition-colors">
+              <div key={jugador.id} className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+                {/* Card clicable (ir al perfil) */}
+                <Link href={`/jugadores/${jugador.id}`} className="block hover:opacity-90 transition-opacity">
                   <div className="flex items-start gap-3">
                     {/* Avatar */}
                     <div className="flex-shrink-0">
@@ -129,8 +153,19 @@ export default async function JugadoresPage() {
                   <div className="mt-3 pt-3 border-t border-outline-variant">
                     <XPBar xp={xp} nivel={nivel} compact />
                   </div>
-                </div>
-              </Link>
+                </Link>
+
+                {/* Botón Invitar — solo visible para admins/capitanes */}
+                {viewerEquipo && (
+                  <div className="mt-3">
+                    <InvitarJugadorButton
+                      equipoId={viewerEquipo.id}
+                      equipoNombre={viewerEquipo.nombre}
+                      jugadorNombre={nombre}
+                    />
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
