@@ -36,11 +36,12 @@ app/
     jugadores/page.tsx          ← Lista de jugadores disponibles para reclutamiento (sin equipo)
     jugadores/[id]/page.tsx     ← Perfil público de jugador (bio, posición, especialidades, datos físicos, disponible badge)
     equipos/[id]/page.tsx       ← Perfil público de equipo (canchas, stats, roster, botón "Solicitar unirme")
-    ligas/page.tsx              ← Lista de ligas (mis ligas + otras); botón "Crear liga" si tiene suscripción
-    ligas/nueva/page.tsx        ← Formulario crear liga (requiere suscripción activa)
+    ligas/page.tsx              ← Lista de ligas (mis ligas + otras); botón "Crear liga" si tiene suscripción; "Ver planes →" si no
+    ligas/nueva/page.tsx        ← Formulario crear liga (requiere suscripción activa; CTA a /planes si no tiene)
     ligas/[id]/page.tsx         ← Vista pública de liga: hero, tabla/grupos/bracket, próximos, recientes, equipos
     ligas/[id]/admin/page.tsx   ← Panel admin: estado, stats, generar calendario, cargar resultados, equipos
     ligas/[id]/admin/partidos/  ← Carga de resultados agrupada por fase/grupo/ronda
+    planes/page.tsx             ← Página pública de planes: Gratuito vs Organizador, precios, FAQ, CTA WhatsApp
   auth/callback/route.ts        ← OAuth callback
   api/
     equipos/route.ts            ← POST crear equipo
@@ -76,7 +77,8 @@ profiles          (id→auth.users, username, display_name, avatar_url, ciudad, 
 temporadas        (id, nombre, deporte, inicio, fin, activa)
 equipos           (id, nombre, deporte, modalidad, ciudad, color, nivel, xp, creador_id, temporada_id nullable)
 equipo_miembros   (id, equipo_id, jugador_id→profiles, rol, posicion, temporada_id nullable, deporte)
-canchas           (id, nombre, direccion, lat, lng, fotos, deporte[], agregada_por)
+canchas           (id, nombre, direccion, lat, lng, fotos, deporte[], agregada_por,
+                   es_publica bool DEFAULT true, precio_hora int nullable, telefono_contacto text nullable, nombre_recinto text nullable)
 cancha_dominio    (id, cancha_id, equipo_id, victorias, derrotas, es_king, temporada_id nullable)
 desafios          (id, equipo_retador_id, equipo_retado_id, cancha_id, deporte, formato, fecha, mensaje, estado)
 resultados        (id, desafio_id, ganador_id, propuesto_por→equipos, puntos_retador nullable, puntos_retado nullable, confirmado_por_perdedor, disputado, confirmado_at)
@@ -228,6 +230,7 @@ En `DesafioCard`: actualizar estado local inmediatamente + llamar `router.refres
 | 020 | Tabla `historial_equipos` + triggers automáticos `trg_equipo_miembro_insert/delete`; backfill de miembros actuales |
 | 021 | `historial_equipos` + columnas `temporada_id/temporada_nombre`; trigger actualizado captura temporada al ingreso; backfill activos |
 | 022 | **Ligas** (feature/ligas): tablas `suscripciones`, `ligas`, `liga_equipos`, `liga_partidos` con RLS completo. Políticas: crear liga requiere suscripción activa; editar/generar solo organizador; ver ligas: públicas o propias |
+| 023 | **Canchas info** (feature/canchas-info): `es_publica`, `precio_hora`, `telefono_contacto`, `nombre_recinto` en tabla `canchas`; índice en `es_publica` |
 
 ---
 
@@ -362,10 +365,34 @@ RESEND_API_KEY=...
 > Rama: `feature/ligas` — pendiente de merge a main.
 > Para aplicar: `supabase db push` o ejecutar `supabase/migrations/022_ligas.sql`.
 
+### Página de planes (`/planes`)
+
+- Pública (accesible sin login), accesible desde el dashboard y cualquier pantalla de "acceso restringido".
+- Muestra plan **Gratuito** (siempre) + plan **Organizador** (precio en `PLAN_ORGANIZADOR` en la misma página).
+- Si el usuario tiene suscripción activa → muestra "Activo ✓" y CTA a `/ligas`.
+- CTA de pago: botón WhatsApp configurable en `PLAN_ORGANIZADOR.ctaWhatsapp` (cambiar número antes de producción).
+- Precio y features editables directamente en `app/(app)/planes/page.tsx` sin tocar HTML.
+
+### Navegación (MobileBottomNav)
+
+- El ítem **Ranking** fue reemplazado por **Ligas** (`/ligas`) con ícono de medalla/insignia.
+- Ranking sigue accesible en `/ranking` (link en dashboard, equipo page, etc.).
+
+### Dashboard — card de ligas
+
+- Si tiene suscripción activa: muestra conteo de ligas propias + CTA a `/ligas` o `/ligas/nueva`.
+- Si no tiene suscripción: teaser con emoji 🏆 + link a `/planes`.
+- Requiere query adicional a `suscripciones` + `ligas` en el server component del dashboard.
+
 ### Suscripciones
 
 - La tabla `suscripciones` se gestiona manualmente (admin SQL o panel Supabase).
-- Para habilitar a un usuario: `INSERT INTO suscripciones (user_id, plan, estado, fecha_inicio, fecha_fin) VALUES ('<uid>', 'organizador', 'activa', now(), now() + interval '1 year')`.
+- Forma rápida usando el email del usuario:
+  ```sql
+  INSERT INTO suscripciones (user_id, plan, estado, fecha_inicio, fecha_fin)
+  SELECT id, 'organizador', 'activa', now(), now() + interval '1 year'
+  FROM auth.users WHERE email = 'usuario@ejemplo.com';
+  ```
 - El endpoint POST `/api/ligas` y la página `/ligas/nueva` verifican `suscripciones` (estado=activa, fecha_fin≥hoy) antes de permitir crear.
 
 ### Formatos de liga
