@@ -22,7 +22,7 @@ function PlayerAvatar({ player, size }: { player: PlayerRankingStat; size: 'sm' 
   return (
     <div className={`${dim} rounded-full overflow-hidden bg-surface-container-high flex-shrink-0 flex items-center justify-center`}>
       {player.avatarUrl ? (
-        <img src={player.avatarUrl} alt="" className="w-full h-full object-cover" />
+        <img src={player.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
       ) : (
         <span className="font-bold text-on-surface-variant">{player.displayName[0]?.toUpperCase()}</span>
       )}
@@ -112,7 +112,7 @@ export function PlayerRankingView({ stats, currentUserId }: Props) {
             {/* Avatar */}
             <div className="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high flex-shrink-0 flex items-center justify-center">
               {player.avatarUrl ? (
-                <img src={player.avatarUrl} alt="" className="w-full h-full object-cover" />
+                <img src={player.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
                 <span className="text-[12px] font-bold text-on-surface-variant">{player.displayName[0]?.toUpperCase()}</span>
               )}

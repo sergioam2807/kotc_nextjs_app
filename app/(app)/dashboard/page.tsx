@@ -128,7 +128,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-3.5 min-w-0 flex-1">
             <div className="w-14 h-14 rounded-[10px] border-2 border-[#F5C344] overflow-hidden flex-shrink-0 flex items-center justify-center bg-[#1a1a0a]">
               {avatarUrl ? (
-                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
                 <span className="text-[20px] font-medium text-[#F5C344]">{iniciales}</span>
               )}

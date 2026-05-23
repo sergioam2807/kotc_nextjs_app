@@ -28,11 +28,14 @@ app/
     dashboard/page.tsx          ← Home del jugador autenticado
     mapa/page.tsx               ← Mapa de canchas con Google Maps
     desafios/page.tsx           ← Gestión de desafíos del equipo
-    equipo/page.tsx             ← Perfil del equipo + roster
+    equipo/page.tsx             ← Perfil del equipo + roster (admins: solicitudes badge + buscar jugadores)
     equipo/invitaciones/        ← Gestión de invitaciones
+    equipo/solicitudes/         ← Solicitudes de ingreso (solo admin/capitán)
     ranking/page.tsx            ← Ranking territorial (equipos + jugadores)
-    jugadores/[id]/page.tsx     ← Perfil público de jugador
-    equipos/[id]/page.tsx       ← Perfil público de equipo (canchas, stats, roster)
+    perfil/page.tsx             ← Editar perfil de jugador (bio, posición, especialidades, datos físicos, reclutamiento)
+    jugadores/page.tsx          ← Lista de jugadores disponibles para reclutamiento (sin equipo)
+    jugadores/[id]/page.tsx     ← Perfil público de jugador (bio, posición, especialidades, datos físicos, disponible badge)
+    equipos/[id]/page.tsx       ← Perfil público de equipo (canchas, stats, roster, botón "Solicitar unirme")
   auth/callback/route.ts        ← OAuth callback
   api/
     equipos/route.ts            ← POST crear equipo
@@ -41,8 +44,12 @@ app/
     desafios/route.ts           ← POST crear desafío
     desafios/[id]/route.ts      ← PATCH aceptar/rechazar
     resultados/route.ts         ← POST proponer / PATCH confirmar|disputar
-    equipo/miembros/route.ts    ← DELETE expulsar miembro
+    equipo/miembros/route.ts    ← PATCH cambiar posición titular/suplente (admin); DELETE salir/expulsar con validaciones
+    equipo/disolver/route.ts    ← DELETE disolver equipo (admin): elimina dominio, solicitudes, invitaciones, desafíos, miembros y equipo en orden FK-safe
     invitaciones/route.ts       ← POST crear / GET aceptar invitación
+    perfil/route.ts             ← PATCH actualizar perfil propio (bio, posición, especialidades, datos físicos, reclutamiento)
+    solicitudes/route.ts        ← POST crear solicitud / GET listar (admin: equipo | jugador: ?tipo=mias)
+    solicitudes/[id]/route.ts   ← PATCH aceptar/rechazar/cancelar solicitud; DELETE cancelar
 ```
 
 ---
@@ -50,7 +57,9 @@ app/
 ## Schema de base de datos (resumen)
 
 ```sql
-profiles          (id→auth.users, username, display_name, avatar_url, ciudad, nivel, xp)
+profiles          (id→auth.users, username, display_name, avatar_url, ciudad, nivel, xp,
+                   bio, posicion_principal, posiciones_adicionales text[], especialidades text[],
+                   altura_cm, peso_kg, mano_habil, anos_experiencia, disponible_reclutamiento)
 temporadas        (id, nombre, deporte, inicio, fin, activa)
 equipos           (id, nombre, deporte, modalidad, ciudad, color, nivel, xp, creador_id, temporada_id nullable)
 equipo_miembros   (id, equipo_id, jugador_id→profiles, rol, posicion, temporada_id nullable, deporte)
@@ -59,7 +68,13 @@ cancha_dominio    (id, cancha_id, equipo_id, victorias, derrotas, es_king, tempo
 desafios          (id, equipo_retador_id, equipo_retado_id, cancha_id, deporte, formato, fecha, mensaje, estado)
 resultados        (id, desafio_id, ganador_id, propuesto_por→equipos, puntos_retador nullable, puntos_retado nullable, confirmado_por_perdedor, disputado, confirmado_at)
 invitaciones      (id, equipo_id, token, email, metodo, estado, expira_at)
+solicitudes_equipo (id, equipo_id, jugador_id→auth.users, mensaje, estado [pendiente|aceptada|rechazada|cancelada], created_at, updated_at)
+historial_equipos  (id, jugador_id→auth.users, equipo_id nullable→equipos, equipo_nombre, equipo_color, deporte, ciudad, rol, posicion, fecha_ingreso, fecha_salida nullable)
 ```
+
+**Triggers automáticos en `equipo_miembros`:**
+- `trg_equipo_miembro_insert` → INSERT en `historial_equipos` (captura nombre/color del equipo)
+- `trg_equipo_miembro_delete` → SET `fecha_salida = now()` en `historial_equipos`
 
 **Estado de desafío (FSM):**
 `pendiente → aceptado → resultado_pendiente → completado | disputado`
@@ -114,6 +129,18 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 
 **Componentes UI disponibles:** `Badge` (variants: accent/primary/green/error/purple/neutral/king/libre/rival), `XPBar` (xp, nivel, showLabel?, compact?), `RefreshButton` (llama router.refresh() via useTransition, w-9 h-9 tap target), `ThemeToggle`
 
+**Componentes de perfil/reclutamiento:**
+- `components/perfil/EditarPerfilForm` — form 'use client' para editar bio, posición, especialidades, datos físicos y toggle de reclutamiento. Props: `initialData: PerfilData`.
+- `components/perfil/SolicitarEquipoButton` — botón/modal 'use client' para que un jugador sin equipo solicite unirse. Props: `equipoId`, `equipoNombre`.
+- `components/equipo/SolicitudActions` — botones Accept/Reject con confirmación 'use client'. Props: `solicitudId`, `jugadorNombre`.
+- `components/equipo/DisolverEquipoButton` — panel de disolución con doble confirmación (input con nombre del equipo). Props: `equipoNombre`. Llama DELETE `/api/equipo/disolver`.
+- `components/equipo/RosterRow` — fila de miembro del roster. Admin puede hacer clic en el chip Titular/Suplente para cambiar posición (optimistic update, PATCH `/api/equipo/miembros`). Admin puede expulsar no-admins; jugadores pueden salirse. Props: `miembroId, jugadorId, nombre, iniciales, avatarColor, avatarUrl?, roles[], posicion, nivel, xp, isCurrentUser, isAdmin`.
+
+**Constantes de jugador (`lib/player-constants.ts`):**
+- `POSICIONES_POR_DEPORTE` — mapa deporte → array de posiciones
+- `ESPECIALIDADES_POR_DEPORTE` — mapa deporte → array de especialidades
+- `DEPORTES_MAP` — mapa deporte → `{ emoji, label }`
+
 **Radios:** `rounded-xl` (14px) cards principales · `rounded-lg` (8px) botones/inputs  
 **Tipografía:** `text-[15px]` títulos · `text-[13px]` body · `text-[11px]` secondary · `text-[10px]` labels uppercase
 
@@ -157,6 +184,10 @@ En `DesafioCard`: actualizar estado local inmediatamente + llamar `router.refres
 | 015 | **Fix:** `cancha_dominio.temporada_id` nullable; unique sin temporada; RLS INSERT/UPDATE |
 | 016 | Sistema de niveles 1–100: `_compute_nivel()`, `add_xp()` y `add_team_xp()` con auto-nivel; backfill |
 | 017 | **Fix:** `cancha_dominio.es_king` — reset + recalcular King real por cancha (más victorias, desempate: menos derrotas) |
+| 018 | Columnas de enriquecimiento de perfil: `bio`, `posicion_principal`, `posiciones_adicionales`, `especialidades`, `altura_cm`, `peso_kg`, `mano_habil`, `anos_experiencia`, `disponible_reclutamiento` |
+| 019 | Tabla `solicitudes_equipo` con RLS; política de inserción en `equipo_miembros` para admins |
+| 020 | Tabla `historial_equipos` + triggers automáticos `trg_equipo_miembro_insert/delete`; backfill de miembros actuales |
+| 021 | `historial_equipos` + columnas `temporada_id/temporada_nombre`; trigger actualizado captura temporada al ingreso; backfill activos |
 
 ---
 
@@ -261,6 +292,28 @@ RESEND_API_KEY=...
 - **Modales:** `z-[100]`, en mobile `items-end rounded-t-xl` (bottom-sheet), `max-h-[100dvh] overflow-y-auto`, `padding-bottom: max(1.5rem, env(safe-area-inset-bottom))`
 - **Touch targets:** mínimo 44×44 px (`.kotc-tap-target`); botones de acción con `min-h-[40px]`
 - **MobileBottomNav:** `min-h-[56px]`, iconos 18px, labels 10px, `aria-label` + `aria-current`
+
+---
+
+## Lógica de gestión de equipo
+
+### Salir / expulsión (DELETE `/api/equipo/miembros`)
+- **Admin → salir**: bloqueado. Debe usar "Disolver equipo".
+- **Jugador/capitán → salir**: permitido, excepto si `temporada.activa && inicio ≤ hoy ≤ fin`.
+- **Admin → expulsar miembro**: permitido si target no es admin.
+- **Admin → expulsar admin**: bloqueado siempre.
+
+### Disolver equipo (DELETE `/api/equipo/disolver`)
+- Solo accesible para el admin del equipo.
+- Bloqueado si hay temporada en curso (`activa && inicio ≤ hoy ≤ fin`).
+- Requiere doble confirmación en UI: panel con input del nombre exacto del equipo.
+- Orden de eliminación FK-safe: `cancha_dominio` → `solicitudes_equipo` → `invitaciones` → `resultados` (de desafíos) → `desafios` → `equipo_miembros` (trigger: pone fecha_salida en historial) → `equipos` (ON DELETE SET NULL en historial_equipos.equipo_id).
+- El historial personal de cada jugador se preserva (equipo_nombre/color denormalizados).
+
+### Cambio de posición (PATCH `/api/equipo/miembros`)
+- Body: `{ miembro_id, posicion: 'titular' | 'suplente' }`.
+- Solo admin o capitán del equipo puede cambiar la posición de cualquier miembro.
+- En el roster, el chip Titular/Suplente es clickeable solo para el admin (toggle optimista).
 
 ---
 

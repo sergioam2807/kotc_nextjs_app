@@ -75,7 +75,7 @@ export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, usernam
           >
             <span className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border border-accent/25">
               {avatarUrl ? (
-                <img src={avatarUrl} alt={username ?? iniciales} className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt={username ?? iniciales} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
                 <span className="w-full h-full bg-accent flex items-center justify-center text-[11px] text-on-accent font-semibold">
                   {iniciales}
@@ -93,6 +93,20 @@ export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, usernam
                     <p className="text-[12px] text-on-surface font-semibold truncate">{username}</p>
                   </div>
                 )}
+                <Link
+                  href="/perfil"
+                  onClick={() => setMenuOpen(false)}
+                  className="block w-full text-left px-3 py-2 text-[12px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors no-underline"
+                >
+                  Mi Perfil de Jugador
+                </Link>
+                <Link
+                  href="/jugadores"
+                  onClick={() => setMenuOpen(false)}
+                  className="block w-full text-left px-3 py-2 text-[12px] text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors no-underline border-b border-outline-variant mb-1"
+                >
+                  Jugadores disponibles
+                </Link>
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}

@@ -40,6 +40,7 @@ export function PlayerRow({
           src={avatarUrl}
           alt={nombre}
           className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+          referrerPolicy="no-referrer"
         />
       ) : (
         <div
