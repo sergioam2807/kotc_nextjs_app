@@ -6,6 +6,7 @@ import { RosterSlots } from '@/components/equipo/RosterSlots';
 import { LeaveTeamButton } from '@/components/equipo/LeaveTeamButton';
 import { DisolverEquipoButton } from '@/components/equipo/DisolverEquipoButton';
 import { CrearEquipoForm } from '@/components/equipo/CrearEquipoForm';
+import { InvitacionesRecibidas } from '@/components/equipo/InvitacionesRecibidas';
 import { Badge } from '@/components/ui/Badge';
 
 // ---------------------------------------------------------------------------
@@ -76,6 +77,10 @@ export default async function EquipoPage() {
   if (!miMembresia || !equipoData) {
     return (
       <div className="p-5 max-w-lg mx-auto">
+
+        {/* Invitaciones recibidas — client component, carga async */}
+        <InvitacionesRecibidas />
+
         <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[14px] p-6 text-center mb-4">
           <div
             className="w-14 h-14 rounded-[12px] mx-auto mb-4 flex items-center justify-center text-[24px]"

@@ -411,6 +411,7 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
           <InvitarJugadorButton
             equipoId={viewerEquipo.id}
             equipoNombre={viewerEquipo.nombre}
+            jugadorId={id}
             jugadorNombre={displayName}
           />
         </div>
