@@ -88,11 +88,20 @@ export async function PATCH(request: Request) {
   if (desafio.estado !== 'resultado_pendiente') return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
 
   if (accion === 'confirmar') {
-    // Confirmar resultado
+    // [C-2] Atomic update: only succeeds if not yet confirmed, preventing XP duplication
+    // from concurrent requests (double-click, two tabs, etc.)
     const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
       .update({ confirmado_por_perdedor: true, confirmado_at: new Date().toISOString() })
-      .eq('id', id).select().single();
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+      .eq('id', id)
+      .eq('confirmado_por_perdedor', false) // idempotency guard — fails if already confirmed
+      .select()
+      .single();
+    if (updateError || !updatedResultado) {
+      return NextResponse.json(
+        { error: 'El resultado ya fue confirmado o no se pudo actualizar' },
+        { status: 409 }
+      );
+    }
 
     // Marcar desafio como completado
     const { error: completadoError } = await supabase

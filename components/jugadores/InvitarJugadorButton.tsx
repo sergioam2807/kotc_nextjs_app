@@ -117,7 +117,7 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorId, jugado
         disabled={step === 'loading' || isPending}
         className="w-full bg-accent text-on-accent font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer min-h-[44px]"
       >
-        {step === 'loading' ? 'Enviando invitación...' : `Invitar a ${equipoNombre}`}
+        {step === 'loading' ? 'Enviando invitación...' : `Invitar a ${jugadorNombre}`}
       </button>
     </div>
   );

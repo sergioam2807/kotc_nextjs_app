@@ -50,7 +50,8 @@ export function Sidebar() {
         { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
         { href: '/mapa', label: 'Mapa de canchas', icon: <MapPinIcon /> },
         { href: '/desafios', label: 'Desafíos', icon: <SwordIcon /> },
-        { href: '/ranking', label: 'Temporada', icon: <TrophyIcon /> },
+        { href: '/ligas', label: 'Ligas', icon: <TrophyIcon /> },
+        { href: '/ranking', label: 'Ranking', icon: <CrownIcon /> },
       ],
     },
     {
@@ -58,8 +59,9 @@ export function Sidebar() {
       items: [
         { href: '/equipo', label: 'Roster', icon: <UsersIcon /> },
         { href: '/equipo/invitaciones', label: 'Invitaciones', icon: <MailIcon /> },
-        { href: '/equipo/solicitudes', label: 'Solicitudes', icon: <UserPlusIcon />, badge: 2 },
-        { href: '/equipo/canchas', label: 'Canchas king', icon: <CrownIcon /> },
+        // [ROJO-02] badge removed — was hardcoded to 2 (always wrong).
+        // Solicitudes count is shown correctly on /equipo page instead.
+        { href: '/equipo/solicitudes', label: 'Solicitudes', icon: <UserPlusIcon /> },
       ],
     },
   ];

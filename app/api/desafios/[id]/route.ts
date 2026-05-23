@@ -22,7 +22,10 @@ export async function PATCH(
   const body = await request.json();
   const { estado } = body;
 
-  if (!['aceptado', 'rechazado', 'jugado', 'resultado_pendiente', 'disputado', 'completado'].includes(estado)) {
+  // [C-4] Only allow states that should be settable via this endpoint.
+  // 'resultado_pendiente', 'disputado', 'completado' are managed exclusively
+  // by /api/resultados which contains the XP + cancha_dominio logic.
+  if (!['aceptado', 'rechazado', 'jugado'].includes(estado)) {
     return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
   }
 

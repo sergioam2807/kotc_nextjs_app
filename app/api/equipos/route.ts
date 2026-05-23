@@ -26,9 +26,29 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
 
   const body = await request.json();
+
+  // [C-5] Whitelist — never spread body directly to prevent mass assignment
+  // (e.g. nivel, xp, temporada_id could be injected)
+  const { nombre, deporte, modalidad, ciudad, color } = body;
+
+  if (!nombre?.trim() || !deporte || !modalidad) {
+    return NextResponse.json(
+      { error: 'nombre, deporte y modalidad son requeridos' },
+      { status: 400 }
+    );
+  }
+
   const { data: equipo, error } = await supabase
     .from('equipos')
-    .insert({ ...body, creador_id: user.id })
+    .insert({
+      nombre: nombre.trim(),
+      deporte,
+      modalidad,
+      ciudad: ciudad ?? null,
+      color: color ?? '#F5C344',
+      creador_id: user.id,
+      // nivel and xp take DB defaults (1 and 0)
+    })
     .select()
     .single();
 
@@ -39,7 +59,7 @@ export async function POST(request: Request) {
     jugador_id: user.id,
     rol: 'admin',
     posicion: 'titular',
-    deporte: body.deporte,
+    deporte,
   });
 
   return NextResponse.json(equipo, { status: 201 });

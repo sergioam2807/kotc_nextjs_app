@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { XPBar } from '@/components/ui/XPBar';
 import { Badge } from '@/components/ui/Badge';
@@ -43,18 +44,20 @@ function SidebarContent() {
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  // [Q-4] Explicit guard — don't rely solely on layout/middleware redirect
+  if (!user) redirect('/login');
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('username, avatar_url, nivel, xp, deportes_activos')
-    .eq('id', user!.id)
+    .eq('id', user.id)
     .maybeSingle();
 
   // Fetch user's team (if any)
   const { data: membresia } = await supabase
     .from('equipo_miembros')
     .select('equipo_id')
-    .eq('jugador_id', user!.id)
+    .eq('jugador_id', user.id)
     .limit(1)
     .maybeSingle();
 
@@ -112,7 +115,7 @@ export default async function DashboardPage() {
     ? await supabase
         .from('invitaciones')
         .select('id', { count: 'exact', head: true })
-        .eq('jugador_id', user!.id)
+        .eq('jugador_id', user.id)
         .is('usado_at', null)
     : { count: null };
 
@@ -120,7 +123,7 @@ export default async function DashboardPage() {
   const { data: suscripcion } = await supabase
     .from('suscripciones')
     .select('plan, fecha_fin')
-    .eq('user_id', user!.id)
+    .eq('user_id', user.id)
     .eq('estado', 'activa')
     .gte('fecha_fin', new Date().toISOString().split('T')[0])
     .maybeSingle();
@@ -130,7 +133,7 @@ export default async function DashboardPage() {
     ? await supabase
         .from('ligas')
         .select('id', { count: 'exact', head: true })
-        .eq('organizador_id', user!.id)
+        .eq('organizador_id', user.id)
     : { count: null };
 
   const displayName = user?.user_metadata?.full_name ?? profile?.username ?? 'Player';
