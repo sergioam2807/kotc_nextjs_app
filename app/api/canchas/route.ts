@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('canchas')
     .select(
-      'id, nombre, direccion, lat, lng, deporte, validada, cancha_dominio(id, equipo_id, victorias, derrotas, es_king, equipos(id, nombre, color))'
+      'id, nombre, direccion, lat, lng, deporte, validada, es_publica, precio_hora, telefono_contacto, nombre_recinto, cancha_dominio(id, equipo_id, victorias, derrotas, es_king, equipos(id, nombre, color))'
     )
     .order('created_at', { ascending: false });
 
@@ -30,7 +30,10 @@ export async function POST(request: NextRequest) {
   if (!user) return Response.json({ error: 'No autenticado' }, { status: 401 });
 
   const body = await request.json();
-  const { nombre, direccion, lat, lng, deporte, horarios } = body;
+  const {
+    nombre, direccion, lat, lng, deporte, horarios,
+    es_publica, precio_hora, telefono_contacto, nombre_recinto,
+  } = body;
 
   if (!nombre || !direccion || lat == null || lng == null || !deporte) {
     return Response.json(
@@ -49,6 +52,10 @@ export async function POST(request: NextRequest) {
       deporte,
       horarios: horarios ?? {},
       agregada_por: user.id,
+      es_publica:          es_publica         ?? true,
+      precio_hora:         precio_hora        ?? null,
+      telefono_contacto:   telefono_contacto  ?? null,
+      nombre_recinto:      nombre_recinto     ?? null,
     })
     .select()
     .single();
