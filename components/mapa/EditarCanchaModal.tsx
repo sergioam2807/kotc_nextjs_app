@@ -28,6 +28,12 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
   const [error, setError] = useState<string | null>(null);
   const [ubicacionLoading, setUbicacionLoading] = useState(false);
 
+  // Info de recinto — pre-poblada desde cancha existente
+  const [esPublica, setEsPublica] = useState(cancha.es_publica !== false);
+  const [precioHora, setPrecioHora] = useState(cancha.precio_hora ? String(cancha.precio_hora) : '');
+  const [telefonoContacto, setTelefonoContacto] = useState(cancha.telefono_contacto ?? '');
+  const [nombreRecinto, setNombreRecinto] = useState(cancha.nombre_recinto ?? '');
+
   useEffect(() => {
     if (coordsNuevas) setCoords(coordsNuevas);
   }, [coordsNuevas]);
@@ -67,17 +73,23 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
       return;
     }
 
+    const precioNum = precioHora.trim() ? parseInt(precioHora.replace(/\D/g, ''), 10) : null;
+
     setLoading(true);
     try {
       const res = await fetch(`/api/canchas/${cancha.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nombre: nombre.trim(),
-          direccion: direccion.trim(),
-          lat: coords.lat,
-          lng: coords.lng,
-          deporte: deportes,
+          nombre:             nombre.trim(),
+          direccion:          direccion.trim(),
+          lat:                coords.lat,
+          lng:                coords.lng,
+          deporte:            deportes,
+          es_publica:         esPublica,
+          precio_hora:        esPublica ? null : precioNum,
+          telefono_contacto:  telefonoContacto.trim() || null,
+          nombre_recinto:     nombreRecinto.trim()    || null,
         }),
       });
 
@@ -90,11 +102,15 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
 
       onSuccess({
         ...cancha,
-        nombre: updated.nombre,
-        direccion: updated.direccion,
-        lat: updated.lat,
-        lng: updated.lng,
-        deporte: updated.deporte ?? deportes,
+        nombre:             updated.nombre,
+        direccion:          updated.direccion,
+        lat:                updated.lat,
+        lng:                updated.lng,
+        deporte:            updated.deporte ?? deportes,
+        es_publica:         updated.es_publica          ?? esPublica,
+        precio_hora:        updated.precio_hora         ?? null,
+        telefono_contacto:  updated.telefono_contacto   ?? null,
+        nombre_recinto:     updated.nombre_recinto      ?? null,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado.');
@@ -103,9 +119,7 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-surface/80 backdrop-blur-sm overflow-y-auto p-0 sm:p-4"
-    >
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-surface/80 backdrop-blur-sm overflow-y-auto p-0 sm:p-4">
       <div
         className="relative w-full max-w-md bg-surface-container-low border border-outline-variant sm:rounded-xl rounded-t-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)] max-h-[100dvh] sm:max-h-[92dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -125,6 +139,7 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Nombre */}
           <div>
             <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">Nombre</label>
             <input
@@ -136,6 +151,7 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
             />
           </div>
 
+          {/* Dirección */}
           <div>
             <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">Dirección</label>
             <input
@@ -147,6 +163,7 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
             />
           </div>
 
+          {/* Deportes */}
           <div>
             <label className="block text-[11px] text-outline mb-2 font-medium uppercase tracking-[0.08em]">Deportes</label>
             <div className="flex flex-wrap gap-2">
@@ -168,6 +185,7 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
             </div>
           </div>
 
+          {/* Ubicación */}
           <div>
             <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">Ubicación</label>
             <div className="bg-surface border border-outline-variant rounded-lg px-3 py-2 flex items-center justify-between mb-2">
@@ -182,8 +200,7 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
                   onClick={onNecesitaClickMapa}
                   className="flex-1 bg-surface border border-dashed border-outline-variant rounded-lg px-3 py-2 text-[11px] text-outline hover:border-outline hover:text-on-surface-variant transition-colors flex items-center justify-center gap-1.5"
                 >
-                  <span>📍</span>
-                  <span>Clic en el mapa</span>
+                  <span>📍</span><span>Clic en el mapa</span>
                 </button>
               )}
               <button
@@ -194,6 +211,89 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
               >
                 {ubicacionLoading ? <span>Obteniendo...</span> : <><span>🎯</span><span>Mi ubicación</span></>}
               </button>
+            </div>
+          </div>
+
+          {/* ── Información del recinto ── */}
+          <div className="border-t border-outline-variant pt-4">
+            <div className="text-[10px] text-outline uppercase tracking-[0.08em] font-medium mb-3">Información del recinto</div>
+
+            {/* Nombre del recinto */}
+            <div className="mb-3">
+              <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">
+                Nombre del recinto <span className="normal-case text-[10px]">(opcional)</span>
+              </label>
+              <input
+                type="text"
+                value={nombreRecinto}
+                onChange={(e) => setNombreRecinto(e.target.value)}
+                placeholder="Ej: Complejo Deportivo Norte"
+                className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
+              />
+            </div>
+
+            {/* Acceso */}
+            <div className="mb-3">
+              <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">Acceso</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEsPublica(true)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
+                    esPublica
+                      ? 'bg-status-libre/15 border-status-libre/40 text-status-libre'
+                      : 'bg-surface border-outline-variant text-outline hover:border-outline hover:text-on-surface-variant'
+                  }`}
+                >
+                  🆓 Pública / Gratuita
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEsPublica(false)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[11px] border transition-colors ${
+                    !esPublica
+                      ? 'bg-accent/15 border-accent/40 text-accent'
+                      : 'bg-surface border-outline-variant text-outline hover:border-outline hover:text-on-surface-variant'
+                  }`}
+                >
+                  💰 De pago
+                </button>
+              </div>
+            </div>
+
+            {/* Precio */}
+            {!esPublica && (
+              <div className="mb-3">
+                <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">
+                  Precio promedio por hora (CLP)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-outline">$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={precioHora}
+                    onChange={(e) => setPrecioHora(e.target.value)}
+                    placeholder="8.000"
+                    className="w-full bg-surface border border-outline-variant rounded-lg pl-6 pr-10 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-outline">/hr</span>
+                </div>
+              </div>
+            )}
+
+            {/* Teléfono */}
+            <div>
+              <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">
+                Teléfono de contacto <span className="normal-case text-[10px]">(opcional)</span>
+              </label>
+              <input
+                type="tel"
+                value={telefonoContacto}
+                onChange={(e) => setTelefonoContacto(e.target.value)}
+                placeholder="+56 9 1234 5678"
+                className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
+              />
             </div>
           </div>
 
