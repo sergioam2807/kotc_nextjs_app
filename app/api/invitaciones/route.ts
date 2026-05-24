@@ -157,11 +157,14 @@ export async function GET(request: Request) {
 
       if (error2) return NextResponse.json({ error: error2.message }, { status: 500 });
 
-      // [S-2] Filter expired invitations in-memory since expires_at column may not exist yet
+      // [S-2] Filter expired invitations in-memory since expires_at column may not exist yet.
+      // Cast via unknown because the Supabase inferred type doesn't include expira_at
+      // (the column may not exist in DB yet — this fallback path handles that case).
       const ahora = new Date().toISOString();
-      const filtradas = (data2 ?? []).filter((inv: { expira_at?: string }) => {
-        if (!inv.expira_at) return true; // no expiry = always valid
-        return inv.expira_at > ahora;
+      const filtradas = (data2 ?? []).filter((inv) => {
+        const expiraAt = (inv as unknown as { expira_at?: string }).expira_at;
+        if (!expiraAt) return true; // no expiry date = always valid
+        return expiraAt > ahora;
       });
       return NextResponse.json(filtradas);
     }

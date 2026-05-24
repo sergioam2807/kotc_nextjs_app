@@ -19,20 +19,29 @@ App de desafíos territoriales de canchas deportivas (basketball, fútbol, vóle
 
 ---
 
+## Documentación de API
+
+- **`docs/API_DOCS.md`** — referencia completa de los 20 endpoints con ejemplos JSON, diagramas de flujo Mermaid (desafíos, ligas, canchas, equipo) y guía de autenticación para Bruno.
+- **`docs/bruno/`** — colección Bruno API (47 archivos `.bru`) lista para importar. Environments: `local` (localhost:3000) y `production` (kotc.vercel.app). Requiere copiar cookie `sb-*-auth-token` desde DevTools del browser.
+
+---
+
 ## Ramas de desarrollo
 
 | Rama | Base | Estado | Migraciones |
 |------|------|--------|-------------|
 | `main` | — | producción | 001–021 |
-| `feature/ligas` | main | pendiente merge | 022 |
+| `feature/ligas` | main | **pendiente merge** | 022–026 (todas las nuevas features + security) |
 | `feature/canchas-info` | main | pendiente merge | 023 |
+
+> ⚠️ `feature/ligas` contiene todo: ligas, reclutamiento, invitaciones in-app, equipos browse, API docs, security hardening.
 
 **Orden de merge recomendado:**
 ```bash
 git checkout main
-git merge feature/canchas-info   # supabase/migrations/023_canchas_info.sql
-git merge feature/ligas           # supabase/migrations/022_ligas.sql
-supabase db push                  # aplica ambas migraciones
+git merge feature/canchas-info   # migración 023
+git merge feature/ligas           # migraciones 022, 024, 025, 026
+supabase db push                  # aplica todas (en orden numérico)
 ```
 
 ---
@@ -51,9 +60,11 @@ app/
     equipo/solicitudes/             ← Solicitudes de ingreso (solo admin/capitán)
     ranking/page.tsx                ← Ranking territorial (equipos + jugadores)
     perfil/page.tsx                 ← Editar perfil de jugador (bio, posición, especialidades, datos físicos, reclutamiento)
-    jugadores/page.tsx              ← Lista de jugadores disponibles para reclutamiento (sin equipo)
-    jugadores/[id]/page.tsx         ← Perfil público de jugador
+    jugadores/page.tsx              ← Lista de jugadores disponibles para reclutamiento; admins ven botón "Invitar" por jugador
+    jugadores/[id]/page.tsx         ← Perfil público de jugador; admins ven "Invitar al equipo" si jugador sin equipo
+    equipos/page.tsx                ← Lista pública de equipos (jugadores sin equipo pueden buscar y solicitar unirse)
     equipos/[id]/page.tsx           ← Perfil público de equipo (canchas, stats, roster, botón "Solicitar unirme")
+  join/[equipoId]/[token]/page.tsx  ← Aceptar invitación (token validation + TOCTOU-safe server action)
     planes/page.tsx                 ← Página pública de planes: Gratuito vs Organizador, precios, FAQ, CTA WhatsApp [feature/ligas]
     ligas/page.tsx                  ← Lista de ligas; "Crear liga" si tiene suscripción; "Ver planes →" si no [feature/ligas]
     ligas/nueva/page.tsx            ← Formulario crear liga (requiere suscripción activa) [feature/ligas]
@@ -70,7 +81,7 @@ app/
     resultados/route.ts             ← POST proponer / PATCH confirmar|disputar
     equipo/miembros/route.ts        ← PATCH cambiar posición titular/suplente (admin); DELETE salir/expulsar
     equipo/disolver/route.ts        ← DELETE disolver equipo (admin), FK-safe
-    invitaciones/route.ts           ← POST crear / GET aceptar invitación
+    invitaciones/route.ts           ← POST crear (solo admin, UUID/enum/email validados) / GET recibidas|enviadas
     perfil/route.ts                 ← PATCH actualizar perfil propio
     solicitudes/route.ts            ← POST crear / GET listar solicitudes de equipo
     solicitudes/[id]/route.ts       ← PATCH aceptar/rechazar/cancelar; DELETE cancelar
@@ -108,7 +119,8 @@ desafios          (id, equipo_retador_id, equipo_retado_id, cancha_id, deporte, 
 resultados        (id, desafio_id, ganador_id, propuesto_por→equipos,
                    puntos_retador nullable, puntos_retado nullable,
                    confirmado_por_perdedor, disputado, confirmado_at)
-invitaciones      (id, equipo_id, token, email, metodo, estado, expira_at)
+invitaciones      (id, equipo_id, token, email, metodo, estado, expira_at,
+                   jugador_id uuid NULL REFERENCES auth.users — in-app notification target (migración 024))
 solicitudes_equipo (id, equipo_id, jugador_id→auth.users, mensaje,
                     estado [pendiente|aceptada|rechazada|cancelada], created_at, updated_at)
 historial_equipos  (id, jugador_id→auth.users, equipo_id nullable→equipos,
@@ -227,10 +239,15 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `EditarPerfilForm` ('use client') — edita bio, posición, especialidades, datos físicos, toggle reclutamiento. Props: `initialData: PerfilData`.
 - `SolicitarEquipoButton` ('use client') — botón/modal para solicitar unirse a equipo. Props: `equipoId, equipoNombre`.
 
+### Jugadores (`components/jugadores/`)
+- `InvitarJugadorButton` ('use client') — botón para que admins/capitanes inviten a un jugador desde su perfil o del listado. Props: `equipoId, equipoNombre, jugadorId, jugadorNombre`. POST `/api/invitaciones` con `metodo: 'directo'`. Post-envío: muestra link colapsable + WhatsApp deeplink.
+
 ### Equipo (`components/equipo/`)
 - `SolicitudActions` ('use client') — botones Accept/Reject con confirmación. Props: `solicitudId, jugadorNombre`.
-- `DisolverEquipoButton` ('use client') — panel con input del nombre exacto del equipo como doble confirmación. Props: `equipoNombre`. Llama DELETE `/api/equipo/disolver`.
+- `DisolverEquipoButton` ('use client') — panel con input del nombre exacto del equipo como doble confirmación. Props: `equipoNombre`. Llama DELETE `/api/equipo/disolver` (delegado a SQL function `disolver_equipo()` — totalmente transaccional).
 - `RosterRow` ('use client') — fila del roster. Chip Titular/Suplente clickeable para admin (optimistic PATCH). Admin expulsa; jugador sale. Props: `miembroId, jugadorId, nombre, iniciales, avatarColor, avatarUrl?, roles[], posicion, nivel, xp, isCurrentUser, isAdmin`.
+- `RosterSlots` — barra visual de plazas titulares/suplentes. Props: `modalidad, titulares, maxTitulares, suplentes, maxSuplentes`.
+- `InvitacionesRecibidas` ('use client') — fetcha `GET /api/invitaciones?tipo=recibidas` al montar. Muestra cards con equipo + invitador + botones Aceptar/Ver equipo. Retorna null si no hay invitaciones (no flash).
 
 ### Ligas (`components/ligas/`) — feature/ligas
 - `TablaLiga` — tabla de posiciones. Columnas: #, Equipo, PJ, PG, PE, PP, DP, Pts. Filas sobre `equiposClasifican` resaltadas con `↑`. Props: `rows: StandingRow[], titulo?, equiposClasifican?`.
@@ -316,6 +333,9 @@ const eqObj = Array.isArray(eqRaw) ? eqRaw[0] : eqRaw;
 | 021 | `historial_equipos` + columnas `temporada_id/temporada_nombre`; trigger actualizado; backfill | main |
 | 022 | **Ligas:** `suscripciones`, `ligas`, `liga_equipos`, `liga_partidos` con RLS completo | feature/ligas |
 | 023 | **Canchas info:** `es_publica`, `precio_hora`, `telefono_contacto`, `nombre_recinto` en `canchas`; índice `es_publica` | feature/canchas-info |
+| 024 | **Invitaciones in-app:** `invitaciones.jugador_id uuid` FK → auth.users; índice; RLS SELECT para jugador invitado | feature/ligas |
+| 025 | **Security SQL:** `disolver_equipo()` transaccional; `trg_check_max_equipos` en liga_equipos; `add_xp_batch(uuid[], int)` | feature/ligas |
+| 026 | **RLS hardening:** `liga_equipos_update` tightened (admin/cap solo puede aceptar/rechazar estado); `SET search_path = public` en todas las funciones SECURITY DEFINER | feature/ligas |
 
 ---
 
@@ -408,7 +428,7 @@ RESEND_API_KEY=...
 - Solo el admin del equipo.
 - Bloqueado si hay temporada en curso.
 - UI: doble confirmación con input del nombre exacto del equipo.
-- Orden FK-safe: `cancha_dominio` → `solicitudes_equipo` → `invitaciones` → `resultados` → `desafios` → `equipo_miembros` (trigger pone fecha_salida) → `equipos` (ON DELETE SET NULL en historial).
+- **Implementación**: delega a `supabase.rpc('disolver_equipo', {...})` — función SQL SECURITY DEFINER con transacción real. Si falla cualquier paso, se hace rollback completo (sin datos corruptos).
 - Historial personal preservado (nombre/color denormalizados).
 
 ### Cambio de posición (PATCH `/api/equipo/miembros`)
@@ -551,12 +571,34 @@ Sin generated types, Supabase infiere FK joins como arrays. Usar el helper `unwr
 
 ---
 
+## Seguridad implementada
+
+> Revisiones exhaustivas aplicadas en 2026-05-23. Ver commits `ca3e55e` y `7423057`.
+
+- **Autorización en todos los routes** — whitelist de campos, UUID regex, enum validation, rangos numéricos
+- **`GET /api/invitaciones?equipo_id=`** — requiere ser admin del equipo; sin `token/email` en respuesta
+- **TOCTOU en `/join/`** — server action re-valida estado + expira_at antes de ejecutar INSERT
+- **`POST /api/equipos`** — whitelist explícita (no más `...body` spread)
+- **Disolver equipo** — SQL function transaccional `disolver_equipo()` (migración 025)
+- **Idempotency en confirmar resultado** — `.eq('confirmado_por_perdedor', false)` previene XP duplicado
+- **HTTP Security Headers** — CSP, X-Frame-Options, HSTS, Permissions-Policy en `next.config.ts`
+- **RLS liga_equipos** — admin/cap de equipo solo puede cambiar estado (no grupo/seed) vía DB directo
+
+**Pendiente de infra (no código):**
+- Google Maps API Key → agregar restricción HTTP Referrer en Google Cloud Console
+- Rate limiting → implementar con `@upstash/ratelimit` en middleware antes de producción
+
+---
+
 ## Cosas pendientes / conocidas
 
-- **Dashboard y equipo page** usan estilos hardcodeados legacy (`bg-[#0f0f12]`, `text-[#F5C344]`) — refactoring a tokens pendiente
+- **Dashboard y equipo page** usan estilos hardcodeados legacy (`bg-[#0f0f12]`, `text-[#F5C344]`) — refactoring a tokens pendiente (parcialmente hecho en equipo/page.tsx botones)
 - **Sin temporadas activas** — `temporada_id` nullable en todas las tablas relevantes
 - **Sin Supabase Realtime** — cambios requieren recarga manual (`router.refresh()` o `<RefreshButton />`)
-- **Ranking** eliminado del nav en `feature/ligas`; accesible por URL directa `/ranking`
+- **Ranking** accesible por URL directa `/ranking` (nav lo tiene como "Ranking" en sidebar desktop)
 - **Precio en planes** — `$9.990/mes` es un placeholder; cambiar en `app/(app)/planes/page.tsx` antes de producción
 - **WhatsApp CTA** — número placeholder `+56912345678`; cambiar en `PLAN_ORGANIZADOR.ctaWhatsapp` en `/planes`
 - **Jugadores sin fila en `profiles`** pueden no aparecer en ranking: `SELECT em.jugador_id, p.username FROM equipo_miembros em LEFT JOIN profiles p ON p.id = em.jugador_id WHERE p.id IS NULL`
+- **Rate limiting** — endpoints de creación sin protección anti-spam (POST invitaciones, desafios, solicitudes)
+- **Ranking calculado en JS** — `ranking/page.tsx` hace joins en memoria; migrar a RPC SQL cuando escale
+- **Constantes DEPORTE_LABELS/EMOJI** — definidas localmente en varios archivos; centralizar en `lib/player-constants.ts`
