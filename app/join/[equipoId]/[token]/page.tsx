@@ -76,6 +76,26 @@ export default async function JoinPage({ params }: Props) {
     const { data: { user: u } } = await sb.auth.getUser();
     if (!u) redirect(`/login?next=${encodeURIComponent(`/join/${equipoId}/${token}`)}`);
 
+    // Re-validate the invitation at action time: it must still be pending and not expired.
+    // The page load check is a snapshot; tokens can expire or be revoked between render and submit.
+    const { data: invActual } = await sb
+      .from('invitaciones')
+      .select('id, estado, expira_at')
+      .eq('equipo_id', equipoId)
+      .eq('token', token)
+      .eq('estado', 'pendiente')
+      .maybeSingle();
+
+    if (!invActual) {
+      // Invitation no longer valid — redirect back so the page re-renders with the error state
+      redirect(`/join/${equipoId}/${token}`);
+    }
+
+    // Check expiry if the column exists
+    if (invActual.expira_at && new Date(invActual.expira_at) < new Date()) {
+      redirect(`/join/${equipoId}/${token}`);
+    }
+
     // Verificar que no sea ya miembro (doble check server-side)
     const { data: existe } = await sb
       .from('equipo_miembros')

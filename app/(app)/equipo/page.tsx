@@ -195,7 +195,7 @@ export default async function EquipoPage() {
           <div className="flex-shrink-0 w-full sm:w-auto">
             <Link
               href="/equipo/invitaciones"
-              className="bg-[#F5C344] text-[#080809] rounded-[7px] px-4 py-2.5 text-[12px] font-medium cursor-pointer hover:bg-[#e8b53d] transition-colors inline-flex items-center justify-center gap-1.5 w-full sm:w-auto min-h-[40px]"
+              className="bg-accent text-on-accent rounded-lg px-4 py-2.5 text-[12px] font-medium cursor-pointer hover:brightness-95 transition-all inline-flex items-center justify-center gap-1.5 w-full sm:w-auto min-h-[44px]"
             >
               + Invitar jugador
             </Link>
@@ -259,7 +259,7 @@ export default async function EquipoPage() {
         {isAdmin && (
           <Link
             href="/equipo/invitaciones"
-            className="bg-transparent text-[#555] border border-[#2a2a2a] rounded-[7px] px-3.5 py-1.5 text-[12px] cursor-pointer hover:border-[#444] hover:text-[#aaa] transition-colors inline-flex items-center flex-shrink-0 min-h-[36px]"
+            className="bg-transparent text-on-surface-variant border border-outline-variant rounded-lg px-3.5 py-1.5 text-[12px] cursor-pointer hover:border-outline hover:text-on-surface transition-colors inline-flex items-center flex-shrink-0 min-h-[44px]"
           >
             + Invitar
           </Link>

@@ -70,6 +70,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 });
   }
 
+  // UUID format validation
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(equipo_retado_id)) {
+    return NextResponse.json({ error: 'equipo_retado_id inválido' }, { status: 400 });
+  }
+  if (!UUID_RE.test(cancha_id)) {
+    return NextResponse.json({ error: 'cancha_id inválido' }, { status: 400 });
+  }
+
+  // Enum validation — only allow known values to prevent garbage data in DB
+  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  if (!DEPORTES_VALIDOS.includes(deporte)) {
+    return NextResponse.json({ error: 'deporte inválido' }, { status: 400 });
+  }
+
+  const FORMATOS_VALIDOS = ['1v1', '3v3', '5v5', 'libre'];
+  if (!FORMATOS_VALIDOS.includes(formato)) {
+    return NextResponse.json({ error: 'formato inválido' }, { status: 400 });
+  }
+
+  // Date validation — must be a parseable date in the future
+  const fechaDate = new Date(fecha);
+  if (isNaN(fechaDate.getTime())) {
+    return NextResponse.json({ error: 'fecha inválida' }, { status: 400 });
+  }
+  if (fechaDate < new Date()) {
+    return NextResponse.json({ error: 'La fecha del desafío debe ser futura' }, { status: 400 });
+  }
+
+  // Mensaje length guard (optional field)
+  if (mensaje !== undefined && mensaje !== null && typeof mensaje === 'string' && mensaje.length > 500) {
+    return NextResponse.json({ error: 'El mensaje no puede superar 500 caracteres' }, { status: 400 });
+  }
+
   if (equipo_retado_id === equipoId) {
     return NextResponse.json({ error: 'No puedes desafiar a tu propio equipo' }, { status: 400 });
   }
@@ -82,7 +116,7 @@ export async function POST(request: Request) {
       cancha_id,
       deporte,
       formato,
-      fecha: new Date(fecha).toISOString(),
+      fecha: fechaDate.toISOString(),
       mensaje: mensaje ?? null,
       estado: 'pendiente',
     })

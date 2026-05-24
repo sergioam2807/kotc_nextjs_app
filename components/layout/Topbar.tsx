@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { porcentajeEnNivel } from '@/lib/levels';
 
 interface TopbarProps {
   nivel?: number;
@@ -18,6 +19,7 @@ const tabs = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Mapa', href: '/mapa' },
   { label: 'Desafíos', href: '/desafios' },
+  { label: 'Ligas', href: '/ligas' },
   { label: 'Mi Equipo', href: '/equipo' },
 ];
 
@@ -44,7 +46,8 @@ export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, usernam
           <Link
             key={tab.href}
             href={tab.href}
-            className={`px-3 py-1.5 rounded-md text-[12px] transition-colors no-underline ${
+            className={`px-3 py-1.5 rounded-md text-[12px] transition-colors no-underline
+              focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none ${
               pathname.startsWith(tab.href)
                 ? 'bg-accent-dim text-accent'
                 : 'text-outline hover:text-on-surface-variant'
@@ -60,7 +63,8 @@ export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, usernam
         <div className="hidden md:flex items-center gap-1.5">
           <span className="text-[11px] text-accent font-semibold">Lv.{nivel}</span>
           <div className="w-14 h-1 bg-surface-container rounded-full overflow-hidden">
-            <div className="h-full bg-accent rounded-full" style={{ width: `${Math.min((xp % 100), 100)}%` }} />
+            {/* [ROJO-06] Use the real level formula — xp % 100 was always wrong */}
+            <div className="h-full bg-accent rounded-full" style={{ width: `${porcentajeEnNivel(xp, nivel)}%` }} />
           </div>
         </div>
 

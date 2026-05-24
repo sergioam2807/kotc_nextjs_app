@@ -26,6 +26,27 @@ export async function PATCH(
     return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 });
   }
 
+  // [C-1] Authorization check: only the right actor can change each state
+  if (estado === 'cancelada') {
+    // Only the requester can cancel their own request
+    if (solicitud.jugador_id !== user.id) {
+      return NextResponse.json({ error: 'Sin permisos para cancelar esta solicitud' }, { status: 403 });
+    }
+  } else {
+    // Only admin/captain of the target team can accept or reject
+    const { data: esAdmin } = await supabase
+      .from('equipo_miembros')
+      .select('id')
+      .eq('equipo_id', solicitud.equipo_id)
+      .eq('jugador_id', user.id)
+      .in('rol', ['admin', 'capitan'])
+      .maybeSingle();
+
+    if (!esAdmin) {
+      return NextResponse.json({ error: 'Sin permisos para gestionar esta solicitud' }, { status: 403 });
+    }
+  }
+
   // Update estado
   const { error: updateError } = await supabase
     .from('solicitudes_equipo')

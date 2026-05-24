@@ -14,6 +14,25 @@ export async function POST(request: Request) {
 
   const { desafio_id, ganador_id, puntos_retador, puntos_retado } = await request.json();
 
+  // Input validation
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!desafio_id || !UUID_RE.test(desafio_id)) {
+    return NextResponse.json({ error: 'desafio_id inválido' }, { status: 400 });
+  }
+  if (!ganador_id || !UUID_RE.test(ganador_id)) {
+    return NextResponse.json({ error: 'ganador_id inválido' }, { status: 400 });
+  }
+  if (puntos_retador !== null && puntos_retador !== undefined) {
+    if (typeof puntos_retador !== 'number' || !Number.isInteger(puntos_retador) || puntos_retador < 0 || puntos_retador > 9999) {
+      return NextResponse.json({ error: 'puntos_retador inválido' }, { status: 400 });
+    }
+  }
+  if (puntos_retado !== null && puntos_retado !== undefined) {
+    if (typeof puntos_retado !== 'number' || !Number.isInteger(puntos_retado) || puntos_retado < 0 || puntos_retado > 9999) {
+      return NextResponse.json({ error: 'puntos_retado inválido' }, { status: 400 });
+    }
+  }
+
   // Validar desafio
   const { data: desafio } = await supabase.from('desafios')
     .select('*').eq('id', desafio_id).maybeSingle();
@@ -68,6 +87,14 @@ export async function PATCH(request: Request) {
 
   const { id, accion } = await request.json(); // accion: 'confirmar' | 'disputar'
 
+  // Validate accion before any DB access
+  if (!['confirmar', 'disputar'].includes(accion)) {
+    return NextResponse.json({ error: 'accion inválida' }, { status: 400 });
+  }
+  if (!id || typeof id !== 'string') {
+    return NextResponse.json({ error: 'id de resultado requerido' }, { status: 400 });
+  }
+
   // Obtener resultado
   const { data: resultado } = await supabase.from('resultados')
     .select('*').eq('id', id).maybeSingle();
@@ -88,11 +115,20 @@ export async function PATCH(request: Request) {
   if (desafio.estado !== 'resultado_pendiente') return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
 
   if (accion === 'confirmar') {
-    // Confirmar resultado
+    // [C-2] Atomic update: only succeeds if not yet confirmed, preventing XP duplication
+    // from concurrent requests (double-click, two tabs, etc.)
     const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
       .update({ confirmado_por_perdedor: true, confirmado_at: new Date().toISOString() })
-      .eq('id', id).select().single();
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+      .eq('id', id)
+      .eq('confirmado_por_perdedor', false) // idempotency guard — fails if already confirmed
+      .select()
+      .single();
+    if (updateError || !updatedResultado) {
+      return NextResponse.json(
+        { error: 'El resultado ya fue confirmado o no se pudo actualizar' },
+        { status: 409 }
+      );
+    }
 
     // Marcar desafio como completado
     const { error: completadoError } = await supabase

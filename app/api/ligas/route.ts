@@ -67,6 +67,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Formato inválido' }, { status: 400 });
   }
 
+  // Length and range guards
+  if (nombre.trim().length > 100) {
+    return NextResponse.json({ error: 'nombre demasiado largo (máx 100 caracteres)' }, { status: 400 });
+  }
+  if (descripcion && typeof descripcion === 'string' && descripcion.length > 500) {
+    return NextResponse.json({ error: 'descripcion demasiado larga (máx 500 caracteres)' }, { status: 400 });
+  }
+  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  if (!DEPORTES_VALIDOS.includes(deporte)) {
+    return NextResponse.json({ error: 'deporte inválido' }, { status: 400 });
+  }
+  if (typeof max_equipos !== 'number' || !Number.isInteger(max_equipos) || max_equipos < 2 || max_equipos > 64) {
+    return NextResponse.json({ error: 'max_equipos debe ser entero entre 2 y 64' }, { status: 400 });
+  }
+  for (const [field, val] of [['puntos_victoria', puntos_victoria], ['puntos_empate', puntos_empate], ['puntos_derrota', puntos_derrota]] as [string, number][]) {
+    if (typeof val !== 'number' || !Number.isInteger(val) || val < 0 || val > 99) {
+      return NextResponse.json({ error: `${field} inválido (0–99)` }, { status: 400 });
+    }
+  }
+
   const { data: liga, error } = await supabase
     .from('ligas')
     .insert({

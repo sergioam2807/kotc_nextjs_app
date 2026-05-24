@@ -62,74 +62,22 @@ export async function DELETE() {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // 1. Canchas bajo dominio
-  // -------------------------------------------------------------------------
-  const { error: errDominio } = await supabase
-    .from('cancha_dominio')
-    .delete()
-    .eq('equipo_id', equipoId);
-  if (errDominio) return NextResponse.json({ error: errDominio.message }, { status: 500 });
+  // [C-3] Use the transactional SQL function (migration 025_security_fixes.sql).
+  // All 6 delete steps run inside a single PostgreSQL transaction — if any step
+  // fails, the entire dissolution is rolled back, preventing corrupt state.
+  const { error: errDisolver } = await supabase.rpc('disolver_equipo', {
+    p_equipo_id: equipoId,
+    p_user_id:   user.id,
+  });
 
-  // -------------------------------------------------------------------------
-  // 2. Solicitudes de ingreso
-  // -------------------------------------------------------------------------
-  const { error: errSolicitudes } = await supabase
-    .from('solicitudes_equipo')
-    .delete()
-    .eq('equipo_id', equipoId);
-  if (errSolicitudes) return NextResponse.json({ error: errSolicitudes.message }, { status: 500 });
-
-  // -------------------------------------------------------------------------
-  // 3. Invitaciones
-  // -------------------------------------------------------------------------
-  const { error: errInvitaciones } = await supabase
-    .from('invitaciones')
-    .delete()
-    .eq('equipo_id', equipoId);
-  if (errInvitaciones) return NextResponse.json({ error: errInvitaciones.message }, { status: 500 });
-
-  // -------------------------------------------------------------------------
-  // 4. Resultados + desafíos que involucran al equipo
-  // -------------------------------------------------------------------------
-  const { data: desafiosEquipo } = await supabase
-    .from('desafios')
-    .select('id')
-    .or(`equipo_retador_id.eq.${equipoId},equipo_retado_id.eq.${equipoId}`);
-
-  if (desafiosEquipo && desafiosEquipo.length > 0) {
-    const desafioIds = desafiosEquipo.map(d => d.id);
-
-    const { error: errResultados } = await supabase
-      .from('resultados')
-      .delete()
-      .in('desafio_id', desafioIds);
-    if (errResultados) return NextResponse.json({ error: errResultados.message }, { status: 500 });
-
-    const { error: errDesafios } = await supabase
-      .from('desafios')
-      .delete()
-      .in('id', desafioIds);
-    if (errDesafios) return NextResponse.json({ error: errDesafios.message }, { status: 500 });
+  if (errDisolver) {
+    // Log internal detail, return a generic message to the client
+    console.error('[disolver_equipo]', errDisolver.message);
+    return NextResponse.json(
+      { error: 'No se pudo disolver el equipo. Intenta nuevamente.' },
+      { status: 500 }
+    );
   }
-
-  // -------------------------------------------------------------------------
-  // 5. Miembros — dispara trigger que actualiza historial_equipos.fecha_salida
-  // -------------------------------------------------------------------------
-  const { error: errMiembros } = await supabase
-    .from('equipo_miembros')
-    .delete()
-    .eq('equipo_id', equipoId);
-  if (errMiembros) return NextResponse.json({ error: errMiembros.message }, { status: 500 });
-
-  // -------------------------------------------------------------------------
-  // 6. Equipo — ON DELETE SET NULL en historial_equipos.equipo_id
-  // -------------------------------------------------------------------------
-  const { error: errEquipo } = await supabase
-    .from('equipos')
-    .delete()
-    .eq('id', equipoId);
-  if (errEquipo) return NextResponse.json({ error: errEquipo.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }
