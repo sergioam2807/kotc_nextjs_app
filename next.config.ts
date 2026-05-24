@@ -51,8 +51,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              // Scripts: self + Google Maps
-              "script-src 'self' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com",
+              // Scripts: self + inline (Next.js App Router hydration) + Google Maps
+              // NOTE: 'unsafe-inline' is required by Next.js App Router — it injects inline <script>
+              // tags for client hydration. Without it, React doesn't hydrate and onClick handlers,
+              // useState, and third-party libs (Google Maps) are completely broken.
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com",
               // Styles: self + inline (Tailwind 4) + Google Fonts
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Images: self + Google avatars + Google Maps tiles + data URIs
