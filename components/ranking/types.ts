@@ -2,12 +2,16 @@ export interface TeamRankingStat {
   id: string;
   nombre: string;
   color: string;
+  ciudad: string | null;
+  deporte: string | null;
   puntos: number;
   kingCourts: number;
   totalVictorias: number;
   totalDerrotas: number;
   winRate: number;
   miembros: number;
+  xp: number;
+  nivel: number;
 }
 
 export interface PlayerRankingStat {
