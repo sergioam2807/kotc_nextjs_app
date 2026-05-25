@@ -381,95 +381,209 @@ export function MapaClientWrapper({ canchas, equipoId, stats, deporteInicial }: 
           </button>
         )}
 
-        {/* ── Selected court panel — full width on mobile, fixed width on desktop ── */}
-        {canchaSeleccionada && (
-          <div
-            className="absolute left-3 right-3 md:left-auto md:right-3 md:w-[220px] z-20 bg-surface-container-low border border-outline-variant rounded-xl p-4 shadow-[0_4px_24px_rgba(0,0,0,0.5)] md:!bottom-3"
-            style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div
-                className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium"
-                style={{
-                  background: `${ESTADO_COLORS[canchaSeleccionada.estado]}20`,
-                  color: ESTADO_COLORS[canchaSeleccionada.estado],
-                }}
-              >
-                {ESTADO_LABELS[canchaSeleccionada.estado]}
-              </div>
-              <button
-                onClick={() => setCanchaSeleccionada(null)}
-                className="text-outline hover:text-on-surface-variant text-[16px] leading-none -mt-0.5"
-              >
-                ×
-              </button>
-            </div>
-            <div className="text-[13px] font-medium text-on-surface mb-0.5">{canchaSeleccionada.nombre}</div>
-            {canchaSeleccionada.nombre_recinto && (
-              <div className="text-[10px] text-on-surface-variant mb-0.5">{canchaSeleccionada.nombre_recinto}</div>
-            )}
-            <div className="text-[11px] text-outline mb-2">{canchaSeleccionada.direccion}</div>
+        {/* ── Selected court panel — redesigned card ── */}
+        {canchaSeleccionada && (() => {
+          const teamInitials = canchaSeleccionada.equipoNombre
+            ? canchaSeleccionada.equipoNombre.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+            : null;
+          const teamColor = canchaSeleccionada.equipoColor ?? '#ffe083';
 
-            {/* Acceso + precio */}
-            <div className="flex items-center gap-1.5 mb-1.5">
-              {canchaSeleccionada.es_publica === false ? (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-accent/15 text-accent font-medium">💰 De pago</span>
-              ) : (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-status-libre/15 text-status-libre font-medium">🆓 Pública</span>
-              )}
-              {canchaSeleccionada.precio_hora && (
-                <span className="text-[10px] text-on-surface-variant">
-                  ~${canchaSeleccionada.precio_hora.toLocaleString('es-CL')}/hr
-                </span>
-              )}
-            </div>
-
-            {/* Teléfono */}
-            {canchaSeleccionada.telefono_contacto && (
-              <a
-                href={`tel:${canchaSeleccionada.telefono_contacto.replace(/\s/g, '')}`}
-                className="flex items-center gap-1 text-[10px] text-accent hover:underline mb-1.5"
-              >
-                📞 {canchaSeleccionada.telefono_contacto}
-              </a>
-            )}
-
-            {/* Equipo King */}
-            {canchaSeleccionada.equipoNombre && (
-              <div className="text-[11px] mb-0.5" style={{ color: canchaSeleccionada.equipoColor ?? '#8f909d' }}>
-                {canchaSeleccionada.equipoNombre}
-              </div>
-            )}
-            {(canchaSeleccionada.victorias !== undefined || canchaSeleccionada.derrotas !== undefined) && (
-              <div className="text-[10px] text-outline">
-                {canchaSeleccionada.victorias ?? 0}V - {canchaSeleccionada.derrotas ?? 0}D
-              </div>
-            )}
-
-            {/* Deportes */}
-            {canchaSeleccionada.deporte.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {canchaSeleccionada.deporte.map((d) => (
-                  <span key={d} className="text-[9px] px-1.5 py-0.5 rounded-sm bg-surface-container text-outline">{d}</span>
-                ))}
-              </div>
-            )}
-            {canchaSeleccionada.estado === 'rival' && equipoId && canchaSeleccionada.equipoId && (
-              <button
-                onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
-                className="w-full mt-3 bg-status-rival/10 border border-status-rival/30 rounded-md py-1.5 text-[11px] text-status-rival hover:bg-status-rival/20 hover:border-status-rival/50 transition-colors font-medium"
-              >
-                ⚔️ Desafiar
-              </button>
-            )}
-            <button
-              onClick={() => handleEditarCancha(canchaSeleccionada)}
-              className="w-full mt-2 bg-transparent border border-outline-variant rounded-md py-1.5 text-[11px] text-outline hover:border-outline hover:text-on-surface-variant transition-colors"
+          return (
+            <div
+              className="absolute left-3 right-3 md:left-auto md:right-3 md:w-[290px] z-20 bg-surface-container-low/95 backdrop-blur-xl border border-outline-variant rounded-2xl overflow-hidden shadow-[0_8px_48px_rgba(0,0,0,0.65)] md:!bottom-3"
+              style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
             >
-              Editar cancha
-            </button>
-          </div>
-        )}
+              {/* ── HEADER ── */}
+              <div className="px-5 pt-4 pb-4 border-b border-outline-variant">
+
+                {/* Top row: badges + close */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest"
+                      style={{
+                        background: `${ESTADO_COLORS[canchaSeleccionada.estado]}22`,
+                        color: ESTADO_COLORS[canchaSeleccionada.estado],
+                      }}
+                    >
+                      {ESTADO_LABELS[canchaSeleccionada.estado]}
+                    </span>
+                    {canchaSeleccionada.es_publica === false ? (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent/15 text-accent font-black uppercase tracking-widest">
+                        💰 De pago
+                      </span>
+                    ) : (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-status-libre/15 text-status-libre font-black uppercase tracking-widest">
+                        🆓 Pública
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setCanchaSeleccionada(null)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full text-outline hover:text-on-surface-variant hover:bg-surface-container text-[18px] leading-none transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Court name + address */}
+                <h3 className="text-[17px] font-black italic uppercase text-on-surface tracking-tight leading-tight mb-0.5">
+                  {canchaSeleccionada.nombre}
+                </h3>
+                {canchaSeleccionada.nombre_recinto && (
+                  <div className="text-[10px] text-on-surface-variant font-medium mb-1">
+                    {canchaSeleccionada.nombre_recinto}
+                  </div>
+                )}
+                <p className="text-[10px] text-outline leading-relaxed mb-4">
+                  {canchaSeleccionada.direccion}
+                </p>
+
+                {/* King team row */}
+                {canchaSeleccionada.equipoNombre ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar with crown */}
+                      <div className="relative flex-shrink-0">
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center text-[15px] font-black border-2"
+                          style={{
+                            background: `${teamColor}1a`,
+                            borderColor: `${teamColor}55`,
+                            color: teamColor,
+                          }}
+                        >
+                          {teamInitials}
+                        </div>
+                        <div
+                          className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-md shadow-md z-10 text-[11px] leading-none"
+                          style={{ background: teamColor, transform: 'rotate(12deg)' }}
+                        >
+                          👑
+                        </div>
+                      </div>
+                      <div>
+                        <span className="block text-[8px] font-black uppercase tracking-[0.2em] text-accent mb-0.5">
+                          Rey de la cancha
+                        </span>
+                        <span
+                          className="block text-[15px] font-black italic uppercase leading-tight"
+                          style={{ color: teamColor }}
+                        >
+                          {canchaSeleccionada.equipoNombre}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className="block text-[8px] font-bold text-outline uppercase tracking-widest mb-0.5">Récord</span>
+                      <span className="text-[15px] font-black italic text-on-surface">
+                        {canchaSeleccionada.victorias ?? 0}V — {canchaSeleccionada.derrotas ?? 0}D
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-surface-container border border-outline-variant flex items-center justify-center text-[20px]">
+                      🏟️
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-outline">Sin rey</span>
+                      <span className="block text-[12px] font-black italic text-on-surface-variant">Cancha libre</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── STATS GRID ── */}
+              <div className="px-5 py-3.5 border-b border-outline-variant">
+                <div className="grid grid-cols-2 gap-2.5">
+                  {/* Victorias */}
+                  <div className="bg-surface-container border border-outline-variant rounded-xl p-3">
+                    <span className="block text-[8px] font-bold text-outline uppercase tracking-widest mb-1">
+                      Victorias aquí
+                    </span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[22px] font-black italic text-accent leading-none">
+                        {canchaSeleccionada.victorias ?? 0}
+                      </span>
+                      <span className="text-[8px] font-bold text-outline">
+                        — {canchaSeleccionada.derrotas ?? 0}D
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Deportes */}
+                  <div className="bg-surface-container border border-outline-variant rounded-xl p-3">
+                    <span className="block text-[8px] font-bold text-outline uppercase tracking-widest mb-2">
+                      Deportes
+                    </span>
+                    <div className="flex flex-wrap gap-0.5">
+                      {canchaSeleccionada.deporte.length > 0 ? (
+                        canchaSeleccionada.deporte.slice(0, 4).map((d) => {
+                          const sport = DEPORTES.find(s => s.id === d);
+                          return sport ? (
+                            <span key={d} className="text-[16px] leading-none">{sport.emoji}</span>
+                          ) : (
+                            <span key={d} className="text-[8px] text-outline">{d}</span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-[10px] text-outline">—</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phone */}
+                {canchaSeleccionada.telefono_contacto && (
+                  <a
+                    href={`tel:${canchaSeleccionada.telefono_contacto.replace(/\s/g, '')}`}
+                    className="flex items-center gap-1.5 mt-2.5 text-[10px] text-accent hover:underline"
+                  >
+                    📞 {canchaSeleccionada.telefono_contacto}
+                  </a>
+                )}
+                {canchaSeleccionada.precio_hora && (
+                  <div className="mt-1.5 text-[10px] text-on-surface-variant">
+                    💰 ~${canchaSeleccionada.precio_hora.toLocaleString('es-CL')} /hr
+                  </div>
+                )}
+              </div>
+
+              {/* ── CTA BUTTONS ── */}
+              <div className="px-5 py-4 flex flex-col gap-2">
+                {canchaSeleccionada.estado === 'rival' && equipoId && canchaSeleccionada.equipoId ? (
+                  <button
+                    onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
+                    className="w-full bg-status-rival text-white font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(248,113,113,0.3)] hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                  >
+                    <span>⚔️</span>
+                    <span>Desafiar al Rey</span>
+                  </button>
+                ) : canchaSeleccionada.estado === 'libre' && equipoId ? (
+                  <button
+                    onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}`)}
+                    className="w-full bg-accent text-on-accent font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(255,224,131,0.3)] hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                  >
+                    <span>⚡</span>
+                    <span>Conquistar cancha</span>
+                  </button>
+                ) : canchaSeleccionada.estado === 'king' ? (
+                  <div className="w-full py-3 rounded-xl text-[11px] text-accent font-black italic uppercase tracking-widest text-center bg-accent/10 border border-accent/30">
+                    👑 Tu cancha — ¡Defiéndela!
+                  </div>
+                ) : null}
+
+                <button
+                  onClick={() => handleEditarCancha(canchaSeleccionada)}
+                  className="w-full bg-transparent border border-outline-variant rounded-xl py-2.5 text-[11px] text-outline hover:border-outline hover:text-on-surface-variant transition-colors font-medium"
+                >
+                  ✏️ Editar cancha
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── MOBILE: court list bottom sheet ── */}
         {mobileListOpen && (
