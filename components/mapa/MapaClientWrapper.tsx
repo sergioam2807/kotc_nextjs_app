@@ -19,6 +19,8 @@ export interface CanchaConEstado {
   equipoColor?: string;
   victorias?: number;
   derrotas?: number;
+  rankingGlobal?: number;   // posición XP-based entre todos los equipos
+  equipoNivel?: number;     // nivel del equipo King (para mostrar tier)
   // Información del recinto (migración 023)
   es_publica?: boolean;
   precio_hora?: number | null;
@@ -34,6 +36,20 @@ interface Props {
 }
 
 type Filtro = 'todas' | 'king' | 'libre' | 'rival';
+
+// Tier name from team level — matches leveling system in lib/levels.ts
+function nivelTier(nivel: number): string {
+  if (nivel >= 91) return 'KING';
+  if (nivel >= 81) return 'LEYENDA';
+  if (nivel >= 71) return 'CAMPEÓN';
+  if (nivel >= 61) return 'MÁSTER';
+  if (nivel >= 51) return 'ÉLITE';
+  if (nivel >= 41) return 'WARRIOR';
+  if (nivel >= 31) return 'FIGHTER';
+  if (nivel >= 21) return 'CHALLENGER';
+  if (nivel >= 11) return 'CONTENDER';
+  return 'ROOKIE';
+}
 
 // Design token hex values — used in inline styles where Tailwind classes can't reach
 const ESTADO_COLORS = {
@@ -390,7 +406,7 @@ export function MapaClientWrapper({ canchas, equipoId, stats, deporteInicial }: 
 
           return (
             <div
-              className="absolute left-3 right-3 md:left-auto md:right-3 md:w-[290px] z-20 bg-surface-container-low/95 backdrop-blur-xl border border-outline-variant rounded-2xl overflow-hidden shadow-[0_8px_48px_rgba(0,0,0,0.65)] md:!bottom-3"
+              className="absolute left-3 right-3 md:left-auto md:right-3 md:w-[290px] z-20 bg-surface-container-low border border-outline-variant rounded-2xl overflow-hidden shadow-[0_8px_48px_rgba(0,0,0,0.65)] md:!bottom-3"
               style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
             >
               {/* ── HEADER ── */}
@@ -512,42 +528,62 @@ export function MapaClientWrapper({ canchas, equipoId, stats, deporteInicial }: 
                     </div>
                   </div>
 
-                  {/* Deportes */}
+                  {/* Ranking global */}
                   <div className="bg-surface-container border border-outline-variant rounded-xl p-3">
-                    <span className="block text-[8px] font-bold text-outline uppercase tracking-widest mb-2">
-                      Deportes
+                    <span className="block text-[8px] font-bold text-outline uppercase tracking-widest mb-1">
+                      Ranking global
                     </span>
-                    <div className="flex flex-wrap gap-0.5">
-                      {canchaSeleccionada.deporte.length > 0 ? (
-                        canchaSeleccionada.deporte.slice(0, 4).map((d) => {
-                          const sport = DEPORTES.find(s => s.id === d);
-                          return sport ? (
-                            <span key={d} className="text-[16px] leading-none">{sport.emoji}</span>
-                          ) : (
-                            <span key={d} className="text-[8px] text-outline">{d}</span>
-                          );
-                        })
-                      ) : (
-                        <span className="text-[10px] text-outline">—</span>
-                      )}
-                    </div>
+                    {canchaSeleccionada.rankingGlobal ? (
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[22px] font-black italic text-on-surface leading-none">
+                          #{canchaSeleccionada.rankingGlobal}
+                        </span>
+                        {canchaSeleccionada.equipoNivel && (
+                          <span className="text-[8px] font-bold text-outline leading-none">
+                            {nivelTier(canchaSeleccionada.equipoNivel)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[22px] font-black italic text-outline leading-none">—</span>
+                        <span className="text-[8px] font-bold text-outline">SIN DATOS</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Phone */}
-                {canchaSeleccionada.telefono_contacto && (
-                  <a
-                    href={`tel:${canchaSeleccionada.telefono_contacto.replace(/\s/g, '')}`}
-                    className="flex items-center gap-1.5 mt-2.5 text-[10px] text-accent hover:underline"
-                  >
-                    📞 {canchaSeleccionada.telefono_contacto}
-                  </a>
-                )}
-                {canchaSeleccionada.precio_hora && (
-                  <div className="mt-1.5 text-[10px] text-on-surface-variant">
-                    💰 ~${canchaSeleccionada.precio_hora.toLocaleString('es-CL')} /hr
-                  </div>
-                )}
+                {/* Deportes + contacto */}
+                <div className="mt-2.5 flex flex-col gap-1.5">
+                  {canchaSeleccionada.deporte.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {canchaSeleccionada.deporte.map((d) => {
+                        const sport = DEPORTES.find(s => s.id === d);
+                        return sport ? (
+                          <span
+                            key={d}
+                            className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-surface-container border border-outline-variant text-outline font-medium"
+                          >
+                            {sport.emoji} {sport.label}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+                  {canchaSeleccionada.precio_hora && (
+                    <div className="text-[10px] text-on-surface-variant">
+                      💰 ~${canchaSeleccionada.precio_hora.toLocaleString('es-CL')} /hr
+                    </div>
+                  )}
+                  {canchaSeleccionada.telefono_contacto && (
+                    <a
+                      href={`tel:${canchaSeleccionada.telefono_contacto.replace(/\s/g, '')}`}
+                      className="flex items-center gap-1.5 text-[10px] text-accent hover:underline"
+                    >
+                      📞 {canchaSeleccionada.telefono_contacto}
+                    </a>
+                  )}
+                </div>
               </div>
 
               {/* ── CTA BUTTONS ── */}
@@ -555,7 +591,8 @@ export function MapaClientWrapper({ canchas, equipoId, stats, deporteInicial }: 
                 {canchaSeleccionada.estado === 'rival' && equipoId && canchaSeleccionada.equipoId ? (
                   <button
                     onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
-                    className="w-full bg-status-rival text-white font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(248,113,113,0.3)] hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                    className="w-full font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                    style={{ background: '#f87171', color: '#fff', boxShadow: '0 8px 24px rgba(248,113,113,0.35)' }}
                   >
                     <span>⚔️</span>
                     <span>Desafiar al Rey</span>
