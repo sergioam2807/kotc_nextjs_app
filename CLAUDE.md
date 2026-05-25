@@ -64,6 +64,10 @@ app/
     jugadores/[id]/page.tsx         ← Perfil público de jugador; admins ven "Invitar al equipo" si jugador sin equipo
     equipos/page.tsx                ← Lista pública de equipos (jugadores sin equipo pueden buscar y solicitar unirse)
     equipos/[id]/page.tsx           ← Perfil público de equipo (canchas, stats, roster, botón "Solicitar unirme")
+    admin/page.tsx                  ← Panel admin: stats globales + temporada activa (solo ADMIN_EMAIL) [feature/ligas]
+    admin/temporadas/page.tsx       ← Lista de temporadas (activa + historial) [feature/ligas]
+    admin/temporadas/nueva/page.tsx ← Formulario crear temporada (nombre, descripción, fechas, deportes, activar) [feature/ligas]
+    admin/temporadas/[id]/page.tsx  ← Detalle temporada: stats, progreso, botones activar/cerrar [feature/ligas]
   join/[equipoId]/[token]/page.tsx  ← Aceptar invitación (token validation + TOCTOU-safe server action)
     planes/page.tsx                 ← Página pública de planes: Gratuito vs Organizador, precios, FAQ, CTA WhatsApp [feature/ligas]
     ligas/page.tsx                  ← Lista de ligas; "Crear liga" si tiene suscripción; "Ver planes →" si no [feature/ligas]
@@ -85,6 +89,8 @@ app/
     perfil/route.ts                 ← PATCH actualizar perfil propio
     solicitudes/route.ts            ← POST crear / GET listar solicitudes de equipo
     solicitudes/[id]/route.ts       ← PATCH aceptar/rechazar/cancelar; DELETE cancelar
+    admin/temporadas/route.ts       ← GET list / POST crear temporada (solo ADMIN_EMAIL) [feature/ligas]
+    admin/temporadas/[id]/route.ts  ← PATCH activar|cerrar (snapshots historial_kings al cerrar) / DELETE [feature/ligas]
     ligas/route.ts                  ← GET listar ligas / POST crear liga (requiere suscripción) [feature/ligas]
     ligas/[id]/route.ts             ← GET detalle / PATCH estado / DELETE eliminar [feature/ligas]
     ligas/[id]/equipos/route.ts     ← GET listar / POST invitar o inscribir equipo [feature/ligas]
@@ -336,6 +342,12 @@ const eqObj = Array.isArray(eqRaw) ? eqRaw[0] : eqRaw;
 | 024 | **Invitaciones in-app:** `invitaciones.jugador_id uuid` FK → auth.users; índice; RLS SELECT para jugador invitado | feature/ligas |
 | 025 | **Security SQL:** `disolver_equipo()` transaccional; `trg_check_max_equipos` en liga_equipos; `add_xp_batch(uuid[], int)` | feature/ligas |
 | 026 | **RLS hardening:** `liga_equipos_update` tightened (admin/cap solo puede aceptar/rechazar estado); `SET search_path = public` en todas las funciones SECURITY DEFINER | feature/ligas |
+| 027 | **Temporadas admin:** `deporte` nullable, `descripcion`, `deporte_filter text[]`; RLS permissiva (guard en API layer) | feature/ligas |
+| 028 | **King metrics:** `cancha_dominio.racha_defensiva int`, `fecha_rey_desde timestamptz`; tabla `historial_kings` con RLS | feature/ligas |
+| 029 | **Ranking puntos:** tabla `ranking_puntos` (equipo_id, temporada_id UNIQUE, puntos, victorias, derrotas, defensas_exitosas) con RLS | feature/ligas |
+| 030 | **Actividad feed:** tabla `actividad` (tipo enum, equipo_id, jugador_id, cancha_id, metadata jsonb) con índices | feature/ligas |
+| 031 | **Cancha enriquecida:** `superficie text CHECK(...)`, `iluminacion boolean`, `tipo_aro text CHECK(...)` en `canchas` | feature/ligas |
+| 032 | **Equipos mejoras:** `descripcion text`, `cancha_local_id uuid`, `racha_victorias int`, `racha_derrotas int` en `equipos` | feature/ligas |
 
 ---
 
@@ -400,6 +412,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000   ← cambiar en producción
 RESEND_API_KEY=...
+ADMIN_EMAIL=...                              ← email del admin para panel /admin (server-only, NO NEXT_PUBLIC)
 ```
 
 ---

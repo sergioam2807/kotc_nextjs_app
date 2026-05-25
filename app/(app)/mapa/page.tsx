@@ -9,18 +9,27 @@ export default async function MapaPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Obtener equipo del usuario
+  // Obtener equipo del usuario + deporte principal del equipo
   let equipoId: string | null = null;
+  let deporteInicial: string | undefined;
 
   if (user) {
     const { data: membresia } = await supabase
       .from('equipo_miembros')
-      .select('equipo_id, equipo:equipos(id, nombre, color)')
+      .select('equipo_id, equipo:equipos(id, nombre, color, deporte)')
       .eq('jugador_id', user.id)
       .limit(1)
       .maybeSingle();
 
     equipoId = membresia?.equipo_id ?? null;
+
+    // Pre-select the team's sport in the map filter.
+    // Supabase FK joins may be returned as arrays — unwrap defensively.
+    const equipoRaw = membresia?.equipo;
+    const equipoObj = Array.isArray(equipoRaw) ? equipoRaw[0] : equipoRaw;
+    if (equipoObj && typeof equipoObj === 'object' && 'deporte' in equipoObj) {
+      deporteInicial = (equipoObj as { deporte?: string }).deporte ?? undefined;
+    }
   }
 
   // Obtener canchas con dominio + nueva info de recinto
@@ -92,6 +101,7 @@ export default async function MapaPage() {
       canchas={canchas}
       equipoId={equipoId}
       stats={{ misKing, partidos, total }}
+      deporteInicial={deporteInicial}
     />
   );
 }

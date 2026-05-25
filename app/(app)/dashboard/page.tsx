@@ -21,22 +21,41 @@ const ESTADO_BADGE: Record<string, { label: string; variant: 'accent' | 'neutral
 
 import { nombreNivel } from '@/lib/levels';
 
-function SidebarContent() {
+function SidebarContent({ temporada }: { temporada: { id: string; nombre: string; fin: string } | null }) {
+  const diasRestantes = temporada
+    ? Math.ceil((new Date(temporada.fin).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : 0;
+
   return (
     <>
       {/* Temporada */}
-      <div className="bg-[#151518] border border-[#1e1e24] rounded-[8px] p-2.5 mb-5">
-        <div className="text-[10px] text-[#555] mb-1">Temporada activa</div>
-        <div className="text-[12px] text-[#444] italic">No hay temporada activa</div>
+      <div className={`rounded-[8px] p-2.5 mb-5 border ${
+        temporada
+          ? 'bg-accent/8 border-accent/25'
+          : 'bg-[#151518] border-[#1e1e24]'
+      }`}>
+        <div className="text-[10px] text-outline mb-1 uppercase tracking-wider font-medium">Temporada activa</div>
+        {temporada ? (
+          <>
+            <div className="text-[12px] font-semibold text-on-surface">🏆 {temporada.nombre}</div>
+            {diasRestantes > 0 && (
+              <div className="text-[10px] text-accent mt-0.5">{diasRestantes}d restantes</div>
+            )}
+          </>
+        ) : (
+          <div className="text-[11px] text-outline italic">No hay temporada activa</div>
+        )}
       </div>
 
       {/* Ranking */}
-      <div className="text-[10px] text-[#444] tracking-[0.1em] font-medium mb-2.5 uppercase">Ranking temporada</div>
-      <div className="text-[12px] text-[#444] italic mb-5">Sin datos de ranking aún.</div>
+      <div className="text-[10px] text-outline tracking-[0.1em] font-medium mb-2.5 uppercase">Ranking temporada</div>
+      <div className="text-[11px] text-outline italic mb-5">
+        <Link href="/ranking" className="text-accent hover:underline">Ver ranking →</Link>
+      </div>
 
       {/* Próximos */}
-      <div className="text-[10px] text-[#444] tracking-[0.1em] font-medium mb-2.5 uppercase">Próximos partidos</div>
-      <div className="text-[12px] text-[#444] italic">No hay partidos programados.</div>
+      <div className="text-[10px] text-outline tracking-[0.1em] font-medium mb-2.5 uppercase">Próximos partidos</div>
+      <div className="text-[11px] text-outline italic">No hay partidos programados.</div>
     </>
   );
 }
@@ -119,6 +138,13 @@ export default async function DashboardPage() {
         .is('usado_at', null)
     : { count: null };
 
+  // Active season
+  const { data: temporadaActiva } = await supabase
+    .from('temporadas')
+    .select('id, nombre, fin')
+    .eq('activa', true)
+    .maybeSingle();
+
   // Check ligas subscription
   const { data: suscripcion } = await supabase
     .from('suscripciones')
@@ -151,6 +177,21 @@ export default async function DashboardPage() {
     <div className="flex min-h-full md:h-full">
       {/* Main column */}
       <div className="flex-1 p-4 sm:p-5 md:overflow-y-auto">
+
+        {/* Season banner */}
+        {temporadaActiva && (
+          <div className="flex items-center gap-2 bg-accent/8 border border-accent/25 rounded-xl px-3.5 py-2.5 mb-4">
+            <span className="text-[18px]">🏆</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-[12px] font-semibold text-on-surface">{temporadaActiva.nombre}</span>
+              {' '}
+              <span className="text-[11px] text-outline">— temporada activa</span>
+            </div>
+            <Link href="/ranking" className="text-[11px] text-accent hover:underline flex-shrink-0">
+              Ver ranking →
+            </Link>
+          </div>
+        )}
 
         {/* Player banner */}
         <div className="bg-[#0f0f12] border border-[#1e1e24] rounded-[12px] p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3.5 mb-5">
@@ -346,13 +387,13 @@ export default async function DashboardPage() {
 
         {/* Sidebar content — only visible on mobile, rendered inline */}
         <div className="md:hidden border-t border-[#1a1a1f] pt-5">
-          <SidebarContent />
+          <SidebarContent temporada={temporadaActiva ?? null} />
         </div>
       </div>
 
       {/* Right panel — desktop only */}
       <div className="hidden md:flex md:flex-col w-[210px] bg-[#0a0a0c] border-l border-[#1a1a1f] p-4 overflow-y-auto flex-shrink-0">
-        <SidebarContent />
+        <SidebarContent temporada={temporadaActiva ?? null} />
       </div>
     </div>
   );

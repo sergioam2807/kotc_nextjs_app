@@ -30,6 +30,7 @@ interface Props {
   canchas: CanchaConEstado[];
   equipoId: string | null;
   stats: { misKing: number; partidos: number; total: number };
+  deporteInicial?: string;
 }
 
 type Filtro = 'todas' | 'king' | 'libre' | 'rival';
@@ -49,14 +50,16 @@ const ESTADO_LABELS = {
 
 const DEPORTES = [
   { id: 'basketball', emoji: '🏀', label: 'Basketball' },
-  { id: 'futbol', emoji: '⚽', label: 'Fútbol' },
-  { id: 'voleibol', emoji: '🏐', label: 'Vóleibol' },
+  { id: 'futbol',     emoji: '⚽', label: 'Fútbol' },
+  { id: 'voleibol',   emoji: '🏐', label: 'Vóleibol' },
+  { id: 'tenis',      emoji: '🎾', label: 'Tenis' },
+  { id: 'padel',      emoji: '🏓', label: 'Pádel' },
 ];
 
-export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
+export function MapaClientWrapper({ canchas, equipoId, stats, deporteInicial }: Props) {
   const router = useRouter();
   const [filtro, setFiltro] = useState<Filtro>('todas');
-  const [deporteFiltro, setDeporteFiltro] = useState<string>('todas');
+  const [deporteFiltro, setDeporteFiltro] = useState<string>(deporteInicial ?? 'todas');
   const [busqueda, setBusqueda] = useState('');
   const [canchaSeleccionada, setCanchaSeleccionada] = useState<CanchaConEstado | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -591,6 +594,7 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         <div style={{ display: showModal ? undefined : 'none' }}>
           <AgregarCanchaModal
             coordsIniciales={coordsNuevaCancha ?? undefined}
+            deportesIniciales={deporteInicial ? [deporteInicial] : undefined}
             onClose={handleModalClose}
             onSuccess={handleModalSuccess}
             onNecesitaClickMapa={handleNecesitaClickMapa}

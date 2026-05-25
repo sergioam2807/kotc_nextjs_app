@@ -5,6 +5,8 @@ import type { CanchaConEstado } from './MapaClientWrapper';
 
 interface Props {
   coordsIniciales?: { lat: number; lng: number };
+  /** Pre-selected sports (e.g. the user's team sport) */
+  deportesIniciales?: string[];
   onClose: () => void;
   onSuccess: (cancha: CanchaConEstado) => void;
   onNecesitaClickMapa?: () => void;
@@ -12,16 +14,16 @@ interface Props {
 
 const DEPORTES_OPCIONES = [
   { id: 'basketball', label: 'Basketball', emoji: '🏀' },
-  { id: 'futbol', label: 'Fútbol', emoji: '⚽' },
-  { id: 'voleibol', label: 'Vóleibol', emoji: '🏐' },
-  { id: 'tenis', label: 'Tenis', emoji: '🎾' },
-  { id: 'padel', label: 'Pádel', emoji: '🏸' },
+  { id: 'futbol',     label: 'Fútbol',     emoji: '⚽' },
+  { id: 'voleibol',   label: 'Vóleibol',   emoji: '🏐' },
+  { id: 'tenis',      label: 'Tenis',      emoji: '🎾' },
+  { id: 'padel',      label: 'Pádel',      emoji: '🏸' },
 ];
 
-export function AgregarCanchaModal({ coordsIniciales, onClose, onSuccess, onNecesitaClickMapa }: Props) {
+export function AgregarCanchaModal({ coordsIniciales, deportesIniciales, onClose, onSuccess, onNecesitaClickMapa }: Props) {
   const [nombre, setNombre] = useState('');
   const [direccion, setDireccion] = useState('');
-  const [deportes, setDeportes] = useState<string[]>([]);
+  const [deportes, setDeportes] = useState<string[]>(deportesIniciales ?? []);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(coordsIniciales ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -25,7 +25,7 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorId, jugado
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         equipo_id: equipoId,
-        metodo: 'directo',
+        metodo: 'link',
         valor: '',
         jugador_id: jugadorId,
       }),

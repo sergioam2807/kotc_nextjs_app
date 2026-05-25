@@ -47,14 +47,24 @@ export async function PATCH(
     }
   }
 
-  // Update estado
-  const { error: updateError } = await supabase
+  // Update estado — filter by 'pendiente' to prevent double-processing.
+  // Use .select() so we can detect if RLS silently blocked the update (0 rows → null).
+  const { data: updated, error: updateError } = await supabase
     .from('solicitudes_equipo')
     .update({ estado, updated_at: new Date().toISOString() })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('estado', 'pendiente')
+    .select('id')
+    .maybeSingle();
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+  if (!updated) {
+    return NextResponse.json(
+      { error: 'La solicitud ya fue procesada o no tienes permisos para gestionarla' },
+      { status: 409 },
+    );
   }
 
   // If accepted: add player to equipo_miembros

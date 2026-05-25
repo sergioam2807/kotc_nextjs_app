@@ -35,16 +35,30 @@ export default async function SolicitudesPage() {
     );
   }
 
-  const { data: solicitudes } = await supabase
+  // Step 1: Fetch solicitudes WITHOUT profiles join.
+  // solicitudes_equipo.jugador_id → auth.users (not profiles), so the embedded
+  // profiles() join is unresolvable by PostgREST and returns null data silently.
+  // We fetch profiles in a separate query instead (same pattern as equipo/page.tsx).
+  const { data: solicitudesRaw } = await supabase
     .from('solicitudes_equipo')
-    .select(
-      'id, jugador_id, mensaje, estado, created_at, profiles(username, display_name, avatar_url, nivel, xp, posicion_principal, especialidades, deportes_activos, ciudad)',
-    )
+    .select('id, jugador_id, mensaje, estado, created_at')
     .eq('equipo_id', membresia.equipo_id)
     .eq('estado', 'pendiente')
     .order('created_at', { ascending: false });
 
-  const count = solicitudes?.length ?? 0;
+  const solicitudes = solicitudesRaw ?? [];
+  const count = solicitudes.length;
+
+  // Step 2: Fetch profiles separately for the requesting players
+  const jugadorIds = solicitudes.map(s => s.jugador_id).filter(Boolean);
+  const { data: perfilesRaw } = jugadorIds.length > 0
+    ? await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url, nivel, xp, posicion_principal, especialidades, deportes_activos, ciudad')
+        .in('id', jugadorIds)
+    : { data: [] };
+
+  const perfilMap = Object.fromEntries((perfilesRaw ?? []).map(p => [p.id, p]));
 
   return (
     <div className="p-5 max-w-2xl">
@@ -73,19 +87,17 @@ export default async function SolicitudesPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {(solicitudes ?? []).map(sol => {
-            const perfil = Array.isArray(sol.profiles) ? sol.profiles[0] : sol.profiles;
-            if (!perfil) return null;
+          {solicitudes.map(sol => {
+            const perfil = perfilMap[sol.jugador_id];
 
-            const nombre = (perfil as { display_name?: string; username: string }).display_name
-              ?? (perfil as { username: string }).username;
-            const nivel = (perfil as { nivel?: number }).nivel ?? 1;
-            const xp = (perfil as { xp?: number }).xp ?? 0;
-            const ciudad = (perfil as { ciudad?: string }).ciudad;
-            const posicionPrincipal = (perfil as { posicion_principal?: string }).posicion_principal;
-            const especialidades: string[] = (perfil as { especialidades?: string[] }).especialidades ?? [];
-            const deportesActivos: string[] = (perfil as { deportes_activos?: string[] }).deportes_activos ?? [];
-            const avatarUrl = (perfil as { avatar_url?: string }).avatar_url;
+            const nombre = perfil?.display_name ?? perfil?.username ?? 'Jugador';
+            const nivel = perfil?.nivel ?? 1;
+            const xp = perfil?.xp ?? 0;
+            const ciudad = perfil?.ciudad;
+            const posicionPrincipal = perfil?.posicion_principal;
+            const especialidades: string[] = perfil?.especialidades ?? [];
+            const deportesActivos: string[] = perfil?.deportes_activos ?? [];
+            const avatarUrl = perfil?.avatar_url;
 
             const palabras = nombre.trim().split(/\s+/);
             const iniciales =
