@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const deporte = request.nextUrl.searchParams.get('deporte');
 
   // Validate deporte filter to prevent unexpected query injection
-  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  const DEPORTES_VALIDOS = ['basketball']; // MVP: solo basketball
   if (deporte && !DEPORTES_VALIDOS.includes(deporte)) {
     return Response.json({ error: 'deporte inválido' }, { status: 400 });
   }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   if (!Array.isArray(deporte) || deporte.length === 0) {
     return Response.json({ error: 'deporte debe ser un array no vacío' }, { status: 400 });
   }
-  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  const DEPORTES_VALIDOS = ['basketball']; // MVP: solo basketball
   if (!deporte.every((d: unknown) => typeof d === 'string' && DEPORTES_VALIDOS.includes(d))) {
     return Response.json({ error: 'deporte contiene valores inválidos' }, { status: 400 });
   }

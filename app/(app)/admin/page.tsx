@@ -5,18 +5,21 @@ export default async function AdminPage() {
   const supabase = await createClient();
 
   // Parallel stats queries
+  const nowIso = new Date().toISOString();
   const [
     { count: totalCanchas },
     { count: totalEquipos },
     { count: totalJugadores },
     { count: totalDesafios },
     { data: temporadaActiva },
+    { count: eventosVigentes },
   ] = await Promise.all([
     supabase.from('canchas').select('*', { count: 'exact', head: true }),
     supabase.from('equipos').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('desafios').select('*', { count: 'exact', head: true }),
     supabase.from('temporadas').select('id, nombre, inicio, fin').eq('activa', true).maybeSingle(),
+    supabase.from('eventos').select('*', { count: 'exact', head: true }).eq('activo', true).lte('fecha_inicio', nowIso).gte('fecha_fin', nowIso),
   ]);
 
   const stats = [
@@ -80,6 +83,25 @@ export default async function AdminPage() {
         ))}
       </div>
 
+      {/* Eventos vigentes badge */}
+      {(eventosVigentes ?? 0) > 0 && (
+        <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-6 flex items-center gap-3">
+          <span className="text-[24px]">🎉</span>
+          <div className="flex-1">
+            <div className="text-[13px] font-semibold text-on-surface">
+              {eventosVigentes} evento{eventosVigentes === 1 ? '' : 's'} en curso
+            </div>
+            <div className="text-[11px] text-on-surface-variant">Visibles en el dashboard de los usuarios</div>
+          </div>
+          <Link
+            href="/admin/eventos"
+            className="text-[11px] text-accent hover:underline flex-shrink-0"
+          >
+            Ver →
+          </Link>
+        </div>
+      )}
+
       {/* Quick links */}
       <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
         <div className="text-[11px] text-outline uppercase tracking-wider mb-3 font-medium">Acciones rápidas</div>
@@ -102,6 +124,26 @@ export default async function AdminPage() {
             <div>
               <div className="text-[13px] font-medium text-on-surface">Historial de temporadas</div>
               <div className="text-[11px] text-on-surface-variant">Ver y gestionar todas las temporadas</div>
+            </div>
+          </Link>
+          <Link
+            href="/admin/eventos/nuevo"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-outline-variant hover:border-outline hover:bg-surface-container transition-colors"
+          >
+            <span className="text-[18px]">🎉</span>
+            <div>
+              <div className="text-[13px] font-medium text-on-surface">Nuevo evento especial</div>
+              <div className="text-[11px] text-on-surface-variant">Torneo exprés, bonus XP, reto semanal y más</div>
+            </div>
+          </Link>
+          <Link
+            href="/admin/eventos"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-outline-variant hover:border-outline hover:bg-surface-container transition-colors"
+          >
+            <span className="text-[18px]">⭐</span>
+            <div>
+              <div className="text-[13px] font-medium text-on-surface">Gestionar eventos</div>
+              <div className="text-[11px] text-on-surface-variant">Ver todos los eventos activos e historial</div>
             </div>
           </Link>
         </div>

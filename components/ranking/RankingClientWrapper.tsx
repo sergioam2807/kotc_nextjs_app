@@ -3,17 +3,22 @@
 import { useState, useMemo } from 'react';
 import { TeamRankingView } from './TeamRankingView';
 import { PlayerRankingView } from './PlayerRankingView';
-import type { TeamRankingStat, PlayerRankingStat } from './types';
+import { Player1v1RankingView } from './Player1v1RankingView';
+import type { TeamRankingStat, PlayerRankingStat, Player1v1Stat } from './types';
 
 interface Props {
   teamStats: TeamRankingStat[];
   playerStats: PlayerRankingStat[];
+  stats1v1: Player1v1Stat[];
   currentUserId: string | null;
   temporadaNombre: string | null;
+  temporadaColor?: string | null;
+  temporadaEmoji?: string | null;
+  temporadaNumero?: number | null;
 }
 
-export default function RankingClientWrapper({ teamStats, playerStats, currentUserId, temporadaNombre }: Props) {
-  const [tab, setTab] = useState<'equipos' | 'jugadores'>('equipos');
+export default function RankingClientWrapper({ teamStats, playerStats, stats1v1, currentUserId, temporadaNombre, temporadaColor, temporadaEmoji, temporadaNumero }: Props) {
+  const [tab, setTab] = useState<'equipos' | 'jugadores' | '1v1'>('equipos');
   const [ciudadFiltro, setCiudadFiltro] = useState<string>('todas');
 
   // Unique cities from teams (sorted alphabetically, ignoring nulls)
@@ -38,9 +43,30 @@ export default function RankingClientWrapper({ teamStats, playerStats, currentUs
             <div className="text-[11px] text-outline mt-0.5">Clasificación territorial por canchas conquistadas</div>
           </div>
           {temporadaNombre && (
-            <div className="flex items-center gap-1.5 bg-accent/10 border border-accent/25 rounded-lg px-2.5 py-1.5 flex-shrink-0">
-              <span className="text-[12px]">🏆</span>
-              <span className="text-[10px] font-semibold text-accent truncate max-w-[120px]">{temporadaNombre}</span>
+            <div
+              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 flex-shrink-0"
+              style={{
+                background: temporadaColor ? `${temporadaColor}15` : 'var(--color-accent)/10',
+                border: `1px solid ${temporadaColor ? `${temporadaColor}35` : 'var(--color-accent)/25'}`,
+              }}
+            >
+              <span className="text-[12px]">{temporadaEmoji ?? '🏆'}</span>
+              <div className="max-w-[120px] truncate">
+                {temporadaNumero && (
+                  <span
+                    className="text-[9px] font-semibold mr-0.5"
+                    style={{ color: temporadaColor ?? 'var(--color-accent)' }}
+                  >
+                    T{String(temporadaNumero).padStart(2, '0')} ·{' '}
+                  </span>
+                )}
+                <span
+                  className="text-[10px] font-semibold"
+                  style={{ color: temporadaColor ?? 'var(--color-accent)' }}
+                >
+                  {temporadaNombre}
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -59,6 +85,12 @@ export default function RankingClientWrapper({ teamStats, playerStats, currentUs
           className={`px-4 py-2 rounded-lg text-[12px] font-semibold transition-colors min-h-[40px] ${tab === 'jugadores' ? 'bg-accent/15 text-accent' : 'text-outline hover:text-on-surface-variant'}`}
         >
           Jugadores
+        </button>
+        <button
+          onClick={() => setTab('1v1')}
+          className={`px-4 py-2 rounded-lg text-[12px] font-semibold transition-colors min-h-[40px] ${tab === '1v1' ? 'bg-accent/15 text-accent' : 'text-outline hover:text-on-surface-variant'}`}
+        >
+          ⚔️ 1v1
         </button>
       </div>
 
@@ -94,8 +126,10 @@ export default function RankingClientWrapper({ teamStats, playerStats, currentUs
       <div className="flex-1">
         {tab === 'equipos' ? (
           <TeamRankingView stats={teamStatsFiltrados} />
-        ) : (
+        ) : tab === 'jugadores' ? (
           <PlayerRankingView stats={playerStats} currentUserId={currentUserId} />
+        ) : (
+          <Player1v1RankingView stats={stats1v1} currentUserId={currentUserId} />
         )}
       </div>
     </div>

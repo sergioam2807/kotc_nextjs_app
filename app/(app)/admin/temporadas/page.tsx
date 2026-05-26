@@ -1,12 +1,21 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 
+const TEMA_LABELS: Record<string, string> = {
+  street:      '🟥 Street',
+  competitivo: '🟦 Competitivo',
+  summer:      '🟨 Summer',
+  nightball:   '⬛ Nightball',
+  playoffs:    '🟪 Playoffs',
+  underground: '🟩 Underground',
+};
+
 export default async function AdminTemporadasPage() {
   const supabase = await createClient();
 
   const { data: temporadas } = await supabase
     .from('temporadas')
-    .select('id, nombre, descripcion, deporte, deporte_filter, inicio, fin, activa')
+    .select('id, nombre, descripcion, slogan, deporte, deporte_filter, inicio, fin, activa, numero, color, tema, emoji')
     .order('created_at', { ascending: false });
 
   const lista = temporadas ?? [];
@@ -76,11 +85,16 @@ function TemporadaCard({
     id: string;
     nombre: string;
     descripcion?: string | null;
+    slogan?: string | null;
     deporte?: string | null;
     deporte_filter?: string[] | null;
     inicio: string;
     fin: string;
     activa: boolean;
+    numero?: number | null;
+    color?: string | null;
+    tema?: string | null;
+    emoji?: string | null;
   };
   isActiva: boolean;
 }) {
@@ -95,45 +109,90 @@ function TemporadaCard({
     ? temporada.deporte
     : 'Todos los deportes';
 
+  const seasonColor = temporada.color ?? (isActiva ? 'var(--color-accent)' : undefined);
+
   return (
     <Link
       href={`/admin/temporadas/${temporada.id}`}
-      className={`block rounded-xl p-4 border transition-colors hover:border-outline ${
-        isActiva
-          ? 'bg-accent/8 border-accent/30'
-          : 'bg-surface-container-low border-outline-variant'
-      }`}
+      className="block rounded-xl overflow-hidden border transition-colors hover:border-outline"
+      style={{
+        borderColor: isActiva && seasonColor ? `${seasonColor}50` : undefined,
+        background: isActiva && seasonColor ? `${seasonColor}08` : undefined,
+      }}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="text-[14px] font-semibold text-on-surface truncate">{temporada.nombre}</span>
-            {isActiva && (
-              <span className="px-1.5 py-0.5 rounded bg-accent/15 border border-accent/30 text-[9px] text-accent font-semibold uppercase tracking-wider">
-                Activa
+      {/* Color bar top */}
+      {seasonColor && (
+        <div className="h-1" style={{ background: seasonColor }} />
+      )}
+
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            {/* Numero + Emoji + Nombre */}
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              {temporada.emoji && (
+                <span className="text-[16px]">{temporada.emoji}</span>
+              )}
+              <span className="text-[14px] font-bold text-on-surface truncate">
+                {temporada.numero && (
+                  <span
+                    className="text-[11px] font-normal mr-1"
+                    style={{ color: seasonColor ?? undefined }}
+                  >
+                    T{String(temporada.numero).padStart(2, '0')} ·{' '}
+                  </span>
+                )}
+                {temporada.nombre}
               </span>
+              {isActiva && (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider"
+                  style={{
+                    background: seasonColor ? `${seasonColor}20` : 'var(--color-accent)/15',
+                    color: seasonColor ?? 'var(--color-accent)',
+                    border: `1px solid ${seasonColor ? `${seasonColor}40` : 'var(--color-accent)/30'}`,
+                  }}
+                >
+                  Activa
+                </span>
+              )}
+            </div>
+
+            {/* Slogan */}
+            {temporada.slogan && (
+              <p
+                className="text-[11px] mb-1 italic line-clamp-1"
+                style={{ color: seasonColor ? `${seasonColor}cc` : undefined }}
+              >
+                "{temporada.slogan}"
+              </p>
             )}
+
+            {/* Meta info */}
+            <div className="flex items-center gap-2 flex-wrap text-[10px] text-outline">
+              <span>
+                {inicioDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {' — '}
+                {finDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+              <span>·</span>
+              <span>{deporteLabel}</span>
+              {temporada.tema && (
+                <>
+                  <span>·</span>
+                  <span>{TEMA_LABELS[temporada.tema] ?? temporada.tema}</span>
+                </>
+              )}
+              {isActiva && diasRestantes > 0 && (
+                <>
+                  <span>·</span>
+                  <span style={{ color: seasonColor ?? undefined }}>{diasRestantes}d restantes</span>
+                </>
+              )}
+            </div>
           </div>
-          {temporada.descripcion && (
-            <p className="text-[11px] text-on-surface-variant mb-1 line-clamp-1">{temporada.descripcion}</p>
-          )}
-          <div className="flex items-center gap-3 flex-wrap text-[11px] text-outline">
-            <span>
-              {inicioDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
-              {' — '}
-              {finDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </span>
-            <span>·</span>
-            <span>{deporteLabel}</span>
-            {isActiva && diasRestantes > 0 && (
-              <>
-                <span>·</span>
-                <span className="text-accent">{diasRestantes}d restantes</span>
-              </>
-            )}
-          </div>
+          <span className="text-outline text-[16px] ml-3">›</span>
         </div>
-        <span className="text-outline text-[16px] ml-3">›</span>
       </div>
     </Link>
   );

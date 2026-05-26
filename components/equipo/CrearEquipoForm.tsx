@@ -4,23 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 
-type Deporte = 'basketball' | 'futbol' | 'voleibol' | 'tenis' | 'padel';
-
-const MODALIDADES: Record<Deporte, string[]> = {
-  basketball: ['3v3', '5v5'],
-  futbol: ['5v5', '7v7', '11v11'],
-  voleibol: ['6v6'],
-  tenis: ['1v1'],
-  padel: ['2v2'],
-};
-
-const DEPORTES_LABELS: Record<Deporte, string> = {
-  basketball: 'Basketball',
-  futbol: 'Fútbol',
-  voleibol: 'Voleibol',
-  tenis: 'Tenis',
-  padel: 'Pádel',
-};
+// MVP: Basketball únicamente
+const MODALIDADES = ['3v3', '5v5'];
 
 const COLOR_OPTIONS = [
   { value: '#ffe083', label: 'Amarillo' },
@@ -40,17 +25,11 @@ const labelClass =
 export function CrearEquipoForm() {
   const router = useRouter();
   const [nombre, setNombre] = useState('');
-  const [deporte, setDeporte] = useState<Deporte>('basketball');
   const [modalidad, setModalidad] = useState('3v3');
   const [ciudad, setCiudad] = useState('');
   const [color, setColor] = useState('#ffe083');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const handleDeporteChange = (d: Deporte) => {
-    setDeporte(d);
-    setModalidad(MODALIDADES[d][0]);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +40,7 @@ export function CrearEquipoForm() {
       const res = await fetch('/api/equipos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: nombre.trim(), deporte, modalidad, ciudad: ciudad.trim(), color }),
+        body: JSON.stringify({ nombre: nombre.trim(), deporte: 'basketball', modalidad, ciudad: ciudad.trim(), color }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -93,19 +72,14 @@ export function CrearEquipoForm() {
         />
       </div>
 
-      {/* Deporte + Modalidad */}
+      {/* Deporte (fijo: basketball) + Modalidad */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label className={labelClass}>Deporte</label>
-          <select
-            value={deporte}
-            onChange={e => handleDeporteChange(e.target.value as Deporte)}
-            className={`${inputClass} cursor-pointer appearance-none`}
-          >
-            {(Object.keys(DEPORTES_LABELS) as Deporte[]).map(d => (
-              <option key={d} value={d}>{DEPORTES_LABELS[d]}</option>
-            ))}
-          </select>
+          <div className={`${inputClass} flex items-center gap-2 cursor-default select-none opacity-80`}>
+            <span>🏀</span>
+            <span>Basketball</span>
+          </div>
         </div>
         <div className="flex flex-col gap-1.5">
           <label className={labelClass}>Modalidad</label>
@@ -114,7 +88,7 @@ export function CrearEquipoForm() {
             onChange={e => setModalidad(e.target.value)}
             className={`${inputClass} cursor-pointer appearance-none`}
           >
-            {MODALIDADES[deporte].map(m => (
+            {MODALIDADES.map(m => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>

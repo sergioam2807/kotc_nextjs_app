@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const deporte = searchParams.get('deporte');
 
   // Validate deporte filter
-  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  const DEPORTES_VALIDOS = ['basketball']; // MVP: solo basketball
   if (deporte && !DEPORTES_VALIDOS.includes(deporte)) {
     return NextResponse.json({ error: 'deporte inválido' }, { status: 400 });
   }
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   if (typeof nombre !== 'string' || nombre.trim().length > 60) {
     return NextResponse.json({ error: 'nombre inválido (máx 60 caracteres)' }, { status: 400 });
   }
-  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  const DEPORTES_VALIDOS = ['basketball']; // MVP: solo basketball
   if (!DEPORTES_VALIDOS.includes(deporte)) {
     return NextResponse.json({ error: 'deporte inválido' }, { status: 400 });
   }

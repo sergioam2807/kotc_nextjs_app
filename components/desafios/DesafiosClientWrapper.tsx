@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useTransition } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { DesafioConDatos, EquipoSimple, CanchaSimple, EstadoDesafio, ResultadoDesafio } from './types';
+import type { ProfileSimple, Desafio1v1ConDatos } from '@/components/desafios1v1/types';
 import { DesafioCard } from './DesafioCard';
 import { NuevoDesafioModal } from './NuevoDesafioModal';
 
@@ -11,6 +12,7 @@ interface Props {
   equipoId: string;
   equipos: EquipoSimple[];
   canchas: CanchaSimple[];
+  jugadores1v1?: ProfileSimple[];
 }
 
 type Filtro = 'todos' | 'recibidos' | 'enviados' | 'jugados';
@@ -24,7 +26,7 @@ const FILTROS: { value: Filtro; label: string }[] = [
 
 const ESTADOS_JUGADOS: EstadoDesafio[] = ['jugado', 'resultado_pendiente', 'disputado', 'completado'];
 
-export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas }: Props) {
+export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas, jugadores1v1 = [] }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -147,6 +149,7 @@ export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas }: 
           equipoId={equipoId}
           equipos={equipos}
           canchas={canchas}
+          jugadores1v1={jugadores1v1}
           canchaPreseleccionada={canchaPreseleccionada}
           equipoRetadoPreseleccionado={equipoRetadoPreseleccionado}
           onClose={() => { setShowModal(false); setCanchaPreseleccionada(undefined); setEquipoRetadoPreseleccionado(undefined); }}
@@ -155,6 +158,11 @@ export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas }: 
             setShowModal(false);
             setCanchaPreseleccionada(undefined);
             setEquipoRetadoPreseleccionado(undefined);
+          }}
+          onSuccess1v1={() => {
+            // 1v1 created from within team desafios modal — refresh to show in 1v1 section
+            setShowModal(false);
+            startTransition(() => router.refresh());
           }}
         />
       )}

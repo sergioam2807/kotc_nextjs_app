@@ -80,12 +80,12 @@ export async function POST(request: Request) {
   }
 
   // Enum validation — only allow known values to prevent garbage data in DB
-  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  const DEPORTES_VALIDOS = ['basketball']; // MVP: solo basketball
   if (!DEPORTES_VALIDOS.includes(deporte)) {
     return NextResponse.json({ error: 'deporte inválido' }, { status: 400 });
   }
 
-  const FORMATOS_VALIDOS = ['1v1', '3v3', '5v5', 'libre'];
+  const FORMATOS_VALIDOS = ['2v2', '3v3', '4v4', '5v5', 'equipo_completo'];
   if (!FORMATOS_VALIDOS.includes(formato)) {
     return NextResponse.json({ error: 'formato inválido' }, { status: 400 });
   }

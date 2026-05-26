@@ -6,6 +6,9 @@ function isAdmin(email: string | undefined): boolean {
   return !!(email && adminEmail && email === adminEmail);
 }
 
+const VALID_TEMAS = ['street', 'competitivo', 'summer', 'nightball', 'playoffs', 'underground'] as const;
+const HEX_REGEX = /^#[0-9a-fA-F]{6}$/;
+
 // GET /api/admin/temporadas — list all seasons
 export async function GET() {
   const supabase = await createClient();
@@ -17,7 +20,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('temporadas')
-    .select('id, nombre, descripcion, deporte, deporte_filter, inicio, fin, activa, created_at')
+    .select('id, nombre, descripcion, deporte, deporte_filter, inicio, fin, activa, created_at, numero, color, slogan, tema, emoji')
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -41,6 +44,11 @@ export async function POST(req: Request) {
     fin?: string;
     deporte_filter?: string[] | null;
     activa?: boolean;
+    numero?: number | null;
+    color?: string | null;
+    slogan?: string | null;
+    tema?: string | null;
+    emoji?: string | null;
   };
 
   try {
@@ -49,7 +57,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
   }
 
-  const { nombre, descripcion, inicio, fin, deporte_filter, activa } = body;
+  const { nombre, descripcion, inicio, fin, deporte_filter, activa, numero, color, slogan, tema, emoji } = body;
 
   if (!nombre?.trim()) {
     return NextResponse.json({ error: 'El nombre es requerido.' }, { status: 400 });
@@ -59,6 +67,15 @@ export async function POST(req: Request) {
   }
   if (new Date(fin) <= new Date(inicio)) {
     return NextResponse.json({ error: 'La fecha de fin debe ser posterior al inicio.' }, { status: 400 });
+  }
+  if (color && !HEX_REGEX.test(color)) {
+    return NextResponse.json({ error: 'Color inválido (debe ser hex #rrggbb).' }, { status: 400 });
+  }
+  if (tema && !VALID_TEMAS.includes(tema as typeof VALID_TEMAS[number])) {
+    return NextResponse.json({ error: 'Tema inválido.' }, { status: 400 });
+  }
+  if (numero !== null && numero !== undefined && (typeof numero !== 'number' || numero < 1 || numero > 999)) {
+    return NextResponse.json({ error: 'Número de temporada inválido.' }, { status: 400 });
   }
 
   // If activating, deactivate all others first
@@ -73,14 +90,19 @@ export async function POST(req: Request) {
     .from('temporadas')
     .insert({
       nombre: nombre.trim(),
-      descripcion: descripcion ?? null,
+      descripcion: descripcion?.trim() ?? null,
       inicio,
       fin,
       deporte: deporte_filter?.[0] ?? null,          // keep legacy deporte col in sync
       deporte_filter: deporte_filter ?? null,
       activa: activa ?? false,
+      numero: numero ?? null,
+      color: color ?? null,
+      slogan: slogan?.trim() ?? null,
+      tema: tema ?? null,
+      emoji: emoji?.trim() ?? null,
     })
-    .select('id, nombre, descripcion, deporte, deporte_filter, inicio, fin, activa')
+    .select('id, nombre, descripcion, deporte, deporte_filter, inicio, fin, activa, numero, color, slogan, tema, emoji')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

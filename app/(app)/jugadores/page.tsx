@@ -25,6 +25,25 @@ export default async function JugadoresPage() {
     ? { id: viewerMembresia.equipo_id, nombre: (viewerMembresia as any).equipos?.nombre ?? 'Mi equipo' }
     : null;
 
+  // Build map: jugador_id → token de invitación pendiente (no expirada)
+  const invitacionesMapa: Record<string, string> = {};
+  if (viewerEquipo) {
+    const ahora = new Date().toISOString();
+    const { data: invsPendientes } = await supabase
+      .from('invitaciones')
+      .select('jugador_id, token, expira_at')
+      .eq('equipo_id', viewerEquipo.id)
+      .eq('estado', 'pendiente')
+      .not('jugador_id', 'is', null)
+      .gt('expira_at', ahora);
+
+    for (const inv of invsPendientes ?? []) {
+      if (inv.jugador_id && inv.token) {
+        invitacionesMapa[inv.jugador_id] = inv.token;
+      }
+    }
+  }
+
   const { data: jugadores } = await supabase
     .from('profiles')
     .select(
@@ -163,6 +182,7 @@ export default async function JugadoresPage() {
                       equipoNombre={viewerEquipo.nombre}
                       jugadorId={jugador.id}
                       jugadorNombre={nombre}
+                      tokenExistente={invitacionesMapa[jugador.id] ?? null}
                     />
                   </div>
                 )}

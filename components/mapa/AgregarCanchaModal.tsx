@@ -12,12 +12,9 @@ interface Props {
   onNecesitaClickMapa?: () => void;
 }
 
+// MVP: Basketball únicamente
 const DEPORTES_OPCIONES = [
   { id: 'basketball', label: 'Basketball', emoji: '🏀' },
-  { id: 'futbol',     label: 'Fútbol',     emoji: '⚽' },
-  { id: 'voleibol',   label: 'Vóleibol',   emoji: '🏐' },
-  { id: 'tenis',      label: 'Tenis',      emoji: '🎾' },
-  { id: 'padel',      label: 'Pádel',      emoji: '🏸' },
 ];
 
 export function AgregarCanchaModal({ coordsIniciales, deportesIniciales, onClose, onSuccess, onNecesitaClickMapa }: Props) {
@@ -114,6 +111,7 @@ export function AgregarCanchaModal({ coordsIniciales, deportesIniciales, onClose
         lng:                cancha.lng,
         deporte:            cancha.deporte ?? deportes,
         estado:             'libre',
+        kingsPerFormato:    {},
         es_publica:         cancha.es_publica          ?? esPublica,
         precio_hora:        cancha.precio_hora         ?? null,
         telefono_contacto:  cancha.telefono_contacto   ?? null,

@@ -24,8 +24,8 @@ function DashboardIcon() {
 function SwordIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg>;
 }
-function TrophyIcon() {
-  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 12 3 5 21 5 16 12"/><path d="M12 12v9"/><path d="M8 21h8"/></svg>;
+function StarIcon() {
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
 }
 function UsersIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
@@ -60,7 +60,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
         { href: '/mapa', label: 'Mapa de canchas', icon: <MapPinIcon /> },
         { href: '/desafios', label: 'Desafíos', icon: <SwordIcon /> },
-        { href: '/ligas', label: 'Ligas', icon: <TrophyIcon /> },
+        // { href: '/ligas', label: 'Ligas', icon: <TrophyIcon /> }, // TODO: habilitar cuando se lance ligas
         { href: '/ranking', label: 'Ranking', icon: <CrownIcon /> },
       ],
     },
@@ -79,6 +79,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
     items: [
       { href: '/admin', label: 'Panel Admin', icon: <SettingsIcon /> },
       { href: '/admin/temporadas', label: 'Temporadas', icon: <CalendarIcon /> },
+      { href: '/admin/eventos', label: 'Eventos', icon: <StarIcon /> },
     ],
   };
 
