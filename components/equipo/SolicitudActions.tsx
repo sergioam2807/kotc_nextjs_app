@@ -12,25 +12,32 @@ export function SolicitudActions({ solicitudId, jugadorNombre }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [confirmando, setConfirmando] = useState<'aceptar' | 'rechazar' | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleAction = async (estado: 'aceptada' | 'rechazada') => {
     setError(null);
-    const res = await fetch(`/api/solicitudes/${solicitudId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ estado }),
-    });
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/solicitudes/${solicitudId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado }),
+      });
 
-    if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? 'Error al procesar la solicitud');
-      setConfirmando(null);
-      return;
-    }
 
-    setConfirmando(null);
-    startTransition(() => router.refresh());
+      if (!res.ok) {
+        setError(data.error ?? 'Error al procesar la solicitud');
+        setConfirmando(null);
+        return;
+      }
+
+      setConfirmando(null);
+      startTransition(() => router.refresh());
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (confirmando === 'aceptar') {
@@ -42,14 +49,14 @@ export function SolicitudActions({ solicitudId, jugadorNombre }: Props) {
         <div className="flex gap-2">
           <button
             onClick={() => handleAction('aceptada')}
-            disabled={isPending}
+            disabled={loading || isPending}
             className="flex-1 bg-status-libre/15 border border-status-libre/40 text-status-libre text-[12px] font-semibold py-2 rounded-lg hover:bg-status-libre/25 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {isPending ? 'Procesando...' : 'Sí, aceptar'}
+            {loading ? 'Procesando...' : 'Sí, aceptar'}
           </button>
           <button
             onClick={() => setConfirmando(null)}
-            disabled={isPending}
+            disabled={loading || isPending}
             className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant text-[12px] py-2 rounded-lg hover:border-outline transition-colors disabled:opacity-50 cursor-pointer"
           >
             Cancelar
@@ -68,14 +75,14 @@ export function SolicitudActions({ solicitudId, jugadorNombre }: Props) {
         <div className="flex gap-2">
           <button
             onClick={() => handleAction('rechazada')}
-            disabled={isPending}
+            disabled={loading || isPending}
             className="flex-1 bg-error/15 border border-error/40 text-error text-[12px] font-semibold py-2 rounded-lg hover:bg-error/25 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {isPending ? 'Procesando...' : 'Sí, rechazar'}
+            {loading ? 'Procesando...' : 'Sí, rechazar'}
           </button>
           <button
             onClick={() => setConfirmando(null)}
-            disabled={isPending}
+            disabled={loading || isPending}
             className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant text-[12px] py-2 rounded-lg hover:border-outline transition-colors disabled:opacity-50 cursor-pointer"
           >
             Cancelar

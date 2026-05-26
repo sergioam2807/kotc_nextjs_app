@@ -11,12 +11,9 @@ interface Props {
   onNecesitaClickMapa?: () => void;
 }
 
+// MVP: Basketball únicamente
 const DEPORTES_OPCIONES = [
   { id: 'basketball', label: 'Basketball', emoji: '🏀' },
-  { id: 'futbol', label: 'Fútbol', emoji: '⚽' },
-  { id: 'voleibol', label: 'Vóleibol', emoji: '🏐' },
-  { id: 'tenis', label: 'Tenis', emoji: '🎾' },
-  { id: 'padel', label: 'Pádel', emoji: '🏸' },
 ];
 
 export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, onNecesitaClickMapa }: Props) {

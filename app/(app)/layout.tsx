@@ -23,6 +23,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ? (palabras[0][0] + palabras[1][0]).toUpperCase()
     : fullName.slice(0, 2).toUpperCase() || 'TU';
 
+  const adminEmail = process.env.ADMIN_EMAIL ?? '';
+  const isAdmin = !!(user?.email && adminEmail && user.email === adminEmail);
+
   return (
     <div className="flex flex-col h-[100dvh] bg-surface">
       <Topbar
@@ -34,7 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       />
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden md:flex">
-          <Sidebar />
+          <Sidebar isAdmin={isAdmin} />
         </div>
         <main className="flex-1 overflow-y-auto kotc-main-scroll">
           {children}

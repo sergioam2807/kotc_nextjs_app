@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
+// MVP: Basketball activo. El resto "próximamente".
 const DEPORTES = [
-  { id: 'basketball', nombre: 'Basketball', emoji: '🏀' },
-  { id: 'futbol', nombre: 'Fútbol', emoji: '⚽' },
-  { id: 'voleibol', nombre: 'Vóleibol', emoji: '🏐' },
-  { id: 'tenis', nombre: 'Tenis', emoji: '🎾' },
-  { id: 'padel', nombre: 'Pádel', emoji: '🏓' },
-  { id: 'proximamente', nombre: 'Más pronto', emoji: '⏳' },
+  { id: 'basketball', nombre: 'Basketball', emoji: '🏀', proximamente: false },
+  { id: 'futbol',     nombre: 'Fútbol',     emoji: '⚽', proximamente: true  },
+  { id: 'voleibol',   nombre: 'Vóleibol',   emoji: '🏐', proximamente: true  },
+  { id: 'tenis',      nombre: 'Tenis',      emoji: '🎾', proximamente: true  },
+  { id: 'padel',      nombre: 'Pádel',      emoji: '🏓', proximamente: true  },
 ];
 
 const PASOS = ['Cuenta', 'Deportes', 'Equipo', 'Mapa'];
@@ -22,7 +22,8 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   const toggleDeporte = (id: string) => {
-    if (id === 'proximamente') return;
+    const d = DEPORTES.find(x => x.id === id);
+    if (!d || d.proximamente) return;
     setDeportesSeleccionados(prev =>
       prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
     );
@@ -98,31 +99,35 @@ export default function OnboardingPage() {
             <div className="grid grid-cols-3 gap-2.5 mb-6">
               {DEPORTES.map(deporte => {
                 const selected = deportesSeleccionados.includes(deporte.id);
-                const disabled = deporte.id === 'proximamente';
+                const disabled = deporte.proximamente;
                 return (
                   <button
                     key={deporte.id}
                     onClick={() => toggleDeporte(deporte.id)}
                     disabled={disabled}
-                    className={`bg-[#111114] border rounded-[12px] py-4 px-2.5 text-center cursor-pointer transition-all ${
+                    className={`bg-[#111114] border rounded-[12px] py-4 px-2.5 text-center transition-all relative ${
                       selected
-                        ? 'border-[#F5C344] bg-[#18180f]'
+                        ? 'border-[#F5C344] bg-[#18180f] cursor-pointer'
                         : disabled
                         ? 'border-[#1e1e24] opacity-40 cursor-not-allowed'
-                        : 'border-[#1e1e24] hover:border-[#333]'
+                        : 'border-[#1e1e24] hover:border-[#333] cursor-pointer'
                     }`}
                   >
                     <div className="text-[26px] mb-2">{deporte.emoji}</div>
                     <div className={`text-[13px] font-medium ${selected ? 'text-[#F5C344]' : 'text-[#888]'}`}>
                       {deporte.nombre}
                     </div>
-                    <div
-                      className={`w-4 h-4 rounded-full border mx-auto mt-1.5 flex items-center justify-center text-[10px] ${
-                        selected ? 'bg-[#F5C344] border-[#F5C344] text-[#080809]' : 'border-[#333]'
-                      }`}
-                    >
-                      {selected && '✓'}
-                    </div>
+                    {disabled ? (
+                      <div className="text-[9px] text-[#444] mt-1.5">Próximamente</div>
+                    ) : (
+                      <div
+                        className={`w-4 h-4 rounded-full border mx-auto mt-1.5 flex items-center justify-center text-[10px] ${
+                          selected ? 'bg-[#F5C344] border-[#F5C344] text-[#080809]' : 'border-[#333]'
+                        }`}
+                      >
+                        {selected && '✓'}
+                      </div>
+                    )}
                   </button>
                 );
               })}

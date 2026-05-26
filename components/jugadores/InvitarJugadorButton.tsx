@@ -7,14 +7,29 @@ interface Props {
   equipoNombre: string;
   jugadorId: string;
   jugadorNombre: string;
+  /** Token de una invitación pendiente ya existente (hidratado desde el servidor) */
+  tokenExistente?: string | null;
 }
 
-export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorId, jugadorNombre }: Props) {
+type Step = 'idle' | 'loading' | 'pendiente' | 'enviada';
+
+export function InvitarJugadorButton({
+  equipoId,
+  equipoNombre,
+  jugadorId,
+  jugadorNombre,
+  tokenExistente,
+}: Props) {
   const [isPending, startTransition] = useTransition();
-  const [step, setStep] = useState<'idle' | 'loading' | 'done'>('idle');
-  const [link, setLink] = useState<string | null>(null);
+  // Si viene un token del servidor → ya hay una invitación activa
+  const [step, setStep] = useState<Step>(tokenExistente ? 'pendiente' : 'idle');
+  const [token, setToken] = useState<string | null>(tokenExistente ?? null);
+  const [showLink, setShowLink] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const getLink = () =>
+    token ? `${window.location.origin}/join/${equipoId}/${token}` : '';
 
   const handleInvitar = async () => {
     setError(null);
@@ -25,7 +40,7 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorId, jugado
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         equipo_id: equipoId,
-        metodo: 'directo',
+        metodo: 'link',
         valor: '',
         jugador_id: jugadorId,
       }),
@@ -39,31 +54,79 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorId, jugado
       return;
     }
 
-    const joinUrl = data.joinUrl ?? `${window.location.origin}/join/${equipoId}/${data.token}`;
-    setLink(joinUrl);
-    startTransition(() => setStep('done'));
+    setToken(data.token ?? null);
+    startTransition(() => setStep('enviada'));
   };
 
   const handleCopy = async () => {
-    if (!link) return;
     try {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(getLink());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback: select the text
+      /* noop */
     }
   };
 
   const handleWhatsApp = () => {
-    if (!link) return;
+    const link = getLink();
     const texto = encodeURIComponent(
       `Hola ${jugadorNombre}! Te invito a unirte a *${equipoNombre}* en KOTC 🏀\n\n${link}`,
     );
     window.open(`https://wa.me/?text=${texto}`, '_blank');
   };
 
-  if (step === 'done' && link) {
+  // ── Invitación pendiente (hidratada desde el servidor) ──────────────────────
+  if (step === 'pendiente') {
+    return (
+      <div className="bg-surface-container border border-outline-variant rounded-xl p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[14px]">⏳</span>
+            <div>
+              <div className="text-[12px] font-semibold text-on-surface">
+                Invitación pendiente
+              </div>
+              <p className="text-[11px] text-on-surface-variant">
+                Esperando respuesta de {jugadorNombre}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowLink(v => !v)}
+            className="text-[11px] text-accent hover:underline cursor-pointer flex-shrink-0 ml-2"
+          >
+            {showLink ? 'Ocultar' : 'Ver link'}
+          </button>
+        </div>
+
+        {showLink && token && (
+          <>
+            <div className="bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[11px] text-on-surface-variant font-mono break-all select-all mb-2">
+              {getLink()}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopy}
+                className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant font-semibold text-[12px] py-1.5 rounded-lg hover:border-outline transition-colors cursor-pointer"
+              >
+                {copied ? '✓ Copiado' : 'Copiar link'}
+              </button>
+              <button
+                onClick={handleWhatsApp}
+                className="flex-1 bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-semibold text-[12px] py-1.5 rounded-lg hover:bg-[#25D366]/25 transition-colors cursor-pointer"
+              >
+                WhatsApp
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ── Recién enviada (flujo dentro de la misma sesión) ───────────────────────
+  if (step === 'enviada') {
     return (
       <div className="bg-status-libre/8 border border-status-libre/25 rounded-xl p-4">
         <div className="flex items-start gap-2 mb-3">
@@ -79,34 +142,38 @@ export function InvitarJugadorButton({ equipoId, equipoNombre, jugadorId, jugado
           </div>
         </div>
 
-        {/* Link colapsable */}
-        <details className="mb-3">
-          <summary className="text-[11px] text-accent cursor-pointer hover:underline select-none">
-            Ver link de invitación
-          </summary>
-          <div className="mt-2 bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-[11px] text-on-surface-variant font-mono break-all select-all">
-            {link}
-          </div>
-        </details>
+        {token && (
+          <>
+            <details className="mb-3">
+              <summary className="text-[11px] text-accent cursor-pointer hover:underline select-none">
+                Ver link de invitación
+              </summary>
+              <div className="mt-2 bg-surface-container border border-outline-variant rounded-lg px-3 py-2 text-[11px] text-on-surface-variant font-mono break-all select-all">
+                {getLink()}
+              </div>
+            </details>
 
-        <div className="flex gap-2">
-          <button
-            onClick={handleCopy}
-            className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant font-semibold text-[12px] py-2 rounded-lg hover:border-outline transition-colors cursor-pointer"
-          >
-            {copied ? '✓ Copiado' : 'Copiar link'}
-          </button>
-          <button
-            onClick={handleWhatsApp}
-            className="flex-1 bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-semibold text-[12px] py-2 rounded-lg hover:bg-[#25D366]/25 transition-colors cursor-pointer"
-          >
-            WhatsApp
-          </button>
-        </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopy}
+                className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant font-semibold text-[12px] py-2 rounded-lg hover:border-outline transition-colors cursor-pointer"
+              >
+                {copied ? '✓ Copiado' : 'Copiar link'}
+              </button>
+              <button
+                onClick={handleWhatsApp}
+                className="flex-1 bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-semibold text-[12px] py-2 rounded-lg hover:bg-[#25D366]/25 transition-colors cursor-pointer"
+              >
+                WhatsApp
+              </button>
+            </div>
+          </>
+        )}
       </div>
     );
   }
 
+  // ── Idle / cargando ────────────────────────────────────────────────────────
   return (
     <div>
       {error && (

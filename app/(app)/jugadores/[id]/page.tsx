@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { nombreNivel } from '@/lib/levels';
 import { DEPORTES_MAP } from '@/lib/player-constants';
 import { InvitarJugadorButton } from '@/components/jugadores/InvitarJugadorButton';
+import { Desafiar1v1Button } from '@/components/desafios1v1/Desafiar1v1Button';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -77,6 +78,55 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
   const viewerEquipo = viewerMembresia?.equipo_id
     ? { id: viewerMembresia.equipo_id, nombre: (viewerMembresia as any).equipos?.nombre ?? 'Mi equipo' }
     : null;
+
+  // Check pending 1v1 + pending team invite in parallel
+  let desafio1v1PendienteId: string | null = null;
+  let inviteTokenExistente: string | null = null;
+  if (user && !isOwnProfile) {
+    const ahora = new Date().toISOString();
+    const [d1v1Result, invResult] = await Promise.all([
+      supabase
+        .from('desafios_individual')
+        .select('id')
+        .or(
+          `and(retador_id.eq.${user.id},retado_id.eq.${id}),and(retador_id.eq.${id},retado_id.eq.${user.id})`,
+        )
+        .eq('estado', 'pendiente')
+        .limit(1)
+        .maybeSingle(),
+      viewerEquipo
+        ? supabase
+            .from('invitaciones')
+            .select('token')
+            .eq('equipo_id', viewerEquipo.id)
+            .eq('jugador_id', id)
+            .eq('estado', 'pendiente')
+            .gt('expira_at', ahora)
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    desafio1v1PendienteId = d1v1Result.data?.id ?? null;
+    inviteTokenExistente  = invResult.data?.token ?? null;
+  }
+
+  // 1v1 stats for the player being viewed
+  let stats1v1 = { victorias: 0, derrotas: 0, racha: 0 };
+  {
+    const { data: r1v1 } = await supabase
+      .from('ranking_1v1')
+      .select('victorias, derrotas, racha_actual')
+      .eq('jugador_id', id)
+      .is('temporada_id', null)
+      .maybeSingle();
+    if (r1v1) {
+      stats1v1 = {
+        victorias: r1v1.victorias ?? 0,
+        derrotas:  r1v1.derrotas  ?? 0,
+        racha:     r1v1.racha_actual ?? 0,
+      };
+    }
+  }
 
   // 1. Profile (all fields)
   const { data: profile } = await supabase
@@ -413,7 +463,42 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
             equipoNombre={viewerEquipo.nombre}
             jugadorId={id}
             jugadorNombre={displayName}
+            tokenExistente={inviteTokenExistente}
           />
+        </div>
+      )}
+
+      {/* Desafiar 1v1 — visible para cualquier usuario logueado viendo otro jugador */}
+      {user && !isOwnProfile && (
+        <div className="mb-4">
+          <Desafiar1v1Button
+            retadoId={id}
+            retadoNombre={displayName}
+            desafioPendienteId={desafio1v1PendienteId}
+          />
+        </div>
+      )}
+
+      {/* 1v1 stats */}
+      {(stats1v1.victorias > 0 || stats1v1.derrotas > 0) && (
+        <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-4">
+          <div className="text-[10px] text-on-surface-variant tracking-[0.08em] font-medium uppercase mb-3">
+            ⚔️ 1v1 individual
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-surface-container rounded-lg p-3 text-center">
+              <div className="text-[22px] font-semibold text-status-libre">{stats1v1.victorias}</div>
+              <div className="text-[10px] text-on-surface-variant mt-0.5">Victorias</div>
+            </div>
+            <div className="bg-surface-container rounded-lg p-3 text-center">
+              <div className="text-[22px] font-semibold text-error">{stats1v1.derrotas}</div>
+              <div className="text-[10px] text-on-surface-variant mt-0.5">Derrotas</div>
+            </div>
+            <div className="bg-surface-container rounded-lg p-3 text-center">
+              <div className="text-[22px] font-semibold text-accent">{stats1v1.racha}</div>
+              <div className="text-[10px] text-on-surface-variant mt-0.5">Racha</div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -32,6 +32,7 @@ const DEPORTE_EMOJI: Record<string, string> = {
 export function InvitacionesRecibidas() {
   const [invitaciones, setInvitaciones] = useState<InvitacionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rechazandoId, setRechazandoId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/invitaciones?tipo=recibidas')
@@ -42,6 +43,23 @@ export function InvitacionesRecibidas() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const handleRechazar = async (inv: InvitacionRow) => {
+    setRechazandoId(inv.id);
+    try {
+      await fetch(`/api/invitaciones/${inv.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'rechazar' }),
+      });
+      // Remove from list optimistically
+      setInvitaciones(prev => prev.filter(i => i.id !== inv.id));
+    } catch {
+      /* noop */
+    } finally {
+      setRechazandoId(null);
+    }
+  };
 
   if (loading) return null; // no flash
   if (invitaciones.length === 0) return null;
@@ -70,6 +88,8 @@ export function InvitacionesRecibidas() {
           const iniciales = words.length >= 2
             ? (words[0][0] + words[1][0]).toUpperCase()
             : equipo.nombre.slice(0, 2).toUpperCase();
+
+          const isRechazando = rechazandoId === inv.id;
 
           return (
             <div
@@ -104,14 +124,22 @@ export function InvitacionesRecibidas() {
                   href={`/join/${inv.equipo_id}/${inv.token}`}
                   className="flex-1 bg-accent text-on-accent text-center font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity min-h-[44px] flex items-center justify-center"
                 >
-                  Aceptar invitación
+                  Aceptar
                 </Link>
                 <Link
                   href={`/equipos/${inv.equipo_id}`}
-                  className="px-4 bg-surface-container border border-outline-variant text-on-surface-variant text-[12px] py-2.5 rounded-lg hover:border-outline transition-colors min-h-[44px] flex items-center justify-center"
+                  className="px-3 bg-surface-container border border-outline-variant text-on-surface-variant text-[12px] py-2.5 rounded-lg hover:border-outline transition-colors min-h-[44px] flex items-center justify-center"
                 >
                   Ver equipo
                 </Link>
+                <button
+                  onClick={() => handleRechazar(inv)}
+                  disabled={isRechazando}
+                  className="px-3 bg-error/10 border border-error/25 text-error text-[12px] py-2.5 rounded-lg hover:bg-error/20 transition-colors min-h-[44px] flex items-center justify-center disabled:opacity-40 cursor-pointer"
+                  aria-label="Rechazar invitación"
+                >
+                  {isRechazando ? '…' : '✕'}
+                </button>
               </div>
             </div>
           );

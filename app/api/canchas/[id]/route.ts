@@ -54,7 +54,7 @@ export async function PATCH(
   if (lng < -180 || lng > 180) {
     return Response.json({ error: 'lng fuera de rango (-180 a 180)' }, { status: 400 });
   }
-  const DEPORTES_VALIDOS = ['basketball', 'futbol', 'voleibol', 'tenis', 'padel'];
+  const DEPORTES_VALIDOS = ['basketball']; // MVP: solo basketball
   if (!deporte.every((d: unknown) => typeof d === 'string' && DEPORTES_VALIDOS.includes(d))) {
     return Response.json({ error: 'deporte contiene valores inválidos' }, { status: 400 });
   }

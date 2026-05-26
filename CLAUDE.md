@@ -64,6 +64,10 @@ app/
     jugadores/[id]/page.tsx         ← Perfil público de jugador; admins ven "Invitar al equipo" si jugador sin equipo
     equipos/page.tsx                ← Lista pública de equipos (jugadores sin equipo pueden buscar y solicitar unirse)
     equipos/[id]/page.tsx           ← Perfil público de equipo (canchas, stats, roster, botón "Solicitar unirme")
+    admin/page.tsx                  ← Panel admin: stats globales + temporada activa (solo ADMIN_EMAIL) [feature/ligas]
+    admin/temporadas/page.tsx       ← Lista de temporadas (activa + historial) [feature/ligas]
+    admin/temporadas/nueva/page.tsx ← Formulario crear temporada (nombre, descripción, fechas, deportes, activar) [feature/ligas]
+    admin/temporadas/[id]/page.tsx  ← Detalle temporada: stats, progreso, botones activar/cerrar [feature/ligas]
   join/[equipoId]/[token]/page.tsx  ← Aceptar invitación (token validation + TOCTOU-safe server action)
     planes/page.tsx                 ← Página pública de planes: Gratuito vs Organizador, precios, FAQ, CTA WhatsApp [feature/ligas]
     ligas/page.tsx                  ← Lista de ligas; "Crear liga" si tiene suscripción; "Ver planes →" si no [feature/ligas]
@@ -85,6 +89,8 @@ app/
     perfil/route.ts                 ← PATCH actualizar perfil propio
     solicitudes/route.ts            ← POST crear / GET listar solicitudes de equipo
     solicitudes/[id]/route.ts       ← PATCH aceptar/rechazar/cancelar; DELETE cancelar
+    admin/temporadas/route.ts       ← GET list / POST crear temporada (solo ADMIN_EMAIL) [feature/ligas]
+    admin/temporadas/[id]/route.ts  ← PATCH activar|cerrar (snapshots historial_kings al cerrar) / DELETE [feature/ligas]
     ligas/route.ts                  ← GET listar ligas / POST crear liga (requiere suscripción) [feature/ligas]
     ligas/[id]/route.ts             ← GET detalle / PATCH estado / DELETE eliminar [feature/ligas]
     ligas/[id]/equipos/route.ts     ← GET listar / POST invitar o inscribir equipo [feature/ligas]
@@ -93,6 +99,9 @@ app/
     ligas/[id]/partidos/route.ts    ← GET listar partidos (?fase&grupo&ronda&estado) [feature/ligas]
     ligas/[id]/partidos/[partidoId]/route.ts ← PATCH cargar resultado [feature/ligas]
     ligas/[id]/tabla/route.ts       ← GET standings computados [feature/ligas]
+    desafios-1v1/route.ts           ← GET lista 1v1 del usuario / POST crear desafío 1v1 [feature/ligas]
+    desafios-1v1/[id]/route.ts      ← PATCH aceptar|rechazar|marcar_jugado|cancelar [feature/ligas]
+    resultados-1v1/route.ts         ← POST proponer resultado / PATCH confirmar|disputar → XP + ranking_1v1 [feature/ligas]
 ```
 
 ---
@@ -113,7 +122,14 @@ canchas           (id, nombre, direccion, lat, lng, fotos, deporte[], agregada_p
                    precio_hora     int   NULL,                    -- CLP por hora (solo si es de pago)
                    telefono_contacto text NULL,                   -- contacto para reservas
                    nombre_recinto  text  NULL)                    -- nombre del complejo/recinto
-cancha_dominio    (id, cancha_id, equipo_id, victorias, derrotas, es_king, temporada_id nullable)
+cancha_dominio    (id, cancha_id,
+                   equipo_id uuid NULL → equipos,   -- NULL for 1v1 player rows
+                   jugador_id uuid NULL → auth.users, -- set for 1v1 rows; NULL for team rows
+                   formato text NOT NULL DEFAULT 'general'  -- 'general'|'1v1'|'2v2'|'3v3'|'4v4'|'5v5'|'equipo_completo'
+                   victorias, derrotas, es_king, temporada_id nullable)
+-- King rule: one es_king=true per (cancha_id, formato, temporada_id) scope
+-- Partial unique indexes: (cancha_id, equipo_id, formato) WHERE equipo_id IS NOT NULL ...
+--                         (cancha_id, jugador_id, formato) WHERE jugador_id IS NOT NULL ...
 desafios          (id, equipo_retador_id, equipo_retado_id, cancha_id, deporte, formato,
                    fecha, mensaje, estado)
 resultados        (id, desafio_id, ganador_id, propuesto_por→equipos,
@@ -143,15 +159,34 @@ liga_partidos     (id, liga_id→ligas,
                    fase, grupo, ronda,
                    estado CHECK('pendiente','completado','cancelado'),
                    fecha, cancha_id, puntos_local, puntos_visitante, ganador_id→equipos nullable)
+
+-- 1v1 individual (migración 036, feature/ligas)
+desafios_individual (id, retador_id→auth.users, retado_id→auth.users, cancha_id nullable,
+                     deporte, formato DEFAULT '1v1',
+                     fecha nullable, mensaje nullable,
+                     estado CHECK('pendiente','aceptado','resultado_pendiente','completado','rechazado'))
+resultados_individual (id, desafio_id→desafios_individual UNIQUE, ganador_id→auth.users,
+                       puntos_retador nullable, puntos_retado nullable,
+                       propuesto_por→auth.users, confirmado_por_perdedor bool, disputado bool,
+                       confirmado_at nullable)
+ranking_1v1          (id, jugador_id→auth.users, temporada_id nullable→temporadas,
+                      puntos int, victorias int, derrotas int, racha_actual int, racha_max int,
+                      UNIQUE(jugador_id) WHERE temporada_id IS NULL,
+                      UNIQUE(jugador_id, temporada_id) WHERE temporada_id IS NOT NULL)
 ```
 
 **Triggers automáticos en `equipo_miembros`:**
 - `trg_equipo_miembro_insert` → INSERT en `historial_equipos` (captura nombre/color del equipo)
 - `trg_equipo_miembro_delete` → SET `fecha_salida = now()` en `historial_equipos`
 
-**Estado de desafío (FSM):**
+**Estado de desafío en equipo (FSM):**
 `pendiente → aceptado → resultado_pendiente → completado | disputado`
 También: `pendiente → rechazado`, `aceptado → resultado_pendiente` (via POST /api/resultados)
+
+**Estado de desafío 1v1 (FSM):**
+`pendiente → aceptado → resultado_pendiente → completado`
+También: `pendiente → rechazado` (retado rechaza) / `pendiente → rechazado` (retador cancela via `accion: 'cancelar'`)
+`aceptado → resultado_pendiente` (vía PATCH `marcar_jugado`) → proponer resultado → confirmar → completado
 
 **XP functions (SECURITY DEFINER, bypasan RLS):**
 - `add_xp(target_user_id uuid, amount int)` → incrementa `profiles.xp` y auto-nivela
@@ -218,19 +253,27 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
   > ⚠️ `feature/ligas` reemplazó **Ranking** por **Ligas**. Ranking sigue accesible en `/ranking`.
 
 ### Mapa (`components/mapa/`)
-- `MapaClientWrapper` — wrapper cliente completo del mapa. Gestiona estado: filtros, búsqueda, cancha seleccionada, modales. Exporta interfaz `CanchaConEstado`:
+- `MapaClientWrapper` — wrapper cliente completo del mapa. Gestiona estado: filtros de estado + modalidad, búsqueda, cancha seleccionada, modales. Exporta `CanchaConEstado` y `KingInfo`:
   ```ts
+  interface KingInfo {
+    equipoId?, equipoNombre?, equipoColor?, equipoNivel?: number
+    jugadorId?, jugadorNombre?: string  // for 1v1 kings
+    victorias, derrotas: number
+  }
   interface CanchaConEstado {
     id, nombre, direccion, lat, lng: number, deporte: string[]
-    estado: 'libre' | 'king' | 'rival'
-    equipoId?, equipoNombre?, equipoColor?, victorias?, derrotas?: number
-    // campos de recinto (feature/canchas-info):
-    es_publica?: boolean           // undefined = desconocido (legacy)
-    precio_hora?: number | null    // CLP por hora
+    estado: 'libre' | 'king' | 'rival'       // general king, recomputed client-side per filtroFormato
+    equipoId?, equipoNombre?, equipoColor?, victorias?, derrotas?: number  // general king convenience fields
+    rankingGlobal?, equipoNivel?: number
+    kingsPerFormato: Record<string, KingInfo>  // ALL format kings for this court (migration 038)
+    // campos de recinto (migración 023):
+    es_publica?: boolean | null
+    precio_hora?: number | null
     telefono_contacto?: string | null
     nombre_recinto?: string | null
   }
   ```
+  Format filter (`filtroFormato: 'general'|'1v1'|'2v2'|'3v3'|'5v5'|...`) recomputes each court's `estado` and the court panel king display. Format chips only appear when multiple formats have kings.
 - `MapaTerritorial` — componente Google Maps; pines coloreados por estado (king/libre/rival). Props: `canchas, onSelectCancha, modoAgregar, onMapClick, panToCoords`.
 - `AgregarCanchaModal` — bottom-sheet modal para agregar cancha. Campos: nombre, dirección, deportes (multi-select), ubicación (mapa/geoloc), **sección recinto** (nombre recinto, acceso público/pago, precio/hr, teléfono). +80 XP al crear. POST `/api/canchas`.
 - `EditarCanchaModal` — idéntico a Agregar pero pre-poblado con datos existentes. PATCH `/api/canchas/[id]`.
@@ -247,7 +290,11 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `DisolverEquipoButton` ('use client') — panel con input del nombre exacto del equipo como doble confirmación. Props: `equipoNombre`. Llama DELETE `/api/equipo/disolver` (delegado a SQL function `disolver_equipo()` — totalmente transaccional).
 - `RosterRow` ('use client') — fila del roster. Chip Titular/Suplente clickeable para admin (optimistic PATCH). Admin expulsa; jugador sale. Props: `miembroId, jugadorId, nombre, iniciales, avatarColor, avatarUrl?, roles[], posicion, nivel, xp, isCurrentUser, isAdmin`.
 - `RosterSlots` — barra visual de plazas titulares/suplentes. Props: `modalidad, titulares, maxTitulares, suplentes, maxSuplentes`.
-- `InvitacionesRecibidas` ('use client') — fetcha `GET /api/invitaciones?tipo=recibidas` al montar. Muestra cards con equipo + invitador + botones Aceptar/Ver equipo. Retorna null si no hay invitaciones (no flash).
+- `InvitacionesRecibidas` ('use client') — fetcha `GET /api/invitaciones?tipo=recibidas` al montar. Muestra cards con equipo + invitador + botones Aceptar/Ver equipo/Rechazar (PATCH `expirada`). Retorna null si no hay invitaciones (no flash).
+
+### 1v1 (`components/desafios1v1/`) — feature/ligas
+- `Desafiar1v1Button` ('use client') — botón expandible para desafiar a otro jugador en 1v1. Props: `retadoId, retadoNombre, desafioPendienteId?`. Estados: idle → form → loading → pendiente | enviado. POST `/api/desafios-1v1`. Si viene `desafioPendienteId` del servidor → inicia en `'pendiente'` con botón Cancelar.
+- `Desafios1v1Section` ('use client') — sección completa de desafíos 1v1 para la página `/desafios`. Props: `desafios: Desafio1v1ConDatos[], userId: string`. Agrupa por: recibidos (pendiente), enviados (pendiente), activos (aceptado/resultado_pendiente), historial. Inline form para proponer resultado con selector ganador + puntos opcionales.
 
 ### Ligas (`components/ligas/`) — feature/ligas
 - `TablaLiga` — tabla de posiciones. Columnas: #, Equipo, PJ, PG, PE, PP, DP, Pts. Filas sobre `equiposClasifican` resaltadas con `↑`. Props: `rows: StandingRow[], titulo?, equiposClasifican?`.
@@ -336,6 +383,16 @@ const eqObj = Array.isArray(eqRaw) ? eqRaw[0] : eqRaw;
 | 024 | **Invitaciones in-app:** `invitaciones.jugador_id uuid` FK → auth.users; índice; RLS SELECT para jugador invitado | feature/ligas |
 | 025 | **Security SQL:** `disolver_equipo()` transaccional; `trg_check_max_equipos` en liga_equipos; `add_xp_batch(uuid[], int)` | feature/ligas |
 | 026 | **RLS hardening:** `liga_equipos_update` tightened (admin/cap solo puede aceptar/rechazar estado); `SET search_path = public` en todas las funciones SECURITY DEFINER | feature/ligas |
+| 027 | **Temporadas admin:** `deporte` nullable, `descripcion`, `deporte_filter text[]`; RLS permissiva (guard en API layer) | feature/ligas |
+| 028 | **King metrics:** `cancha_dominio.racha_defensiva int`, `fecha_rey_desde timestamptz`; tabla `historial_kings` con RLS | feature/ligas |
+| 029 | **Ranking puntos:** tabla `ranking_puntos` (equipo_id, temporada_id UNIQUE, puntos, victorias, derrotas, defensas_exitosas) con RLS | feature/ligas |
+| 030 | **Actividad feed:** tabla `actividad` (tipo enum, equipo_id, jugador_id, cancha_id, metadata jsonb) con índices | feature/ligas |
+| 031 | **Cancha enriquecida:** `superficie text CHECK(...)`, `iluminacion boolean`, `tipo_aro text CHECK(...)` en `canchas` | feature/ligas |
+| 032 | **Equipos mejoras:** `descripcion text`, `cancha_local_id uuid`, `racha_victorias int`, `racha_derrotas int` en `equipos` | feature/ligas |
+| 035 | **Reclutamiento default:** `disponible_reclutamiento DEFAULT true`; backfill NULL → true | feature/ligas |
+| 036 | **1v1 individual:** `desafios_individual`, `resultados_individual`, `ranking_1v1` con RLS | feature/ligas |
+| 037 | **Fix ranking_1v1 RLS:** políticas insert/update permisivas para writes cross-user | feature/ligas |
+| 038 | **KOTC por formato:** `cancha_dominio` + `formato`, `jugador_id`, `equipo_id` nullable; índices parciales; APIs actualizadas | feature/ligas |
 
 ---
 
@@ -386,9 +443,18 @@ Sub-nivel en romano desde el 2: `Rookie III`, `Contender II`, etc.
 
 | Evento | XP equipo | XP por jugador |
 |--------|----------:|---------------:|
-| Victoria | +500 | +100 |
-| Derrota  | +150 | +35 |
+| Victoria (equipo) | +500 | +100 |
+| Derrota  (equipo) | +150 | +35 |
 | Agregar cancha al mapa | — | +80 |
+
+### XP por 1v1 individual
+
+| Evento | XP individual |
+|--------|-------------:|
+| Victoria 1v1 | +50 |
+| Derrota 1v1  | +15 |
+
+**Ranking 1v1:** puntos = 3 por victoria. Racha: +1 por victoria, reset a 0 en derrota. Se almacena en `ranking_1v1` (by temporada_id IS NULL para acumulado global).
 
 ---
 
@@ -400,6 +466,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000   ← cambiar en producción
 RESEND_API_KEY=...
+ADMIN_EMAIL=...                              ← email del admin para panel /admin (server-only, NO NEXT_PUBLIC)
 ```
 
 ---

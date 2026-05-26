@@ -6,6 +6,19 @@ import { AgregarCanchaModal } from './AgregarCanchaModal';
 import { EditarCanchaModal } from './EditarCanchaModal';
 import { MapaTerritorial } from './MapaTerritorial';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export interface KingInfo {
+  equipoId?: string;
+  equipoNombre?: string;
+  equipoColor?: string;
+  equipoNivel?: number;
+  jugadorId?: string;
+  jugadorNombre?: string;
+  victorias: number;
+  derrotas: number;
+}
+
 export interface CanchaConEstado {
   id: string;
   nombre: string;
@@ -13,12 +26,19 @@ export interface CanchaConEstado {
   lat: number;
   lng: number;
   deporte: string[];
+  /** Status relative to current user, for the GENERAL king (server-side initial value).
+   *  Client-side this is recomputed per selected filtroFormato. */
   estado: 'libre' | 'king' | 'rival';
+  /** General king fields (convenience duplicates of kingsPerFormato['general']) */
   equipoId?: string;
   equipoNombre?: string;
   equipoColor?: string;
   victorias?: number;
   derrotas?: number;
+  rankingGlobal?: number;
+  equipoNivel?: number;
+  /** All format-specific kings (format → KingInfo). Always present (may be empty {}). */
+  kingsPerFormato: Record<string, KingInfo>;
   // Información del recinto (migración 023)
   es_publica?: boolean;
   precio_hora?: number | null;
@@ -26,38 +46,60 @@ export interface CanchaConEstado {
   nombre_recinto?: string | null;
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
 interface Props {
   canchas: CanchaConEstado[];
   equipoId: string | null;
+  userId: string | null;
   stats: { misKing: number; partidos: number; total: number };
 }
 
 type Filtro = 'todas' | 'king' | 'libre' | 'rival';
+type FiltroFormato = 'general' | '1v1' | '2v2' | '3v3' | '4v4' | '5v5' | 'equipo_completo';
 
-// Design token hex values — used in inline styles where Tailwind classes can't reach
+const FORMAT_LABELS: Record<string, string> = {
+  general:         '👑 General',
+  '1v1':           '⚔️ 1v1',
+  '2v2':           '🤼 2v2',
+  '3v3':           '🏀 3v3',
+  '4v4':           '🔥 4v4',
+  '5v5':           '🏆 5v5',
+  equipo_completo: '🏟️ Equipo',
+};
+
+function nivelTier(nivel: number): string {
+  if (nivel >= 91) return 'KING';
+  if (nivel >= 81) return 'LEYENDA';
+  if (nivel >= 71) return 'CAMPEÓN';
+  if (nivel >= 61) return 'MÁSTER';
+  if (nivel >= 51) return 'ÉLITE';
+  if (nivel >= 41) return 'WARRIOR';
+  if (nivel >= 31) return 'FIGHTER';
+  if (nivel >= 21) return 'CHALLENGER';
+  if (nivel >= 11) return 'CONTENDER';
+  return 'ROOKIE';
+}
+
 const ESTADO_COLORS = {
-  king: '#ffe083',   // --accent
-  libre: '#4ade80',  // --status-libre
-  rival: '#f87171',  // --status-rival
+  king:  '#ffe083',
+  libre: '#4ade80',
+  rival: '#f87171',
 };
 
 const ESTADO_LABELS = {
-  king: 'KING',
+  king:  'KING',
   libre: 'LIBRE',
   rival: 'RIVAL',
 };
 
-const DEPORTES = [
-  { id: 'basketball', emoji: '🏀', label: 'Basketball' },
-  { id: 'futbol', emoji: '⚽', label: 'Fútbol' },
-  { id: 'voleibol', emoji: '🏐', label: 'Vóleibol' },
-];
+// ── Component ─────────────────────────────────────────────────────────────────
 
-export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
+export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
   const router = useRouter();
-  const [filtro, setFiltro] = useState<Filtro>('todas');
-  const [deporteFiltro, setDeporteFiltro] = useState<string>('todas');
-  const [busqueda, setBusqueda] = useState('');
+  const [filtro, setFiltro]       = useState<Filtro>('todas');
+  const [filtroFormato, setFiltroFormato] = useState<FiltroFormato>('general');
+  const [busqueda, setBusqueda]   = useState('');
   const [canchaSeleccionada, setCanchaSeleccionada] = useState<CanchaConEstado | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [modoAgregar, setModoAgregar] = useState(false);
@@ -70,30 +112,77 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
   const [coordsEditando, setCoordsEditando] = useState<{ lat: number; lng: number } | null>(null);
   const [mobileListOpen, setMobileListOpen] = useState(false);
 
+  // Formats that actually have at least one king across all courts
+  const formatosDisponibles = useMemo<FiltroFormato[]>(() => {
+    const set = new Set<FiltroFormato>(['general']);
+    for (const c of canchasLocales) {
+      for (const fmt of Object.keys(c.kingsPerFormato)) {
+        if (fmt !== 'general') set.add(fmt as FiltroFormato);
+      }
+    }
+    // Stable order: general first, then by FORMAT_LABELS key order
+    const order: FiltroFormato[] = ['general', '1v1', '2v2', '3v3', '4v4', '5v5', 'equipo_completo'];
+    return order.filter(f => set.has(f));
+  }, [canchasLocales]);
+
+  // Recompute each court's estado based on the selected format filter
+  const canchasConFormato = useMemo(() => {
+    return canchasLocales.map(c => {
+      let kingInfo: KingInfo | null;
+
+      if (filtroFormato === 'general') {
+        // Use the general king fields embedded in the root object
+        kingInfo = c.equipoId
+          ? {
+              equipoId:    c.equipoId,
+              equipoNombre: c.equipoNombre,
+              equipoColor:  c.equipoColor,
+              equipoNivel:  c.equipoNivel,
+              victorias:    c.victorias ?? 0,
+              derrotas:     c.derrotas  ?? 0,
+            }
+          : null;
+      } else {
+        kingInfo = c.kingsPerFormato[filtroFormato] ?? null;
+      }
+
+      let estado: 'libre' | 'king' | 'rival' = 'libre';
+      if (kingInfo) {
+        if (filtroFormato === '1v1') {
+          // Individual format — king is a player, not a team
+          estado = kingInfo.jugadorId && kingInfo.jugadorId === userId ? 'king' : 'rival';
+        } else {
+          estado = kingInfo.equipoId && kingInfo.equipoId === equipoId ? 'king' : 'rival';
+        }
+      }
+
+      return { ...c, estado, _formatoKing: kingInfo };
+    });
+  }, [canchasLocales, filtroFormato, equipoId, userId]);
+
   const canchasFiltradas = useMemo(() => {
-    return canchasLocales.filter((c) => {
+    return canchasConFormato.filter((c) => {
       if (filtro !== 'todas' && c.estado !== filtro) return false;
-      if (deporteFiltro !== 'todas' && !c.deporte.includes(deporteFiltro)) return false;
       if (busqueda.trim()) {
         const q = busqueda.toLowerCase();
         if (!c.nombre.toLowerCase().includes(q) && !c.direccion.toLowerCase().includes(q)) return false;
       }
       return true;
     });
-  }, [canchasLocales, filtro, deporteFiltro, busqueda]);
+  }, [canchasConFormato, filtro, busqueda]);
 
   const conteos = useMemo(() => ({
-    todas: canchasLocales.length,
-    king: canchasLocales.filter((c) => c.estado === 'king').length,
-    libre: canchasLocales.filter((c) => c.estado === 'libre').length,
-    rival: canchasLocales.filter((c) => c.estado === 'rival').length,
-  }), [canchasLocales]);
+    todas:  canchasConFormato.length,
+    king:   canchasConFormato.filter((c) => c.estado === 'king').length,
+    libre:  canchasConFormato.filter((c) => c.estado === 'libre').length,
+    rival:  canchasConFormato.filter((c) => c.estado === 'rival').length,
+  }), [canchasConFormato]);
 
   const filtroItems: { id: Filtro; label: string; color: string; count: number }[] = [
-    { id: 'todas', label: 'Todas', color: '#8f909d', count: conteos.todas },
-    { id: 'king',  label: 'King',   color: '#ffe083', count: conteos.king },
-    { id: 'libre', label: 'Libres', color: '#4ade80', count: conteos.libre },
-    { id: 'rival', label: 'Rivales',color: '#f87171', count: conteos.rival },
+    { id: 'todas',  label: 'Todas',   color: '#8f909d', count: conteos.todas },
+    { id: 'king',   label: 'King',    color: '#ffe083', count: conteos.king  },
+    { id: 'libre',  label: 'Libres',  color: '#4ade80', count: conteos.libre },
+    { id: 'rival',  label: 'Rivales', color: '#f87171', count: conteos.rival },
   ];
 
   useEffect(() => {
@@ -103,6 +192,15 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
       setCanchaSeleccionada(c);
     }
   }, [canchasFiltradas, busqueda]);
+
+  // Keep canchaSeleccionada in sync with format changes
+  useEffect(() => {
+    if (canchaSeleccionada) {
+      const updated = canchasConFormato.find(c => c.id === canchaSeleccionada.id);
+      if (updated) setCanchaSeleccionada(updated);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtroFormato]);
 
   function handleSelectFromDropdown(cancha: CanchaConEstado) {
     setCanchaSeleccionada(cancha);
@@ -176,14 +274,18 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
     setCanchaSeleccionada(cancha);
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
     <div className="flex h-full">
 
       {/* ── LEFT PANEL (desktop only) ── */}
       <div className="hidden md:flex md:flex-col w-[200px] bg-surface border-r border-outline-variant flex-shrink-0">
+
+        {/* Estado filter */}
         <div className="p-3.5 border-b border-outline-variant">
           <div className="text-[10px] text-outline tracking-[0.1em] mb-2.5 font-medium uppercase">
-            Filtrar por estado
+            Estado
           </div>
           {filtroItems.map((f) => (
             <button
@@ -202,31 +304,29 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
           ))}
         </div>
 
-        <div className="p-3.5 border-b border-outline-variant">
-          <div className="text-[10px] text-outline tracking-[0.1em] mb-2.5 font-medium uppercase">Deporte</div>
-          <button
-            onClick={() => setDeporteFiltro('todas')}
-            className={`flex items-center gap-1.5 w-full bg-transparent border-none px-2 py-1.5 rounded-lg cursor-pointer mb-0.5 transition-colors ${
-              deporteFiltro === 'todas' ? 'bg-accent/10' : 'hover:bg-surface-container-low'
-            }`}
-          >
-            <span className="text-[14px]">🏟️</span>
-            <span className={`text-[12px] ${deporteFiltro === 'todas' ? 'text-on-surface' : 'text-outline'}`}>Todos</span>
-          </button>
-          {DEPORTES.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => setDeporteFiltro(d.id)}
-              className={`flex items-center gap-1.5 w-full bg-transparent border-none px-2 py-1.5 rounded-lg cursor-pointer mb-0.5 transition-colors ${
-                deporteFiltro === d.id ? 'bg-accent/10' : 'hover:bg-surface-container-low'
-              }`}
-            >
-              <span className="text-[14px]">{d.emoji}</span>
-              <span className={`text-[12px] ${deporteFiltro === d.id ? 'text-on-surface' : 'text-outline'}`}>{d.label}</span>
-            </button>
-          ))}
-        </div>
+        {/* Format filter (only shown if more than one format exists) */}
+        {formatosDisponibles.length > 1 && (
+          <div className="p-3.5 border-b border-outline-variant">
+            <div className="text-[10px] text-outline tracking-[0.1em] mb-2.5 font-medium uppercase">
+              Modalidad
+            </div>
+            {formatosDisponibles.map((fmt) => (
+              <button
+                key={fmt}
+                onClick={() => setFiltroFormato(fmt)}
+                className={`flex items-center gap-2 w-full bg-transparent border-none px-2 py-1.5 rounded-lg cursor-pointer mb-0.5 transition-colors text-left text-[12px] ${
+                  filtroFormato === fmt
+                    ? 'bg-accent/10 text-on-surface'
+                    : 'text-outline hover:bg-surface-container-low'
+                }`}
+              >
+                {FORMAT_LABELS[fmt] ?? fmt}
+              </button>
+            ))}
+          </div>
+        )}
 
+        {/* Stats */}
         <div className="p-3.5 flex-1">
           <div className="text-[10px] text-outline tracking-[0.1em] mb-2 font-medium uppercase">Mis stats</div>
           <div className="flex justify-between items-center mb-2">
@@ -298,9 +398,10 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
           )}
         </div>
 
-        {/* ── MOBILE FILTER CHIPS (below search) ── */}
-        <div className="md:hidden absolute left-0 right-0 z-10 flex gap-1.5 overflow-x-auto px-3 pointer-events-none" style={{ top: '56px' }}>
-          <div className="flex gap-1.5 pointer-events-auto pb-1">
+        {/* ── MOBILE FILTER CHIPS ── */}
+        <div className="md:hidden absolute left-0 right-0 z-10 pointer-events-none" style={{ top: '56px' }}>
+          {/* Estado chips */}
+          <div className="flex gap-1.5 overflow-x-auto px-3 pointer-events-auto pb-1">
             {filtroItems.map((f) => (
               <button
                 key={f.id}
@@ -315,21 +416,25 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
                 {f.label}
               </button>
             ))}
-            <div className="w-px self-stretch bg-outline-variant mx-0.5 shrink-0" />
-            {DEPORTES.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => setDeporteFiltro(deporteFiltro === d.id ? 'todas' : d.id)}
-                className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-semibold border transition-colors ${
-                  deporteFiltro === d.id
-                    ? 'bg-surface-container border-outline-variant text-on-surface'
-                    : 'bg-surface-container-low/75 border-outline-variant text-outline'
-                }`}
-              >
-                {d.emoji} {d.label}
-              </button>
-            ))}
           </div>
+          {/* Format chips (mobile) — only if multiple formats exist */}
+          {formatosDisponibles.length > 1 && (
+            <div className="flex gap-1.5 overflow-x-auto px-3 pointer-events-auto pb-1 mt-1">
+              {formatosDisponibles.map((fmt) => (
+                <button
+                  key={fmt}
+                  onClick={() => setFiltroFormato(fmt)}
+                  className={`flex-shrink-0 px-2.5 py-1.5 rounded-full text-[10px] font-semibold border transition-colors ${
+                    filtroFormato === fmt
+                      ? 'bg-accent/15 border-accent/40 text-accent'
+                      : 'bg-surface-container-low/75 border-outline-variant text-outline'
+                  }`}
+                >
+                  {FORMAT_LABELS[fmt] ?? fmt}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <MapaTerritorial
@@ -352,6 +457,13 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
               <span className="text-[11px] text-outline">{l.label}</span>
             </div>
           ))}
+          {filtroFormato !== 'general' && (
+            <div className="mt-2 pt-2 border-t border-outline-variant">
+              <span className="text-[9px] text-accent font-bold uppercase tracking-wider">
+                Viendo: {FORMAT_LABELS[filtroFormato] ?? filtroFormato}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* ── MOBILE: list toggle button ── */}
@@ -378,95 +490,275 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
           </button>
         )}
 
-        {/* ── Selected court panel — full width on mobile, fixed width on desktop ── */}
-        {canchaSeleccionada && (
-          <div
-            className="absolute left-3 right-3 md:left-auto md:right-3 md:w-[220px] z-20 bg-surface-container-low border border-outline-variant rounded-xl p-4 shadow-[0_4px_24px_rgba(0,0,0,0.5)] md:!bottom-3"
-            style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div
-                className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium"
-                style={{
-                  background: `${ESTADO_COLORS[canchaSeleccionada.estado]}20`,
-                  color: ESTADO_COLORS[canchaSeleccionada.estado],
-                }}
-              >
-                {ESTADO_LABELS[canchaSeleccionada.estado]}
-              </div>
-              <button
-                onClick={() => setCanchaSeleccionada(null)}
-                className="text-outline hover:text-on-surface-variant text-[16px] leading-none -mt-0.5"
-              >
-                ×
-              </button>
-            </div>
-            <div className="text-[13px] font-medium text-on-surface mb-0.5">{canchaSeleccionada.nombre}</div>
-            {canchaSeleccionada.nombre_recinto && (
-              <div className="text-[10px] text-on-surface-variant mb-0.5">{canchaSeleccionada.nombre_recinto}</div>
-            )}
-            <div className="text-[11px] text-outline mb-2">{canchaSeleccionada.direccion}</div>
+        {/* ── Selected court panel ── */}
+        {canchaSeleccionada && (() => {
+          // For panel display: use the king for the currently selected format
+          const panelKing: KingInfo | null =
+            filtroFormato === 'general'
+              ? (canchaSeleccionada.equipoId
+                  ? {
+                      equipoId:    canchaSeleccionada.equipoId,
+                      equipoNombre: canchaSeleccionada.equipoNombre,
+                      equipoColor:  canchaSeleccionada.equipoColor,
+                      equipoNivel:  canchaSeleccionada.equipoNivel,
+                      victorias:    canchaSeleccionada.victorias ?? 0,
+                      derrotas:     canchaSeleccionada.derrotas  ?? 0,
+                    }
+                  : null)
+              : canchaSeleccionada.kingsPerFormato[filtroFormato] ?? null;
 
-            {/* Acceso + precio */}
-            <div className="flex items-center gap-1.5 mb-1.5">
-              {canchaSeleccionada.es_publica === false ? (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-accent/15 text-accent font-medium">💰 De pago</span>
-              ) : (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-status-libre/15 text-status-libre font-medium">🆓 Pública</span>
-              )}
-              {canchaSeleccionada.precio_hora && (
-                <span className="text-[10px] text-on-surface-variant">
-                  ~${canchaSeleccionada.precio_hora.toLocaleString('es-CL')}/hr
-                </span>
-              )}
-            </div>
+          const displayName   = panelKing?.equipoNombre ?? panelKing?.jugadorNombre ?? null;
+          const displayColor  = panelKing?.equipoColor ?? '#ffe083';
+          const displayInitials = displayName
+            ? displayName.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
+            : null;
 
-            {/* Teléfono */}
-            {canchaSeleccionada.telefono_contacto && (
-              <a
-                href={`tel:${canchaSeleccionada.telefono_contacto.replace(/\s/g, '')}`}
-                className="flex items-center gap-1 text-[10px] text-accent hover:underline mb-1.5"
-              >
-                📞 {canchaSeleccionada.telefono_contacto}
-              </a>
-            )}
+          const formatSpecificKings = Object.entries(canchaSeleccionada.kingsPerFormato)
+            .filter(([fmt]) => fmt !== 'general');
 
-            {/* Equipo King */}
-            {canchaSeleccionada.equipoNombre && (
-              <div className="text-[11px] mb-0.5" style={{ color: canchaSeleccionada.equipoColor ?? '#8f909d' }}>
-                {canchaSeleccionada.equipoNombre}
-              </div>
-            )}
-            {(canchaSeleccionada.victorias !== undefined || canchaSeleccionada.derrotas !== undefined) && (
-              <div className="text-[10px] text-outline">
-                {canchaSeleccionada.victorias ?? 0}V - {canchaSeleccionada.derrotas ?? 0}D
-              </div>
-            )}
-
-            {/* Deportes */}
-            {canchaSeleccionada.deporte.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {canchaSeleccionada.deporte.map((d) => (
-                  <span key={d} className="text-[9px] px-1.5 py-0.5 rounded-sm bg-surface-container text-outline">{d}</span>
-                ))}
-              </div>
-            )}
-            {canchaSeleccionada.estado === 'rival' && equipoId && canchaSeleccionada.equipoId && (
-              <button
-                onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
-                className="w-full mt-3 bg-status-rival/10 border border-status-rival/30 rounded-md py-1.5 text-[11px] text-status-rival hover:bg-status-rival/20 hover:border-status-rival/50 transition-colors font-medium"
-              >
-                ⚔️ Desafiar
-              </button>
-            )}
-            <button
-              onClick={() => handleEditarCancha(canchaSeleccionada)}
-              className="w-full mt-2 bg-transparent border border-outline-variant rounded-md py-1.5 text-[11px] text-outline hover:border-outline hover:text-on-surface-variant transition-colors"
+          return (
+            <div
+              className="absolute left-3 right-3 md:left-auto md:right-3 md:w-[290px] z-20 bg-surface-container-low border border-outline-variant rounded-2xl overflow-hidden shadow-[0_8px_48px_rgba(0,0,0,0.65)] md:!bottom-3"
+              style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
             >
-              Editar cancha
-            </button>
-          </div>
-        )}
+              {/* ── HEADER ── */}
+              <div className="px-5 pt-4 pb-4 border-b border-outline-variant">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest"
+                      style={{
+                        background: `${ESTADO_COLORS[canchaSeleccionada.estado]}22`,
+                        color: ESTADO_COLORS[canchaSeleccionada.estado],
+                      }}
+                    >
+                      {ESTADO_LABELS[canchaSeleccionada.estado]}
+                    </span>
+                    {filtroFormato !== 'general' && (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent/15 text-accent font-bold uppercase tracking-widest">
+                        {FORMAT_LABELS[filtroFormato] ?? filtroFormato}
+                      </span>
+                    )}
+                    {canchaSeleccionada.es_publica === false ? (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-accent/15 text-accent font-black uppercase tracking-widest">
+                        💰 De pago
+                      </span>
+                    ) : (
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-status-libre/15 text-status-libre font-black uppercase tracking-widest">
+                        🆓 Pública
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setCanchaSeleccionada(null)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full text-outline hover:text-on-surface-variant hover:bg-surface-container text-[18px] leading-none transition-colors flex-shrink-0"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <h3 className="text-[17px] font-black italic uppercase text-on-surface tracking-tight leading-tight mb-0.5">
+                  {canchaSeleccionada.nombre}
+                </h3>
+                {canchaSeleccionada.nombre_recinto && (
+                  <div className="text-[10px] text-on-surface-variant font-medium mb-1">
+                    {canchaSeleccionada.nombre_recinto}
+                  </div>
+                )}
+                <p className="text-[10px] text-outline leading-relaxed mb-4">
+                  {canchaSeleccionada.direccion}
+                </p>
+
+                {/* King row */}
+                {displayName ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-shrink-0">
+                        <div
+                          className="w-12 h-12 rounded-xl flex items-center justify-center text-[15px] font-black border-2"
+                          style={{
+                            background: `${displayColor}1a`,
+                            borderColor: `${displayColor}55`,
+                            color: displayColor,
+                          }}
+                        >
+                          {displayInitials}
+                        </div>
+                        <div
+                          className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-md shadow-md z-10 text-[11px] leading-none"
+                          style={{ background: displayColor, transform: 'rotate(12deg)' }}
+                        >
+                          👑
+                        </div>
+                      </div>
+                      <div>
+                        <span className="block text-[8px] font-black uppercase tracking-[0.2em] text-accent mb-0.5">
+                          {filtroFormato === 'general' ? 'Rey de la cancha' : `Rey ${FORMAT_LABELS[filtroFormato] ?? filtroFormato}`}
+                        </span>
+                        <span
+                          className="block text-[15px] font-black italic uppercase leading-tight"
+                          style={{ color: displayColor }}
+                        >
+                          {displayName}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span className="block text-[8px] font-bold text-outline uppercase tracking-widest mb-0.5">Récord</span>
+                      <span className="text-[15px] font-black italic text-on-surface">
+                        {panelKing?.victorias ?? 0}V — {panelKing?.derrotas ?? 0}D
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-surface-container border border-outline-variant flex items-center justify-center text-[20px]">
+                      🏟️
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-bold uppercase tracking-widest text-outline">Sin rey</span>
+                      <span className="block text-[12px] font-black italic text-on-surface-variant">
+                        {filtroFormato === 'general' ? 'Cancha libre' : `Sin rey en ${FORMAT_LABELS[filtroFormato] ?? filtroFormato}`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── STATS GRID ── */}
+              <div className="px-5 py-3.5 border-b border-outline-variant">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="bg-surface-container border border-outline-variant rounded-xl p-3">
+                    <span className="block text-[8px] font-bold text-outline uppercase tracking-widest mb-1">
+                      Victorias
+                    </span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[22px] font-black italic text-accent leading-none">
+                        {panelKing?.victorias ?? 0}
+                      </span>
+                      <span className="text-[8px] font-bold text-outline">
+                        — {panelKing?.derrotas ?? 0}D
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-surface-container border border-outline-variant rounded-xl p-3">
+                    <span className="block text-[8px] font-bold text-outline uppercase tracking-widest mb-1">
+                      Ranking global
+                    </span>
+                    {canchaSeleccionada.rankingGlobal && filtroFormato === 'general' ? (
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[22px] font-black italic text-on-surface leading-none">
+                          #{canchaSeleccionada.rankingGlobal}
+                        </span>
+                        {canchaSeleccionada.equipoNivel && (
+                          <span className="text-[8px] font-bold text-outline leading-none">
+                            {nivelTier(canchaSeleccionada.equipoNivel)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[22px] font-black italic text-outline leading-none">—</span>
+                        <span className="text-[8px] font-bold text-outline">SIN DATOS</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sport + contact */}
+                <div className="mt-2.5 flex flex-col gap-1.5">
+                  {canchaSeleccionada.deporte.includes('basketball') && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-surface-container border border-outline-variant text-outline font-medium">
+                        🏀 Basketball
+                      </span>
+                    </div>
+                  )}
+                  {canchaSeleccionada.precio_hora && (
+                    <div className="text-[10px] text-on-surface-variant">
+                      💰 ~${canchaSeleccionada.precio_hora.toLocaleString('es-CL')} /hr
+                    </div>
+                  )}
+                  {canchaSeleccionada.telefono_contacto && (
+                    <a
+                      href={`tel:${canchaSeleccionada.telefono_contacto.replace(/\s/g, '')}`}
+                      className="flex items-center gap-1.5 text-[10px] text-accent hover:underline"
+                    >
+                      📞 {canchaSeleccionada.telefono_contacto}
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* ── PER-FORMAT KINGS (only if there are format-specific kings) ── */}
+              {formatSpecificKings.length > 0 && (
+                <div className="px-5 py-3 border-b border-outline-variant">
+                  <div className="text-[9px] font-bold text-outline uppercase tracking-widest mb-2">
+                    Reyes por modalidad
+                  </div>
+                  <div className="space-y-1.5">
+                    {formatSpecificKings.map(([fmt, king]) => {
+                      const name = king.equipoNombre ?? king.jugadorNombre;
+                      const color = king.equipoColor ?? '#ffe083';
+                      return (
+                        <div key={fmt} className="flex items-center justify-between">
+                          <span className="text-[10px] text-outline">{FORMAT_LABELS[fmt] ?? fmt}</span>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {name && (
+                              <span
+                                className="text-[10px] font-bold italic truncate max-w-[120px]"
+                                style={{ color }}
+                              >
+                                {name}
+                              </span>
+                            )}
+                            <span className="text-[9px] text-outline flex-shrink-0">
+                              {king.victorias}V-{king.derrotas}D
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── CTA BUTTONS ── */}
+              <div className="px-5 py-4 flex flex-col gap-2">
+                {canchaSeleccionada.estado === 'rival' && equipoId && canchaSeleccionada.equipoId ? (
+                  <button
+                    onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
+                    className="w-full font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                    style={{ background: '#f87171', color: '#fff', boxShadow: '0 8px 24px rgba(248,113,113,0.35)' }}
+                  >
+                    <span>⚔️</span>
+                    <span>Desafiar al Rey</span>
+                  </button>
+                ) : canchaSeleccionada.estado === 'libre' && equipoId ? (
+                  <button
+                    onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}`)}
+                    className="w-full bg-accent text-on-accent font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(255,224,131,0.3)] hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                  >
+                    <span>⚡</span>
+                    <span>Conquistar cancha</span>
+                  </button>
+                ) : canchaSeleccionada.estado === 'king' ? (
+                  <div className="w-full py-3 rounded-xl text-[11px] text-accent font-black italic uppercase tracking-widest text-center bg-accent/10 border border-accent/30">
+                    👑 Tu cancha — ¡Defiéndela!
+                  </div>
+                ) : null}
+
+                <button
+                  onClick={() => handleEditarCancha(canchaSeleccionada)}
+                  className="w-full bg-transparent border border-outline-variant rounded-xl py-2.5 text-[11px] text-outline hover:border-outline hover:text-on-surface-variant transition-colors font-medium"
+                >
+                  ✏️ Editar cancha
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── MOBILE: court list bottom sheet ── */}
         {mobileListOpen && (
@@ -538,31 +830,42 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
           {canchasFiltradas.length === 0 ? (
             <div className="text-[11px] text-outline text-center py-6">Sin resultados</div>
           ) : (
-            canchasFiltradas.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setCanchaSeleccionada(c)}
-                className={`flex items-start gap-2 w-full bg-transparent border rounded-lg px-2 py-2.5 cursor-pointer mb-0.5 transition-colors text-left ${
-                  canchaSeleccionada?.id === c.id
-                    ? 'bg-accent/10 border-accent/30'
-                    : 'border-transparent hover:bg-surface-container-low'
-                }`}
-              >
-                <div className="w-2.5 h-2.5 rounded-full mt-[3px] flex-shrink-0" style={{ background: ESTADO_COLORS[c.estado] }} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-[12px] text-on-surface font-medium truncate">{c.nombre}</div>
-                  <div className="text-[10px] text-outline mt-0.5 truncate">
-                    {c.equipoNombre ? `${c.equipoNombre} · ${c.victorias ?? 0}-${c.derrotas ?? 0}` : c.direccion}
-                  </div>
-                </div>
-                <span
-                  className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium flex-shrink-0"
-                  style={{ background: `${ESTADO_COLORS[c.estado]}20`, color: ESTADO_COLORS[c.estado] }}
+            canchasFiltradas.map((c) => {
+              const listKing = filtroFormato !== 'general'
+                ? c.kingsPerFormato[filtroFormato]
+                : null;
+              const listName = listKing?.equipoNombre ?? listKing?.jugadorNombre;
+
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setCanchaSeleccionada(c)}
+                  className={`flex items-start gap-2 w-full bg-transparent border rounded-lg px-2 py-2.5 cursor-pointer mb-0.5 transition-colors text-left ${
+                    canchaSeleccionada?.id === c.id
+                      ? 'bg-accent/10 border-accent/30'
+                      : 'border-transparent hover:bg-surface-container-low'
+                  }`}
                 >
-                  {ESTADO_LABELS[c.estado]}
-                </span>
-              </button>
-            ))
+                  <div className="w-2.5 h-2.5 rounded-full mt-[3px] flex-shrink-0" style={{ background: ESTADO_COLORS[c.estado] }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12px] text-on-surface font-medium truncate">{c.nombre}</div>
+                    <div className="text-[10px] text-outline mt-0.5 truncate">
+                      {listName
+                        ? `${listName} · ${listKing?.victorias ?? 0}-${listKing?.derrotas ?? 0}`
+                        : c.equipoNombre
+                          ? `${c.equipoNombre} · ${c.victorias ?? 0}-${c.derrotas ?? 0}`
+                          : c.direccion}
+                    </div>
+                  </div>
+                  <span
+                    className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium flex-shrink-0"
+                    style={{ background: `${ESTADO_COLORS[c.estado]}20`, color: ESTADO_COLORS[c.estado] }}
+                  >
+                    {ESTADO_LABELS[c.estado]}
+                  </span>
+                </button>
+              );
+            })
           )}
         </div>
         <button
@@ -591,6 +894,7 @@ export function MapaClientWrapper({ canchas, equipoId, stats }: Props) {
         <div style={{ display: showModal ? undefined : 'none' }}>
           <AgregarCanchaModal
             coordsIniciales={coordsNuevaCancha ?? undefined}
+            deportesIniciales={['basketball']}
             onClose={handleModalClose}
             onSuccess={handleModalSuccess}
             onNecesitaClickMapa={handleNecesitaClickMapa}

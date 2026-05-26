@@ -15,9 +15,20 @@ ALTER TABLE cancha_dominio ALTER COLUMN temporada_id DROP NOT NULL;
 ALTER TABLE cancha_dominio DROP CONSTRAINT IF EXISTS cancha_dominio_cancha_id_equipo_id_temporada_id_key;
 ALTER TABLE cancha_dominio DROP CONSTRAINT IF EXISTS cancha_dominio_unique;
 
-ALTER TABLE cancha_dominio
-  ADD CONSTRAINT cancha_dominio_cancha_equipo_unique
-  UNIQUE (cancha_id, equipo_id);
+DO $$
+BEGIN
+  -- Avoid failure if this constraint already exists in environments with partial/manual changes.
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'cancha_dominio_cancha_equipo_unique'
+      AND conrelid = 'cancha_dominio'::regclass
+  ) THEN
+    ALTER TABLE cancha_dominio
+      ADD CONSTRAINT cancha_dominio_cancha_equipo_unique
+      UNIQUE (cancha_id, equipo_id);
+  END IF;
+END $$;
 
 -- 3. RLS policies for cancha_dominio writes
 --    Allow authenticated users whose equipo is the one being recorded

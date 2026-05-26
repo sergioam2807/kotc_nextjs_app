@@ -1,7 +1,8 @@
 export type Rol = 'admin' | 'capitan' | 'jugador';
 export type Posicion = 'titular' | 'suplente';
-export type Deporte = 'basketball' | 'futbol' | 'voleibol' | 'tenis' | 'padel';
-export type Modalidad = '1v1' | '2v2' | '3v3' | '4v4' | '5v5' | '6v6' | '7v7';
+// MVP: Basketball únicamente. Ampliar cuando se escale a más deportes.
+export type Deporte = 'basketball';
+export type Modalidad = '3v3' | '5v5';
 
 export interface Perfil {
   id: string;
