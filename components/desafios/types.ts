@@ -1,4 +1,4 @@
-export type EstadoDesafio = 'pendiente' | 'aceptado' | 'rechazado' | 'jugado' | 'resultado_pendiente' | 'disputado' | 'completado';
+export type EstadoDesafio = 'pendiente' | 'aceptado' | 'rechazado' | 'jugado' | 'resultado_pendiente' | 'disputado' | 'completado' | 'cancelado';
 
 export interface ResultadoDesafio {
   id: string;
@@ -9,6 +9,7 @@ export interface ResultadoDesafio {
   puntos_retado: number | null;
   confirmado_por_perdedor: boolean;
   disputado: boolean;
+  disputa_at: string | null;
   confirmado_at: string | null;
   created_at: string;
 }

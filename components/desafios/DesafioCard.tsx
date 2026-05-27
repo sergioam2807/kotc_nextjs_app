@@ -19,6 +19,7 @@ const estadoBadgeStyle: Record<EstadoDesafio, { bg: string; color: string; label
   resultado_pendiente:{ bg: 'bg-primary/15',             color: 'text-primary',               label: 'Resultado pendiente'},
   disputado:          { bg: 'bg-error/15',               color: 'text-error',                 label: 'Disputado'          },
   completado:         { bg: 'bg-status-libre/15',        color: 'text-status-libre',          label: 'Completado'         },
+  cancelado:          { bg: 'bg-surface-container',      color: 'text-on-surface-variant',    label: 'Cancelado'          },
 };
 
 function formatFecha(fechaStr: string): string {
@@ -33,6 +34,7 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showProponer, setShowProponer] = useState(false);
+  const [showReproponer, setShowReproponer] = useState(false);
   const [desafioLocal, setDesafioLocal] = useState<DesafioConDatos>(desafio);
 
   const badge = estadoBadgeStyle[desafioLocal.estado];
@@ -131,6 +133,45 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleAceptarOriginal() {
+    if (!resultado) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/resultados', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: resultado.id, accion: 'aceptar_original' }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Error ${res.status}`);
+      }
+      const data = await res.json();
+      const updatedResultado: ResultadoDesafio = data.resultado;
+      const updated = { ...desafioLocal, estado: 'completado' as EstadoDesafio, resultado: updatedResultado };
+      setDesafioLocal(updated);
+      onEstadoCambiado(desafioLocal.id, 'completado', updatedResultado);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleReProponerSuccess(nuevoResultado: ResultadoDesafio) {
+    const updated: DesafioConDatos = {
+      ...desafioLocal,
+      estado: 'resultado_pendiente',
+      resultado: nuevoResultado,
+    };
+    setDesafioLocal(updated);
+    setShowReproponer(false);
+    onEstadoCambiado(desafioLocal.id, 'resultado_pendiente', nuevoResultado);
+    router.refresh();
   }
 
   function handleProponerSuccess(nuevoResultado: ResultadoDesafio) {
@@ -284,14 +325,65 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
           </div>
         )}
 
-        {/* Estado: disputado */}
-        {desafioLocal.estado === 'disputado' && (
-          <div className="mt-1">
-            <div className="text-[11px] text-error italic">
-              ⚠️ Resultado en disputa — esperando resolución
+        {/* Estado: disputado — resolution UI */}
+        {desafioLocal.estado === 'disputado' && resultado && (() => {
+          // Days until auto-cancel (5 days from disputa_at)
+          const disputa_at = resultado.disputa_at;
+          let diasRestantes: number | null = null;
+          if (disputa_at) {
+            const deadline = new Date(disputa_at).getTime() + 5 * 24 * 60 * 60 * 1000;
+            diasRestantes = Math.ceil((deadline - Date.now()) / (24 * 60 * 60 * 1000));
+          }
+          return (
+            <div className="mt-1">
+              {/* Header */}
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="text-[11px] font-semibold text-error">⚠️ Resultado en disputa</span>
+              </div>
+              {/* Original result */}
+              <div className="text-[11px] text-on-surface-variant mb-1">
+                Resultado propuesto:{' '}
+                <span style={{ color: ganador?.color }} className="font-semibold">{ganador?.nombre ?? '?'}</span>
+                {' '}ganó
+              </div>
+              {/* Timeout countdown */}
+              {diasRestantes !== null && (
+                <div className={`text-[10px] mb-3 ${diasRestantes <= 1 ? 'text-error' : 'text-outline'}`}>
+                  ⏱{' '}
+                  {diasRestantes > 0
+                    ? `Se anulará automáticamente en ${diasRestantes} día${diasRestantes !== 1 ? 's' : ''} si no se resuelve`
+                    : 'En proceso de anulación automática'}
+                </div>
+              )}
+              {!disputa_at && (
+                <div className="text-[10px] text-outline mb-3">
+                  ⏱ Esperando resolución manual
+                </div>
+              )}
+              {/* Resolution actions */}
+              <div className="flex flex-col gap-1.5">
+                {/* Only the non-proposer can accept the original result */}
+                {!propusoYo && (
+                  <button
+                    onClick={handleAceptarOriginal}
+                    disabled={loading}
+                    className="w-full rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-status-libre/15 text-status-libre border border-status-libre/25 hover:bg-status-libre/25 min-h-[40px]"
+                  >
+                    {loading ? '...' : '✅ Aceptar resultado original'}
+                  </button>
+                )}
+                {/* Both teams can re-propose */}
+                <button
+                  onClick={() => setShowReproponer(true)}
+                  disabled={loading}
+                  className="w-full rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-accent/15 text-accent border border-accent/25 hover:bg-accent/25 min-h-[40px]"
+                >
+                  🔄 Re-proponer resultado
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Estado: completado o jugado con resultado */}
         {(desafioLocal.estado === 'completado' || desafioLocal.estado === 'jugado') && ganador && (
@@ -314,6 +406,16 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
           equipoId={equipoId}
           onClose={() => setShowProponer(false)}
           onSuccess={handleProponerSuccess}
+        />
+      )}
+
+      {showReproponer && desafioLocal.resultado && (
+        <ProponeResultadoModal
+          desafio={desafioLocal}
+          equipoId={equipoId}
+          resultadoId={desafioLocal.resultado.id}
+          onClose={() => setShowReproponer(false)}
+          onSuccess={handleReProponerSuccess}
         />
       )}
     </>
