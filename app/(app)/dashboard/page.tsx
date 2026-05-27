@@ -281,9 +281,11 @@ export default async function DashboardPage() {
           .limit(10)
       : Promise.resolve({ data: null }),
 
-    // Rivales cercanos buscando match (misma región/comuna)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    equipoId && ((miEquipo as any)?.region || (miEquipo as any)?.comuna)
+    // Rivales buscando match — siempre busca cuando hay equipo.
+    // Si el equipo tiene región configurada → filtra por esa región para
+    // mostrar rivalidades locales. Si no tiene región → devuelve todos
+    // (max 6) para que el usuario descubra quién está disponible.
+    equipoId
       ? (async () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const myRegion: string | null = (miEquipo as any)?.region ?? null;
@@ -292,7 +294,6 @@ export default async function DashboardPage() {
             .select('id, nombre, color, modalidad, rival_modalidad, comuna, region, nivel')
             .eq('buscando_rival', true)
             .neq('id', equipoId);
-          // Filter by region (always) — exact commune proximity shown in UI via badge
           if (myRegion) q = q.eq('region', myRegion);
           return q.order('nivel', { ascending: false }).limit(6);
         })()
@@ -750,6 +751,78 @@ export default async function DashboardPage() {
             </div>
           )}
 
+          {/* ── Rivales buscando match ────────────────────────────────── */}
+          {miEquipo && rivalesCercanos.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <span className="text-[10px] text-outline tracking-[0.08em] font-medium uppercase">
+                    🔥 Rivales buscando match
+                  </span>
+                  <div className="text-[10px] text-outline mt-0.5">
+                    {myRegion
+                      ? rivalesEnMiComuna.length > 0
+                        ? `${rivalesEnMiComuna.length} en tu comuna · ${rivalesCercanos.length - rivalesEnMiComuna.length} más en ${myRegion}`
+                        : `${rivalesCercanos.length} equipo${rivalesCercanos.length !== 1 ? 's' : ''} en ${myRegion}`
+                      : `${rivalesCercanos.length} equipo${rivalesCercanos.length !== 1 ? 's' : ''} disponible${rivalesCercanos.length !== 1 ? 's' : ''}`
+                    }
+                  </div>
+                </div>
+                <Link href="/equipos?rivales=1" className="text-[11px] text-accent hover:underline font-medium">
+                  Ver todos →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {rivalesCercanos.slice(0, 4).map(rival => {
+                  const color = rival.color ?? 'var(--color-accent)';
+                  const words = rival.nombre.trim().split(/\s+/);
+                  const ini = words.length >= 2
+                    ? (words[0][0] + words[1][0]).toUpperCase()
+                    : rival.nombre.slice(0, 2).toUpperCase();
+                  const esCercano = myComuna && rival.comuna === myComuna;
+                  const formato = rival.rival_modalidad ?? rival.modalidad;
+
+                  return (
+                    <Link
+                      key={rival.id}
+                      href={`/equipos/${rival.id}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant hover:border-outline transition-colors"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0 border"
+                        style={{ background: `${color}15`, color, borderColor: `${color}40` }}
+                      >
+                        {ini}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-semibold truncate" style={{ color }}>
+                          {rival.nombre}
+                        </div>
+                        <div className="text-[10px] text-outline flex items-center gap-1 flex-wrap">
+                          {esCercano && <span className="text-status-libre">●</span>}
+                          <span>{esCercano ? rival.comuna : (rival.region ?? rival.comuna ?? 'Sin ubicación')}</span>
+                          {formato && <><span>·</span><span>{formato}</span></>}
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold text-accent flex-shrink-0">Desafiar →</span>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* CTA para configurar región si no tiene */}
+              {!myRegion && (
+                <div className="mt-2 px-3 py-2 rounded-lg bg-accent/8 border border-accent/20">
+                  <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                    💡 <Link href="/equipo" className="text-accent hover:underline">Configura la región de tu equipo</Link>{' '}
+                    para ver rivales cercanos a ti primero.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Analíticas del equipo ────────────────────────────────────── */}
           {miEquipo && (
             <div>
@@ -892,77 +965,19 @@ export default async function DashboardPage() {
         {/* ════════════════ RIGHT COLUMN (1/3) ════════════════ */}
         <div className="space-y-5">
 
-          {/* ── Rivales cercanos buscando match ─────────────────────────────────── */}
-          {rivalesCercanos.length > 0 && (
-            <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-[13px] font-semibold text-on-surface flex items-center gap-1.5">
-                    🔥 Rivales en tu zona
-                  </div>
-                  <div className="text-[10px] text-outline mt-0.5">
-                    {rivalesEnMiComuna.length > 0
-                      ? `${rivalesEnMiComuna.length} en tu comuna · ${rivalesCercanos.length - rivalesEnMiComuna.length} más en ${myRegion ?? 'tu región'}`
-                      : `${rivalesCercanos.length} equipo${rivalesCercanos.length !== 1 ? 's' : ''} en ${myRegion ?? 'tu región'}`
-                    }
-                  </div>
-                </div>
-                <Link
-                  href="/equipos"
-                  className="text-[11px] text-accent hover:underline font-medium flex-shrink-0"
-                >
-                  Ver todos →
-                </Link>
+          {/* Rivals widget moved to left column — only keep small shortcut here when there's no data */}
+          {rivalesCercanos.length === 0 && miEquipo && (
+            <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[12px] font-semibold text-on-surface">🔥 Buscar rivales</div>
+                <div className="text-[10px] text-outline mt-0.5">Ningún equipo busca match ahora</div>
               </div>
-
-              <div className="flex flex-col gap-2">
-                {rivalesCercanos.slice(0, 4).map(rival => {
-                  const color = rival.color ?? 'var(--color-accent)';
-                  const words = rival.nombre.trim().split(/\s+/);
-                  const ini = words.length >= 2
-                    ? (words[0][0] + words[1][0]).toUpperCase()
-                    : rival.nombre.slice(0, 2).toUpperCase();
-                  const esCercano = myComuna && rival.comuna === myComuna;
-                  const formato = rival.rival_modalidad ?? rival.modalidad;
-
-                  return (
-                    <Link
-                      key={rival.id}
-                      href={`/equipos/${rival.id}`}
-                      className="flex items-center gap-3 p-2.5 rounded-lg bg-surface hover:bg-surface-container transition-colors border border-transparent hover:border-outline-variant"
-                    >
-                      <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0 border"
-                        style={{ background: `${color}15`, color, borderColor: `${color}40` }}
-                      >
-                        {ini}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[12px] font-semibold text-on-surface truncate" style={{ color }}>
-                          {rival.nombre}
-                        </div>
-                        <div className="text-[10px] text-outline">
-                          {esCercano && <span className="text-status-libre">● </span>}
-                          {esCercano ? rival.comuna : rival.region ?? rival.comuna}
-                          {formato && ` · ${formato}`}
-                        </div>
-                      </div>
-                      <div className="text-[10px] font-semibold text-accent flex-shrink-0">
-                        Desafiar →
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {rivalesCercanos.length > 4 && (
-                <Link
-                  href="/equipos"
-                  className="mt-3 block text-center text-[11px] text-accent hover:underline"
-                >
-                  Ver {rivalesCercanos.length - 4} más →
-                </Link>
-              )}
+              <Link
+                href="/equipos"
+                className="text-[11px] text-accent hover:underline font-medium flex-shrink-0"
+              >
+                Ver equipos →
+              </Link>
             </div>
           )}
 

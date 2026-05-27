@@ -1,7 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import EquiposClientWrapper from '@/components/equipos/EquiposClientWrapper';
 
-export default async function EquiposPage() {
+export default async function EquiposPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rivales?: string }>;
+}) {
+  const { rivales } = await searchParams;
   const supabase = await createClient();
 
   // Current user — check if they already have a team
@@ -29,6 +34,7 @@ export default async function EquiposPage() {
       equipos={equipos}
       userEquipoId={userEquipoId}
       userId={user?.id ?? null}
+      initialSoloRivales={rivales === '1'}
     />
   );
 }

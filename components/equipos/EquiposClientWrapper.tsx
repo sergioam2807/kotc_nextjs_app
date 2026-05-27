@@ -27,6 +27,7 @@ interface Props {
   equipos: EquipoRow[];
   userEquipoId: string | null;
   userId: string | null;
+  initialSoloRivales?: boolean;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -49,12 +50,12 @@ const DEPORTE_LABELS: Record<string, string> = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function EquiposClientWrapper({ equipos, userEquipoId, userId }: Props) {
+export default function EquiposClientWrapper({ equipos, userEquipoId, userId, initialSoloRivales = false }: Props) {
   const [busqueda, setBusqueda] = useState('');
   const [deporteFiltro, setDeporteFiltro] = useState('');
   const [regionFiltro, setRegionFiltro] = useState('');
   const [modalidadFiltro, setModalidadFiltro] = useState('');
-  const [soloRivales, setSoloRivales] = useState(false);
+  const [soloRivales, setSoloRivales] = useState(initialSoloRivales);
 
   // Derived filter options from actual data
   const deportesDisponibles = useMemo(() => {
