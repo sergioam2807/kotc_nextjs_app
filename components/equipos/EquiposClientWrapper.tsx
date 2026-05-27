@@ -19,6 +19,8 @@ export interface EquipoRow {
   nivel: number | null;
   xp: number | null;
   equipo_miembros: { count: number }[] | null;
+  buscando_rival: boolean | null;       // NEW
+  rival_modalidad: string | null;       // NEW
 }
 
 interface Props {
@@ -51,6 +53,8 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId }: 
   const [busqueda, setBusqueda] = useState('');
   const [deporteFiltro, setDeporteFiltro] = useState('');
   const [regionFiltro, setRegionFiltro] = useState('');
+  const [modalidadFiltro, setModalidadFiltro] = useState('');
+  const [soloRivales, setSoloRivales] = useState(false);
 
   // Derived filter options from actual data
   const deportesDisponibles = useMemo(() => {
@@ -65,6 +69,12 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId }: 
     return Array.from(set).sort();
   }, [equipos]);
 
+  const modalidadesDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    equipos.forEach(e => { if (e.modalidad) set.add(e.modalidad); });
+    return Array.from(set).sort();
+  }, [equipos]);
+
   // Filtered list
   const equiposFiltrados = useMemo(() => {
     return equipos.filter(e => {
@@ -74,16 +84,20 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId }: 
       }
       if (deporteFiltro && e.deporte !== deporteFiltro) return false;
       if (regionFiltro && e.region !== regionFiltro) return false;
+      if (modalidadFiltro && e.modalidad !== modalidadFiltro) return false;
+      if (soloRivales && !e.buscando_rival) return false;
       return true;
     });
-  }, [equipos, busqueda, deporteFiltro, regionFiltro]);
+  }, [equipos, busqueda, deporteFiltro, regionFiltro, modalidadFiltro, soloRivales]);
 
-  const activeFilterCount = [busqueda.trim(), deporteFiltro, regionFiltro].filter(Boolean).length;
+  const activeFilterCount = [busqueda.trim(), deporteFiltro, regionFiltro, modalidadFiltro, soloRivales ? 'rival' : ''].filter(Boolean).length;
 
   function clearFilters() {
     setBusqueda('');
     setDeporteFiltro('');
     setRegionFiltro('');
+    setModalidadFiltro('');
+    setSoloRivales(false);
   }
 
   return (
@@ -196,6 +210,47 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId }: 
           </div>
         )}
 
+        {/* Modalidad chips */}
+        {modalidadesDisponibles.length > 1 && (
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => setModalidadFiltro('')}
+              className={`px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
+                !modalidadFiltro
+                  ? 'bg-surface-container border-outline-variant text-on-surface'
+                  : 'bg-transparent border-outline-variant text-outline hover:text-on-surface-variant'
+              }`}
+            >
+              Todas
+            </button>
+            {modalidadesDisponibles.map(m => (
+              <button
+                key={m}
+                onClick={() => setModalidadFiltro(modalidadFiltro === m ? '' : m)}
+                className={`px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
+                  modalidadFiltro === m
+                    ? 'bg-accent/15 border-accent/40 text-accent'
+                    : 'bg-transparent border-outline-variant text-outline hover:text-on-surface-variant'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Buscando rival toggle chip */}
+        <button
+          onClick={() => setSoloRivales(v => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
+            soloRivales
+              ? 'bg-accent/15 border-accent/40 text-accent'
+              : 'bg-transparent border-outline-variant text-outline hover:text-on-surface-variant'
+          }`}
+        >
+          🔥 Buscando rival
+        </button>
+
         {/* Active filter count + clear */}
         {activeFilterCount > 0 && (
           <div className="flex items-center justify-between">
@@ -301,6 +356,11 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId }: 
                         <span className="text-[11px] text-outline">· {equipo.region}</span>
                       )}
                     </div>
+                    {equipo.buscando_rival && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 text-accent mt-0.5">
+                        🔥 Buscando rival{equipo.rival_modalidad ? ` · ${equipo.rival_modalidad}` : ''}
+                      </span>
+                    )}
                     <div className="text-[10px] text-outline mt-0.5 uppercase tracking-wide">
                       {nivelNombre}
                     </div>

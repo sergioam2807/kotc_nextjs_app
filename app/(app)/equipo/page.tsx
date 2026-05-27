@@ -8,6 +8,7 @@ import { DisolverEquipoButton } from '@/components/equipo/DisolverEquipoButton';
 import { CrearEquipoForm } from '@/components/equipo/CrearEquipoForm';
 import { InvitacionesRecibidas } from '@/components/equipo/InvitacionesRecibidas';
 import { Badge } from '@/components/ui/Badge';
+import { BuscandoRivalToggle } from '@/components/equipo/BuscandoRivalToggle';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -68,7 +69,7 @@ export default async function EquipoPage() {
   // Step 2: datos del equipo por ID separado
   const equipoId = miMembresia?.equipo_id ?? null;
   const { data: equipoData } = equipoId
-    ? await supabase.from('equipos').select('id, nombre, deporte, modalidad, ciudad, color, nivel, xp, creador_id').eq('id', equipoId).maybeSingle()
+    ? await supabase.from('equipos').select('id, nombre, deporte, modalidad, ciudad, region, comuna, color, nivel, xp, creador_id, buscando_rival, rival_modalidad').eq('id', equipoId).maybeSingle()
     : { data: null };
 
   // ------------------------------------------------------------------
@@ -250,6 +251,19 @@ export default async function EquipoPage() {
           </div>
         ))}
       </div>
+
+      {/* Buscando rival — solo admin */}
+      {isAdmin && (
+        <div className="mb-4">
+          <BuscandoRivalToggle
+            equipoId={equipo.id}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            initialBuscando={(equipo as any).buscando_rival ?? false}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            initialModalidad={(equipo as any).rival_modalidad ?? null}
+          />
+        </div>
+      )}
 
       {/* Roster header */}
       <div className="flex items-center justify-between gap-2 mb-3">

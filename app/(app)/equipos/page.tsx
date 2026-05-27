@@ -19,7 +19,7 @@ export default async function EquiposPage() {
   // Fetch all teams with member count (including region)
   const { data: equiposRaw } = await supabase
     .from('equipos')
-    .select('id, nombre, deporte, modalidad, ciudad, region, color, nivel, xp, equipo_miembros(count)')
+    .select('id, nombre, deporte, modalidad, ciudad, region, color, nivel, xp, buscando_rival, rival_modalidad, equipo_miembros(count)')
     .order('xp', { ascending: false });
 
   const equipos = equiposRaw ?? [];
