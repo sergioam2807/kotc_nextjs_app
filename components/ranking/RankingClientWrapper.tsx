@@ -5,6 +5,7 @@ import { TeamRankingView } from './TeamRankingView';
 import { PlayerRankingView } from './PlayerRankingView';
 import { Player1v1RankingView } from './Player1v1RankingView';
 import type { TeamRankingStat, PlayerRankingStat, Player1v1Stat } from './types';
+import { REGIONES_CHILE } from '@/lib/chile-geo';
 
 interface Props {
   teamStats: TeamRankingStat[];
@@ -21,13 +22,8 @@ export default function RankingClientWrapper({ teamStats, playerStats, stats1v1,
   const [tab, setTab] = useState<'equipos' | 'jugadores' | '1v1'>('equipos');
   const [regionFiltro, setRegionFiltro] = useState('');
 
-  // Regions available for the current tab (equipos + jugadores only — 1v1 has no region)
-  const regionesDisponibles = useMemo(() => {
-    const allItems = tab === 'equipos' ? teamStats : playerStats;
-    const set = new Set<string>();
-    (allItems as { region?: string | null }[]).forEach(t => { if (t.region) set.add(t.region); });
-    return Array.from(set).sort();
-  }, [teamStats, playerStats, tab]);
+  // All 16 Chilean regions — always visible so users can filter even before data is populated
+  const todasLasRegiones = REGIONES_CHILE.map(r => r.nombreCorto);
 
   const teamStatsFiltrados = useMemo(() => {
     if (!regionFiltro) return teamStats;
@@ -105,32 +101,31 @@ export default function RankingClientWrapper({ teamStats, playerStats, stats1v1,
         </button>
       </div>
 
-      {/* Región filter — equipos and jugadores tabs only */}
-      {tab !== '1v1' && regionesDisponibles.length > 1 && (
-        <div className="px-4 sm:px-6 pt-3 flex gap-1.5 flex-wrap flex-shrink-0">
-          <button
-            onClick={() => setRegionFiltro('')}
-            className={`px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
-              regionFiltro === ''
+      {/* Región filter — select dropdown, always visible on equipos/jugadores tabs */}
+      {tab !== '1v1' && (
+        <div className="px-4 sm:px-6 pt-3 flex items-center gap-2 flex-shrink-0">
+          <select
+            value={regionFiltro}
+            onChange={e => setRegionFiltro(e.target.value)}
+            className={`h-8 rounded-full border text-[10px] font-semibold px-3 outline-none transition-colors ${
+              regionFiltro
                 ? 'bg-accent/15 border-accent/40 text-accent'
-                : 'bg-transparent border-outline-variant text-outline hover:text-on-surface-variant'
+                : 'bg-surface-container border-outline-variant text-outline'
             }`}
           >
-            Todas las regiones
-          </button>
-          {regionesDisponibles.map(r => (
+            <option value="">📍 Todas las regiones</option>
+            {todasLasRegiones.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          {regionFiltro && (
             <button
-              key={r}
-              onClick={() => setRegionFiltro(regionFiltro === r ? '' : r)}
-              className={`px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
-                regionFiltro === r
-                  ? 'bg-accent/15 border-accent/40 text-accent'
-                  : 'bg-transparent border-outline-variant text-outline hover:text-on-surface-variant'
-              }`}
+              onClick={() => setRegionFiltro('')}
+              className="text-[10px] text-outline hover:text-on-surface-variant transition-colors"
             >
-              {r}
+              ✕ Limpiar
             </button>
-          ))}
+          )}
         </div>
       )}
 

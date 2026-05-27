@@ -191,11 +191,9 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
     return COMUNAS_POR_REGION[filtroRegion] ?? [];
   }, [filtroRegion]);
 
-  const regionesConCanchas = useMemo(() => {
-    const set = new Set<string>();
-    canchasLocales.forEach(c => { if (c.region) set.add(c.region); });
-    return REGIONES_CHILE.filter(r => set.has(r.nombreCorto));
-  }, [canchasLocales]);
+  // All 16 regions always available for filtering — not data-driven so the filter
+  // is always visible even before courts have region data populated.
+  const regionesConCanchas = REGIONES_CHILE;
 
   const filtroItems: { id: Filtro; label: string; color: string; count: number }[] = [
     { id: 'todas',  label: 'Todas',   color: '#8f909d', count: conteos.todas },
