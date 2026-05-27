@@ -19,19 +19,30 @@ interface Props {
 
 export default function RankingClientWrapper({ teamStats, playerStats, stats1v1, currentUserId, temporadaNombre, temporadaColor, temporadaEmoji, temporadaNumero }: Props) {
   const [tab, setTab] = useState<'equipos' | 'jugadores' | '1v1'>('equipos');
-  const [ciudadFiltro, setCiudadFiltro] = useState<string>('todas');
+  const [regionFiltro, setRegionFiltro] = useState('');
 
-  // Unique cities from teams (sorted alphabetically, ignoring nulls)
-  const ciudades = useMemo(() => {
+  // Regions available for the current tab (equipos + jugadores only — 1v1 has no region)
+  const regionesDisponibles = useMemo(() => {
+    const allItems = tab === 'equipos' ? teamStats : playerStats;
     const set = new Set<string>();
-    teamStats.forEach(t => { if (t.ciudad) set.add(t.ciudad); });
+    (allItems as { region?: string | null }[]).forEach(t => { if (t.region) set.add(t.region); });
     return Array.from(set).sort();
-  }, [teamStats]);
+  }, [teamStats, playerStats, tab]);
 
   const teamStatsFiltrados = useMemo(() => {
-    if (ciudadFiltro === 'todas') return teamStats;
-    return teamStats.filter(t => t.ciudad === ciudadFiltro);
-  }, [teamStats, ciudadFiltro]);
+    if (!regionFiltro) return teamStats;
+    return teamStats.filter(t => t.region === regionFiltro);
+  }, [teamStats, regionFiltro]);
+
+  const playerStatsFiltrados = useMemo(() => {
+    if (!regionFiltro) return playerStats;
+    return playerStats.filter(p => p.region === regionFiltro);
+  }, [playerStats, regionFiltro]);
+
+  function handleTabChange(newTab: 'equipos' | 'jugadores' | '1v1') {
+    setTab(newTab);
+    setRegionFiltro(''); // reset region filter on tab change
+  }
 
   return (
     <div className="flex flex-col min-h-full">
@@ -75,49 +86,49 @@ export default function RankingClientWrapper({ teamStats, playerStats, stats1v1,
       {/* Tabs */}
       <div className="px-4 sm:px-6 pt-4 flex gap-1 flex-shrink-0">
         <button
-          onClick={() => setTab('equipos')}
+          onClick={() => handleTabChange('equipos')}
           className={`px-4 py-2 rounded-lg text-[12px] font-semibold transition-colors min-h-[40px] ${tab === 'equipos' ? 'bg-accent/15 text-accent' : 'text-outline hover:text-on-surface-variant'}`}
         >
           Equipos
         </button>
         <button
-          onClick={() => setTab('jugadores')}
+          onClick={() => handleTabChange('jugadores')}
           className={`px-4 py-2 rounded-lg text-[12px] font-semibold transition-colors min-h-[40px] ${tab === 'jugadores' ? 'bg-accent/15 text-accent' : 'text-outline hover:text-on-surface-variant'}`}
         >
           Jugadores
         </button>
         <button
-          onClick={() => setTab('1v1')}
+          onClick={() => handleTabChange('1v1')}
           className={`px-4 py-2 rounded-lg text-[12px] font-semibold transition-colors min-h-[40px] ${tab === '1v1' ? 'bg-accent/15 text-accent' : 'text-outline hover:text-on-surface-variant'}`}
         >
           ⚔️ 1v1
         </button>
       </div>
 
-      {/* City filter — only in equipos tab */}
-      {tab === 'equipos' && ciudades.length > 1 && (
+      {/* Región filter — equipos and jugadores tabs only */}
+      {tab !== '1v1' && regionesDisponibles.length > 1 && (
         <div className="px-4 sm:px-6 pt-3 flex gap-1.5 flex-wrap flex-shrink-0">
           <button
-            onClick={() => setCiudadFiltro('todas')}
+            onClick={() => setRegionFiltro('')}
             className={`px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
-              ciudadFiltro === 'todas'
-                ? 'bg-surface-container border-outline-variant text-on-surface'
+              regionFiltro === ''
+                ? 'bg-accent/15 border-accent/40 text-accent'
                 : 'bg-transparent border-outline-variant text-outline hover:text-on-surface-variant'
             }`}
           >
-            Todas las ciudades
+            Todas las regiones
           </button>
-          {ciudades.map(c => (
+          {regionesDisponibles.map(r => (
             <button
-              key={c}
-              onClick={() => setCiudadFiltro(c)}
+              key={r}
+              onClick={() => setRegionFiltro(regionFiltro === r ? '' : r)}
               className={`px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
-                ciudadFiltro === c
-                  ? 'bg-surface-container border-outline-variant text-on-surface'
+                regionFiltro === r
+                  ? 'bg-accent/15 border-accent/40 text-accent'
                   : 'bg-transparent border-outline-variant text-outline hover:text-on-surface-variant'
               }`}
             >
-              {c}
+              {r}
             </button>
           ))}
         </div>
@@ -127,7 +138,7 @@ export default function RankingClientWrapper({ teamStats, playerStats, stats1v1,
         {tab === 'equipos' ? (
           <TeamRankingView stats={teamStatsFiltrados} />
         ) : tab === 'jugadores' ? (
-          <PlayerRankingView stats={playerStats} currentUserId={currentUserId} />
+          <PlayerRankingView stats={playerStatsFiltrados} currentUserId={currentUserId} />
         ) : (
           <Player1v1RankingView stats={stats1v1} currentUserId={currentUserId} />
         )}

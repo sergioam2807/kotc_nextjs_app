@@ -16,10 +16,10 @@ export default async function RankingPage() {
     { data: temporadaActiva },
     { data: ranking1v1Raw },
   ] = await Promise.all([
-    supabase.from('equipos').select('id, nombre, color, ciudad, deporte, xp, nivel'),
+    supabase.from('equipos').select('id, nombre, color, ciudad, region, deporte, xp, nivel'),
     supabase.from('cancha_dominio').select('equipo_id, victorias, derrotas, es_king'),
     supabase.from('equipo_miembros').select('equipo_id'),
-    supabase.from('profiles').select('id, username, display_name, avatar_url, xp, nivel').order('xp', { ascending: false }).limit(100),
+    supabase.from('profiles').select('id, username, display_name, avatar_url, nivel, xp, region').order('xp', { ascending: false }).limit(100),
     supabase.from('equipo_miembros').select('jugador_id, equipo_id'),
     supabase.from('equipos').select('id, nombre, color'),
     supabase.auth.getUser(),
@@ -44,6 +44,7 @@ export default async function RankingPage() {
       nombre: equipo.nombre,
       color: equipo.color,
       ciudad: equipo.ciudad ?? null,
+      region: (equipo as { region?: string | null }).region ?? null,
       deporte: equipo.deporte ?? null,
       puntos,
       kingCourts,
@@ -65,6 +66,7 @@ export default async function RankingPage() {
       avatarUrl: p.avatar_url ?? null,
       nivel: p.nivel ?? 1,
       xp: p.xp ?? 0,
+      region: (p as { region?: string | null }).region ?? null,
       equipoNombre: equipo?.nombre ?? null,
       equipoColor: equipo?.color ?? null,
     };
