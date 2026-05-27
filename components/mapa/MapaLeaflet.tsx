@@ -11,9 +11,9 @@ interface Props {
 }
 
 const ESTADO_COLORS = {
-  libre: '#5a9e5a',
-  king: '#F5C344',
-  rival: '#E24B4A',
+  libre: '#4ade80',
+  king: '#ffe083',
+  rival: '#f87171',
 };
 
 const ESTADO_LABELS = {
@@ -22,15 +22,23 @@ const ESTADO_LABELS = {
   rival: '🔴 RIVAL',
 };
 
-function buildMarkerHtml(estado: CanchaConEstado['estado']): string {
-  if (estado === 'king') {
-    return `<div style="width:24px;height:24px;border-radius:50%;background:#F5C344;border:2px solid #fff;box-shadow:0 0 10px #F5C34480;display:flex;align-items:center;justify-content:center;font-size:12px">👑</div>`;
+function getInitials(name: string | undefined): string {
+  if (!name) return '?';
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+}
+
+function buildMarkerSvg(cancha: CanchaConEstado): string {
+  if (cancha.estado === 'libre') {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50"><circle cx="20" cy="20" r="19" fill="#4ade80" /><circle cx="20" cy="20" r="14" fill="#14532d" /><text x="20" y="26" text-anchor="middle" fill="#4ade80" font-size="16" font-family="Arial, sans-serif">🏀</text><polygon points="14,37 20,50 26,37" fill="#4ade80" /></svg>`;
   }
-  if (estado === 'rival') {
-    return `<div style="width:18px;height:18px;border-radius:50%;background:#E24B4A;border:2px solid #E24B4A88;box-shadow:0 0 6px #E24B4A60"></div>`;
-  }
-  // libre
-  return `<div style="width:18px;height:18px;border-radius:50%;background:#5a9e5a;border:2px solid #5a9e5a88;box-shadow:0 0 6px #5a9e5a60"></div>`;
+  const ringColor = cancha.estado === 'king' ? '#ffe083' : '#f87171';
+  const initials = getInitials(cancha.equipoNombre);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50"><circle cx="20" cy="20" r="19" fill="${ringColor}" /><circle cx="20" cy="20" r="14" fill="#111827" /><text x="20" y="25" text-anchor="middle" fill="${ringColor}" font-size="12" font-weight="bold" font-family="Arial, sans-serif">${initials}</text><polygon points="14,37 20,50 26,37" fill="${ringColor}" /></svg>`;
+}
+
+function buildMarkerHtml(cancha: CanchaConEstado): string {
+  const svg = buildMarkerSvg(cancha);
+  return `<div style="width:40px;height:50px;display:flex;align-items:center;justify-content:center">${svg}</div>`;
 }
 
 function buildPopupHtml(cancha: CanchaConEstado): string {
@@ -130,15 +138,15 @@ export default function MapaLeaflet({ canchas, onSelectCancha, modoAgregar = fal
     canchas.forEach((cancha) => {
       if (markersRef.current.has(cancha.id)) return;
 
-      const iconSize: [number, number] = cancha.estado === 'king' ? [24, 24] : [18, 18];
-      const iconAnchor: [number, number] = cancha.estado === 'king' ? [12, 12] : [9, 9];
+      const iconSize: [number, number] = [40, 50];
+      const iconAnchor: [number, number] = [20, 50];
 
       const icon = L.divIcon({
         className: '',
-        html: buildMarkerHtml(cancha.estado),
+        html: buildMarkerHtml(cancha),
         iconSize,
         iconAnchor,
-        popupAnchor: [0, -iconAnchor[1] - 4],
+        popupAnchor: [0, -50 - 4],
       });
 
       const popup = L.popup({

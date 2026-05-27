@@ -25,8 +25,12 @@ export async function POST(request: Request) {
   if (!UUID_RE.test(equipo_id)) {
     return NextResponse.json({ error: 'equipo_id inválido' }, { status: 400 });
   }
-  if (!['email', 'whatsapp', 'link'].includes(metodo)) {
+  if (!['email', 'whatsapp', 'link', 'directo'].includes(metodo)) {
     return NextResponse.json({ error: 'metodo inválido' }, { status: 400 });
+  }
+  // 'directo' (in-app) requires jugador_id to link the notification target
+  if (metodo === 'directo' && !jugador_id) {
+    return NextResponse.json({ error: 'jugador_id requerido para invitaciones directas' }, { status: 400 });
   }
   if (metodo === 'email' && valor && typeof valor === 'string') {
     // Basic email format check

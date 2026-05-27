@@ -7,6 +7,7 @@ import {
   ESPECIALIDADES_POR_DEPORTE,
   DEPORTES_MAP,
 } from '@/lib/player-constants';
+import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 
 interface PerfilData {
   bio?: string | null;
@@ -19,6 +20,8 @@ interface PerfilData {
   anos_experiencia?: number | null;
   disponible_reclutamiento?: boolean | null;
   deportes_activos?: string[] | null;
+  region?: string | null;
+  comuna?: string | null;
 }
 
 interface Props {
@@ -56,6 +59,8 @@ export function EditarPerfilForm({ initialData }: Props) {
   const [disponible, setDisponible] = useState(
     initialData.disponible_reclutamiento ?? false,
   );
+  const [region, setRegion] = useState(initialData.region ?? '');
+  const [comuna, setComuna] = useState(initialData.comuna ?? '');
 
   // Collect all positions across active sports (deduplicated)
   const todasPosiciones = Array.from(
@@ -97,6 +102,8 @@ export function EditarPerfilForm({ initialData }: Props) {
       mano_habil: manoHabil,
       anos_experiencia: anosExperiencia,
       disponible_reclutamiento: disponible,
+      region: region || null,
+      comuna: comuna || null,
     };
 
     const res = await fetch('/api/perfil', {
@@ -383,6 +390,19 @@ export function EditarPerfilForm({ initialData }: Props) {
             </div>
           </div>
         </label>
+      </div>
+
+      {/* Región / Comuna */}
+      <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+        <div className="text-[10px] text-on-surface-variant tracking-[0.08em] font-medium uppercase mb-3">
+          Ubicación
+        </div>
+        <RegionComunaSelect
+          region={region}
+          comuna={comuna}
+          onRegionChange={setRegion}
+          onComunaChange={setComuna}
+        />
       </div>
 
       {/* Submit */}

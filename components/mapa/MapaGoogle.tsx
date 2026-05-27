@@ -46,42 +46,36 @@ const MAP_OPTIONS = {
   keyboardShortcuts: false,
 };
 
-// Design token hex values — must be hardcoded for Google Maps API (no CSS vars)
-const TOKEN = {
-  king: '#ffe083',   // --accent
-  libre: '#4ade80',  // --status-libre
-  rival: '#f87171',  // --status-rival
-  white: '#ffffff',
-};
+function getInitials(name: string | undefined): string {
+  if (!name) return '?';
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+}
 
-function buildIcon(estado: CanchaConEstado['estado']): google.maps.Symbol {
-  if (estado === 'king') {
-    return {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 10,
-      fillColor: TOKEN.king,
-      fillOpacity: 1,
-      strokeColor: TOKEN.white,
-      strokeWeight: 2,
-    };
+function buildMarkerSvg(cancha: CanchaConEstado): string {
+  if (cancha.estado === 'libre') {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
+  <circle cx="20" cy="20" r="19" fill="#4ade80" />
+  <circle cx="20" cy="20" r="14" fill="#14532d" />
+  <text x="20" y="26" text-anchor="middle" fill="#4ade80" font-size="16" font-family="Arial, sans-serif">🏀</text>
+  <polygon points="14,37 20,50 26,37" fill="#4ade80" />
+</svg>`;
   }
-  if (estado === 'libre') {
-    return {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 7,
-      fillColor: TOKEN.libre,
-      fillOpacity: 1,
-      strokeColor: TOKEN.libre,
-      strokeWeight: 1.5,
-    };
-  }
+  const ringColor = cancha.estado === 'king' ? '#ffe083' : '#f87171';
+  const initials = getInitials(cancha.equipoNombre);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
+  <circle cx="20" cy="20" r="19" fill="${ringColor}" />
+  <circle cx="20" cy="20" r="14" fill="#111827" />
+  <text x="20" y="25" text-anchor="middle" fill="${ringColor}" font-size="12" font-weight="bold" font-family="Arial, sans-serif">${initials}</text>
+  <polygon points="14,37 20,50 26,37" fill="${ringColor}" />
+</svg>`;
+}
+
+function buildIcon(cancha: CanchaConEstado): google.maps.Icon {
+  const svg = buildMarkerSvg(cancha);
   return {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 7,
-    fillColor: TOKEN.rival,
-    fillOpacity: 1,
-    strokeColor: TOKEN.rival,
-    strokeWeight: 1.5,
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    scaledSize: new google.maps.Size(40, 50),
+    anchor: new google.maps.Point(20, 50),
   };
 }
 
@@ -146,7 +140,7 @@ export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = fals
       const marker = new google.maps.Marker({
         position: { lat: cancha.lat, lng: cancha.lng },
         map,
-        icon: buildIcon(cancha.estado),
+        icon: buildIcon(cancha),
         title: cancha.nombre,
       });
       marker.addListener('click', () => onSelectCanchaRef.current(cancha));
@@ -179,9 +173,9 @@ export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = fals
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 9,
-          fillColor: TOKEN.king,
+          fillColor: '#ffe083',
           fillOpacity: 1,
-          strokeColor: TOKEN.white,
+          strokeColor: '#ffffff',
           strokeWeight: 2,
         },
         zIndex: 999,

@@ -44,6 +44,9 @@ export interface CanchaConEstado {
   precio_hora?: number | null;
   telefono_contacto?: string | null;
   nombre_recinto?: string | null;
+  // Región / comuna (migración 039)
+  region?: string | null;
+  comuna?: string | null;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────

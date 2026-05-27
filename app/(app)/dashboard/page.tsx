@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { nombreNivel } from '@/lib/levels';
 import Link from 'next/link';
+import { InvitacionesRecibidas } from '@/components/equipo/InvitacionesRecibidas';
 
 // MVP: Basketball únicamente
 const DEPORTES_MAP: Record<string, { emoji: string; label: string }> = {
@@ -230,14 +231,12 @@ export default async function DashboardPage() {
       .order('fecha_fin', { ascending: true })
       .limit(5),
 
-    // Invitaciones pendientes (solo sin equipo)
-    !equipoId
-      ? supabase
-          .from('invitaciones')
-          .select('id', { count: 'exact', head: true })
-          .eq('jugador_id', user.id)
-          .is('usado_at', null)
-      : Promise.resolve({ count: null }),
+    // Invitaciones pendientes (todos los jugadores)
+    supabase
+      .from('invitaciones')
+      .select('id', { count: 'exact', head: true })
+      .eq('jugador_id', user.id)
+      .is('usado_at', null),
 
     // Canchas controladas por rivales (para la sección "por conquistar")
     equipoId
@@ -436,23 +435,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* ── Banner invitaciones (sin equipo) ─────────────────────────────── */}
-      {!miEquipo && invitacionesCount && invitacionesCount > 0 ? (
-        <Link
-          href="/equipo"
-          className="flex items-center gap-3 bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 mb-4 hover:bg-accent/15 transition-colors"
-        >
-          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-error text-white text-[11px] font-bold flex-shrink-0">
-            {invitacionesCount}
-          </span>
-          <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-semibold text-on-surface">
-              {invitacionesCount === 1 ? 'Tienes una invitación' : `Tienes ${invitacionesCount} invitaciones`} de equipo
-            </div>
-            <div className="text-[11px] text-on-surface-variant">Toca para ver y aceptar →</div>
-          </div>
-        </Link>
-      ) : null}
+      {/* ── Invitaciones recibidas (in-app, todos los jugadores) ──────────── */}
+      <InvitacionesRecibidas />
 
       {/* ── Main grid: 2 cols desktop ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
