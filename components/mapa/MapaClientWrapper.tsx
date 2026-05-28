@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AgregarCanchaModal } from './AgregarCanchaModal';
 import { EditarCanchaModal } from './EditarCanchaModal';
 import { MapaTerritorial } from './MapaTerritorial';
+import { REGIONES_CHILE, COMUNAS_POR_REGION } from '@/lib/chile-geo';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -44,6 +45,9 @@ export interface CanchaConEstado {
   precio_hora?: number | null;
   telefono_contacto?: string | null;
   nombre_recinto?: string | null;
+  // Región / comuna (migración 039)
+  region?: string | null;
+  comuna?: string | null;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -100,6 +104,8 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
   const [filtro, setFiltro]       = useState<Filtro>('todas');
   const [filtroFormato, setFiltroFormato] = useState<FiltroFormato>('general');
   const [busqueda, setBusqueda]   = useState('');
+  const [filtroRegion, setFiltroRegion]   = useState('');
+  const [filtroComunas, setFiltroComunas] = useState('');
   const [canchaSeleccionada, setCanchaSeleccionada] = useState<CanchaConEstado | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [modoAgregar, setModoAgregar] = useState(false);
@@ -167,9 +173,11 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
         const q = busqueda.toLowerCase();
         if (!c.nombre.toLowerCase().includes(q) && !c.direccion.toLowerCase().includes(q)) return false;
       }
+      if (filtroRegion && c.region !== filtroRegion) return false;
+      if (filtroComunas && c.comuna !== filtroComunas) return false;
       return true;
     });
-  }, [canchasConFormato, filtro, busqueda]);
+  }, [canchasConFormato, filtro, busqueda, filtroRegion, filtroComunas]);
 
   const conteos = useMemo(() => ({
     todas:  canchasConFormato.length,
@@ -177,6 +185,15 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
     libre:  canchasConFormato.filter((c) => c.estado === 'libre').length,
     rival:  canchasConFormato.filter((c) => c.estado === 'rival').length,
   }), [canchasConFormato]);
+
+  const comunasDeRegion = useMemo(() => {
+    if (!filtroRegion) return [];
+    return COMUNAS_POR_REGION[filtroRegion] ?? [];
+  }, [filtroRegion]);
+
+  // All 16 regions always available for filtering — not data-driven so the filter
+  // is always visible even before courts have region data populated.
+  const regionesConCanchas = REGIONES_CHILE;
 
   const filtroItems: { id: Filtro; label: string; color: string; count: number }[] = [
     { id: 'todas',  label: 'Todas',   color: '#8f909d', count: conteos.todas },
@@ -192,6 +209,10 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
       setCanchaSeleccionada(c);
     }
   }, [canchasFiltradas, busqueda]);
+
+  useEffect(() => {
+    setFiltroComunas('');
+  }, [filtroRegion]);
 
   // Keep canchaSeleccionada in sync with format changes
   useEffect(() => {
@@ -326,6 +347,46 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
           </div>
         )}
 
+        {/* Ubicación filter */}
+        {regionesConCanchas.length > 0 && (
+          <div className="p-3.5 border-b border-outline-variant">
+            <div className="text-[10px] text-outline tracking-[0.1em] mb-2.5 font-medium uppercase">
+              Ubicación
+            </div>
+            <select
+              value={filtroRegion}
+              onChange={e => setFiltroRegion(e.target.value)}
+              className="w-full bg-surface border border-outline-variant rounded-lg px-2 py-1.5 text-[11px] text-on-surface outline-none focus:border-accent/40 transition-colors mb-2"
+            >
+              <option value="">Todas las regiones</option>
+              {regionesConCanchas.map(r => (
+                <option key={r.codigo} value={r.nombreCorto}>{r.codigo} · {r.nombreCorto}</option>
+              ))}
+            </select>
+            {filtroRegion && comunasDeRegion.length > 0 && (
+              <select
+                value={filtroComunas}
+                onChange={e => setFiltroComunas(e.target.value)}
+                className="w-full bg-surface border border-outline-variant rounded-lg px-2 py-1.5 text-[11px] text-on-surface outline-none focus:border-accent/40 transition-colors"
+              >
+                <option value="">Todas las comunas</option>
+                {comunasDeRegion.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            )}
+            {filtroRegion && (
+              <button
+                type="button"
+                onClick={() => { setFiltroRegion(''); setFiltroComunas(''); }}
+                className="mt-1.5 text-[10px] text-outline hover:text-on-surface-variant transition-colors"
+              >
+                ✕ Limpiar ubicación
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Stats */}
         <div className="p-3.5 flex-1">
           <div className="text-[10px] text-outline tracking-[0.1em] mb-2 font-medium uppercase">Mis stats</div>
@@ -435,6 +496,45 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
               ))}
             </div>
           )}
+          {/* Region chip (mobile) */}
+          {regionesConCanchas.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto px-3 pointer-events-auto pb-1 mt-1">
+              <div className="relative flex-shrink-0">
+                <select
+                  value={filtroRegion}
+                  onChange={e => setFiltroRegion(e.target.value)}
+                  className={`flex-shrink-0 h-8 rounded-full border text-[11px] px-3 pr-6 outline-none appearance-none cursor-pointer transition-colors ${
+                    filtroRegion
+                      ? 'bg-accent/15 border-accent/40 text-accent'
+                      : 'bg-surface-container border-outline-variant text-outline'
+                  }`}
+                >
+                  <option value="">📍 Región</option>
+                  {regionesConCanchas.map(r => (
+                    <option key={r.codigo} value={r.nombreCorto}>{r.nombreCorto}</option>
+                  ))}
+                </select>
+              </div>
+              {filtroRegion && comunasDeRegion.length > 0 && (
+                <div className="relative flex-shrink-0">
+                  <select
+                    value={filtroComunas}
+                    onChange={e => setFiltroComunas(e.target.value)}
+                    className={`flex-shrink-0 h-8 rounded-full border text-[11px] px-3 pr-6 outline-none appearance-none cursor-pointer transition-colors ${
+                      filtroComunas
+                        ? 'bg-accent/15 border-accent/40 text-accent'
+                        : 'bg-surface-container border-outline-variant text-outline'
+                    }`}
+                  >
+                    <option value="">📍 Comuna</option>
+                    {comunasDeRegion.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <MapaTerritorial
@@ -475,6 +575,11 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
           >
             <span className="w-2 h-2 rounded-full bg-on-surface-variant" />
             {canchasFiltradas.length} canchas
+            {filtroRegion && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent/15 text-accent font-medium">
+                📍 {filtroComunas || filtroRegion}
+              </span>
+            )}
           </button>
         )}
 

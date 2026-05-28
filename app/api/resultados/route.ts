@@ -177,23 +177,23 @@ export async function PATCH(request: Request) {
   const equipoId = miembro?.equipo_id;
   if (!equipoId) return NextResponse.json({ error: 'Sin equipo' }, { status: 403 });
 
-  const { id, accion } = await request.json(); // accion: 'confirmar' | 'disputar'
+  const body = await request.json();
+  const { id, accion, ganador_id: nuevoGanadorId, puntos_retador: nuevosPuntosRetador, puntos_retado: nuevosPuntosRetado } = body;
+  // accion: 'confirmar' | 'disputar' | 're_proponer' | 'aceptar_original' | 'anular'
 
-  if (!['confirmar', 'disputar'].includes(accion)) {
+  const ACCIONES_VALIDAS = ['confirmar', 'disputar', 're_proponer', 'aceptar_original', 'anular'];
+  if (!ACCIONES_VALIDAS.includes(accion)) {
     return NextResponse.json({ error: 'accion inválida' }, { status: 400 });
   }
   if (!id || typeof id !== 'string') {
     return NextResponse.json({ error: 'id de resultado requerido' }, { status: 400 });
   }
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // Obtener resultado
   const { data: resultado } = await supabase.from('resultados')
     .select('*').eq('id', id).maybeSingle();
   if (!resultado) return NextResponse.json({ error: 'Resultado no encontrado' }, { status: 404 });
-
-  if (resultado.propuesto_por === equipoId) {
-    return NextResponse.json({ error: 'No puedes confirmar tu propio resultado' }, { status: 403 });
-  }
 
   // Obtener desafio
   const { data: desafio } = await supabase.from('desafios')
@@ -202,12 +202,28 @@ export async function PATCH(request: Request) {
 
   const esParticipante = desafio.equipo_retador_id === equipoId || desafio.equipo_retado_id === equipoId;
   if (!esParticipante) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-  if (desafio.estado !== 'resultado_pendiente') return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
+
+  // Actions for resultado_pendiente state
+  if (accion === 'confirmar' || accion === 'disputar') {
+    if (resultado.propuesto_por === equipoId) {
+      return NextResponse.json({ error: 'No puedes confirmar tu propio resultado' }, { status: 403 });
+    }
+    if (desafio.estado !== 'resultado_pendiente') {
+      return NextResponse.json({ error: 'El desafío debe estar en estado resultado_pendiente' }, { status: 400 });
+    }
+  }
+
+  // Actions for disputado state
+  if (accion === 're_proponer' || accion === 'aceptar_original' || accion === 'anular') {
+    if (desafio.estado !== 'disputado') {
+      return NextResponse.json({ error: 'El desafío debe estar en estado disputado' }, { status: 400 });
+    }
+  }
 
   // ── DISPUTAR ─────────────────────────────────────────────────────────────
   if (accion === 'disputar') {
     const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
-      .update({ disputado: true })
+      .update({ disputado: true, disputa_at: new Date().toISOString() })
       .eq('id', id).select().single();
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
@@ -222,7 +238,59 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ resultado: updatedResultado, estado: 'disputado' });
   }
 
-  // ── CONFIRMAR ─────────────────────────────────────────────────────────────
+  // ── RE-PROPONER (from disputado → resultado_pendiente) ────────────────────
+  if (accion === 're_proponer') {
+    if (!nuevoGanadorId || !UUID_RE.test(nuevoGanadorId)) {
+      return NextResponse.json({ error: 'ganador_id inválido' }, { status: 400 });
+    }
+    const ganadorValido = nuevoGanadorId === desafio.equipo_retador_id || nuevoGanadorId === desafio.equipo_retado_id;
+    if (!ganadorValido) return NextResponse.json({ error: 'Ganador inválido' }, { status: 400 });
+    if (nuevosPuntosRetador !== null && nuevosPuntosRetador !== undefined) {
+      if (typeof nuevosPuntosRetador !== 'number' || !Number.isInteger(nuevosPuntosRetador) || nuevosPuntosRetador < 0 || nuevosPuntosRetador > 9999) {
+        return NextResponse.json({ error: 'puntos_retador inválido' }, { status: 400 });
+      }
+    }
+    if (nuevosPuntosRetado !== null && nuevosPuntosRetado !== undefined) {
+      if (typeof nuevosPuntosRetado !== 'number' || !Number.isInteger(nuevosPuntosRetado) || nuevosPuntosRetado < 0 || nuevosPuntosRetado > 9999) {
+        return NextResponse.json({ error: 'puntos_retado inválido' }, { status: 400 });
+      }
+    }
+
+    const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
+      .update({
+        ganador_id:            nuevoGanadorId,
+        propuesto_por:         equipoId,
+        puntos_retador:        nuevosPuntosRetador ?? null,
+        puntos_retado:         nuevosPuntosRetado  ?? null,
+        disputado:             false,
+        disputa_at:            null,
+        confirmado_por_perdedor: false,
+        confirmado_at:         null,
+      })
+      .eq('id', id)
+      .select().single();
+    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+
+    const { error: estadoError } = await supabase
+      .from('desafios').update({ estado: 'resultado_pendiente' }).eq('id', resultado.desafio_id);
+    if (estadoError) {
+      return NextResponse.json({ error: `No se pudo actualizar el estado: ${estadoError.message}` }, { status: 500 });
+    }
+
+    return NextResponse.json({ resultado: updatedResultado, estado: 'resultado_pendiente' });
+  }
+
+  // ── ANULAR (auto-timeout: match voided, no XP) ────────────────────────────
+  if (accion === 'anular') {
+    const { error: estadoError } = await supabase
+      .from('desafios').update({ estado: 'cancelado' }).eq('id', resultado.desafio_id).eq('estado', 'disputado');
+    if (estadoError) {
+      return NextResponse.json({ error: `No se pudo anular el desafío: ${estadoError.message}` }, { status: 500 });
+    }
+    return NextResponse.json({ estado: 'cancelado' });
+  }
+
+  // ── CONFIRMAR (normal flow from resultado_pendiente) ──────────────────────
   // Atomic update — idempotency guard prevents double-XP on race conditions
   const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
     .update({ confirmado_por_perdedor: true, confirmado_at: new Date().toISOString() })
@@ -244,6 +312,74 @@ export async function PATCH(request: Request) {
       { error: `No se pudo marcar el desafío como completado: ${completadoError.message}` },
       { status: 500 }
     );
+  }
+
+  // ── ACEPTAR_ORIGINAL (from disputado → completado, triggers XP same as confirmar) ────
+  // Falls through to XP logic below — shares it with 'confirmar'
+  const isAceptarOriginal = accion === 'aceptar_original';
+  if (isAceptarOriginal) {
+    // Mark resultado as confirmed and desafio as completed
+    const { data: updatedResultadoDisputa, error: updateDisputaError } = await supabase.from('resultados')
+      .update({ confirmado_por_perdedor: true, confirmado_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('confirmado_por_perdedor', false)
+      .select().single();
+    if (updateDisputaError || !updatedResultadoDisputa) {
+      return NextResponse.json(
+        { error: 'El resultado ya fue confirmado o no se pudo actualizar' },
+        { status: 409 }
+      );
+    }
+    const { error: completadoDisputaError } = await supabase
+      .from('desafios').update({ estado: 'completado' }).eq('id', resultado.desafio_id);
+    if (completadoDisputaError) {
+      return NextResponse.json(
+        { error: `No se pudo marcar el desafío como completado: ${completadoDisputaError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // XP + King for aceptar_original (same logic, inline)
+    const ganadorIdDisp  = resultado.ganador_id as string;
+    const perdedorIdDisp = ganadorIdDisp === desafio.equipo_retador_id
+      ? desafio.equipo_retado_id
+      : desafio.equipo_retador_id;
+    await Promise.all([
+      supabase.rpc('add_team_xp', { team_id: ganadorIdDisp,  amount: 500 }),
+      supabase.rpc('add_team_xp', { team_id: perdedorIdDisp, amount: 150 }),
+    ]);
+    const [{ data: mGanador }, { data: mPerdedor }] = await Promise.all([
+      supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', ganadorIdDisp),
+      supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', perdedorIdDisp),
+    ]);
+    await Promise.all([
+      ...(mGanador  ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 100 })),
+      ...(mPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 35  })),
+    ]);
+    if (desafio.cancha_id) {
+      const canchaId  = desafio.cancha_id as string;
+      const formatoD  = desafio.formato   as string;
+      const { data: temporadaD } = await supabase.from('temporadas').select('id').eq('activa', true).maybeSingle();
+      const temporadaIdD = temporadaD?.id ?? null;
+      if (formatoD && formatoD !== 'general') {
+        await Promise.all([
+          upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: ganadorIdDisp,  formato: formatoD, temporada_id: temporadaIdD, isWin: true  }),
+          upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: perdedorIdDisp, formato: formatoD, temporada_id: temporadaIdD, isWin: false }),
+        ]);
+      }
+      await Promise.all([
+        upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: ganadorIdDisp,  formato: 'general', temporada_id: temporadaIdD, isWin: true  }),
+        upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: perdedorIdDisp, formato: 'general', temporada_id: temporadaIdD, isWin: false }),
+      ]);
+      const recalcPs: Promise<void>[] = [
+        recalcularKingEquipo(supabase, canchaId, 'general', temporadaIdD, ganadorIdDisp),
+      ];
+      if (formatoD && formatoD !== 'general') {
+        recalcPs.push(recalcularKingEquipo(supabase, canchaId, formatoD, temporadaIdD, ganadorIdDisp));
+      }
+      await Promise.all(recalcPs);
+    }
+    return NextResponse.json({ resultado: updatedResultadoDisputa, estado: 'completado' });
   }
 
   const ganadorId  = resultado.ganador_id as string;

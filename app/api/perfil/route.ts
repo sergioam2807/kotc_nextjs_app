@@ -13,6 +13,8 @@ const ALLOWED_FIELDS = [
   'disponible_reclutamiento',
   'ciudad',
   'display_name',
+  'region',
+  'comuna',
 ];
 
 export async function PATCH(req: Request) {
@@ -44,6 +46,16 @@ export async function PATCH(req: Request) {
   if ('ciudad' in updates && updates.ciudad !== null) {
     if (typeof updates.ciudad !== 'string' || updates.ciudad.length > 100) {
       return NextResponse.json({ error: 'ciudad inválida (máx 100 caracteres)' }, { status: 400 });
+    }
+  }
+  if ('region' in updates && updates.region !== null) {
+    if (typeof updates.region !== 'string' || updates.region.trim().length === 0 || updates.region.length > 100) {
+      return NextResponse.json({ error: 'region inválida (máx 100 caracteres)' }, { status: 400 });
+    }
+  }
+  if ('comuna' in updates && updates.comuna !== null) {
+    if (typeof updates.comuna !== 'string' || updates.comuna.trim().length === 0 || updates.comuna.length > 100) {
+      return NextResponse.json({ error: 'comuna inválida (máx 100 caracteres)' }, { status: 400 });
     }
   }
   if ('altura_cm' in updates && updates.altura_cm !== null) {

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 
 // MVP: Basketball únicamente
 const MODALIDADES = ['3v3', '5v5'];
@@ -28,6 +29,8 @@ export function CrearEquipoForm() {
   const [modalidad, setModalidad] = useState('3v3');
   const [ciudad, setCiudad] = useState('');
   const [color, setColor] = useState('#ffe083');
+  const [region, setRegion] = useState('');
+  const [comuna, setComuna] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -40,7 +43,15 @@ export function CrearEquipoForm() {
       const res = await fetch('/api/equipos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: nombre.trim(), deporte: 'basketball', modalidad, ciudad: ciudad.trim(), color }),
+        body: JSON.stringify({
+          nombre: nombre.trim(),
+          deporte: 'basketball',
+          modalidad,
+          ciudad: ciudad.trim(),
+          color,
+          region: region || null,
+          comuna: comuna || null,
+        }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -108,6 +119,14 @@ export function CrearEquipoForm() {
           className={inputClass}
         />
       </div>
+
+      {/* Región / Comuna */}
+      <RegionComunaSelect
+        region={region}
+        comuna={comuna}
+        onRegionChange={setRegion}
+        onComunaChange={setComuna}
+      />
 
       {/* Color */}
       <div className="flex flex-col gap-1.5">

@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
   const {
     nombre, direccion, lat, lng, deporte, horarios,
     es_publica, precio_hora, telefono_contacto, nombre_recinto,
+    region, comuna,
   } = body;
 
   if (!nombre || !direccion || lat == null || lng == null || !deporte) {
@@ -70,6 +71,18 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'deporte contiene valores inválidos' }, { status: 400 });
   }
 
+  // Optional region/comuna validation
+  if (region !== undefined && region !== null) {
+    if (typeof region !== 'string' || region.trim().length === 0 || region.length > 100) {
+      return Response.json({ error: 'region inválida (máx 100 caracteres)' }, { status: 400 });
+    }
+  }
+  if (comuna !== undefined && comuna !== null) {
+    if (typeof comuna !== 'string' || comuna.trim().length === 0 || comuna.length > 100) {
+      return Response.json({ error: 'comuna inválida (máx 100 caracteres)' }, { status: 400 });
+    }
+  }
+
   const { data: cancha, error: insertError } = await supabase
     .from('canchas')
     .insert({
@@ -84,6 +97,8 @@ export async function POST(request: NextRequest) {
       precio_hora:         precio_hora        ?? null,
       telefono_contacto:   telefono_contacto  ?? null,
       nombre_recinto:      nombre_recinto     ?? null,
+      region:              region             ?? null,
+      comuna:              comuna             ?? null,
     })
     .select()
     .single();

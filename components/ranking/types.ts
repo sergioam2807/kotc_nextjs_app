@@ -3,6 +3,7 @@ export interface TeamRankingStat {
   nombre: string;
   color: string;
   ciudad: string | null;
+  region?: string | null;
   deporte: string | null;
   puntos: number;
   kingCourts: number;
@@ -20,6 +21,7 @@ export interface PlayerRankingStat {
   avatarUrl: string | null;
   nivel: number;
   xp: number;
+  region?: string | null;
   equipoNombre: string | null;
   equipoColor: string | null;
 }

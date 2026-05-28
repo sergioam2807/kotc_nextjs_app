@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { DesafiosClientWrapper } from '@/components/desafios/DesafiosClientWrapper';
-import type { DesafioConDatos, EquipoSimple, CanchaSimple } from '@/components/desafios/types';
+import type { DesafioConDatos, EstadoDesafio, EquipoSimple, CanchaSimple } from '@/components/desafios/types';
 import { Desafios1v1Section } from '@/components/desafios1v1/Desafios1v1Section';
 import type { Desafio1v1ConDatos, ProfileSimple } from '@/components/desafios1v1/types';
 
@@ -159,6 +159,35 @@ export default async function DesafiosPage() {
 
     todosEquipos = (todosEqs ?? []).filter(e => e.id !== equipoId);
     todasCanchas = todasCanchasData ?? [];
+
+    // ── Auto-cancel disputes older than 5 days (Option C) ─────────────────
+    // Disputes raise disputa_at when first recorded. If more than 5 days have
+    // passed without resolution, the match is voided server-side on page load.
+    const CINCO_DIAS_MS = 5 * 24 * 60 * 60 * 1000;
+    const ahora = Date.now();
+    const disputasVencidas = desafios.filter(d => {
+      if (d.estado !== 'disputado' || !d.resultado) return false;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const disputa_at = (d.resultado as any).disputa_at as string | null | undefined;
+      if (!disputa_at) return false; // no timestamp → legacy, skip
+      return (ahora - new Date(disputa_at).getTime()) > CINCO_DIAS_MS;
+    });
+    if (disputasVencidas.length > 0) {
+      await Promise.all(
+        disputasVencidas.map(d =>
+          supabase
+            .from('desafios')
+            .update({ estado: 'cancelado' })
+            .eq('id', d.id)
+            .eq('estado', 'disputado') // idempotency guard
+        )
+      );
+      // Reflect cancellations in the list so the client sees the correct state
+      const cancelledIds = new Set(disputasVencidas.map(d => d.id));
+      desafios = desafios.map(d =>
+        cancelledIds.has(d.id) ? { ...d, estado: 'cancelado' as EstadoDesafio } : d
+      );
+    }
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────

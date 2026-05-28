@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { CanchaConEstado } from './MapaClientWrapper';
+import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 
 interface Props {
   coordsIniciales?: { lat: number; lng: number };
@@ -32,6 +33,10 @@ export function AgregarCanchaModal({ coordsIniciales, deportesIniciales, onClose
   const [precioHora, setPrecioHora] = useState('');
   const [telefonoContacto, setTelefonoContacto] = useState('');
   const [nombreRecinto, setNombreRecinto] = useState('');
+
+  // Región / comuna
+  const [region, setRegion] = useState('');
+  const [comuna, setComuna] = useState('');
 
   useEffect(() => {
     if (coordsIniciales) setCoords(coordsIniciales);
@@ -93,6 +98,8 @@ export function AgregarCanchaModal({ coordsIniciales, deportesIniciales, onClose
           precio_hora:        esPublica ? null : precioNum,
           telefono_contacto:  telefonoContacto.trim() || null,
           nombre_recinto:     nombreRecinto.trim()    || null,
+          region:             region                  || null,
+          comuna:             comuna                  || null,
         }),
       });
 
@@ -116,6 +123,8 @@ export function AgregarCanchaModal({ coordsIniciales, deportesIniciales, onClose
         precio_hora:        cancha.precio_hora         ?? null,
         telefono_contacto:  cancha.telefono_contacto   ?? null,
         nombre_recinto:     cancha.nombre_recinto      ?? null,
+        region:             cancha.region              ?? (region || null),
+        comuna:             cancha.comuna              ?? (comuna || null),
       };
 
       setXpMsg(true);
@@ -180,6 +189,14 @@ export function AgregarCanchaModal({ coordsIniciales, deportesIniciales, onClose
                 required
               />
             </div>
+
+            {/* Región / Comuna */}
+            <RegionComunaSelect
+              region={region}
+              comuna={comuna}
+              onRegionChange={setRegion}
+              onComunaChange={setComuna}
+            />
 
             {/* Deportes */}
             <div>

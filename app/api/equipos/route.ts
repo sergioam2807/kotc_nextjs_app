@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
   // [C-5] Whitelist — never spread body directly to prevent mass assignment
   // (e.g. nivel, xp, temporada_id could be injected)
-  const { nombre, deporte, modalidad, ciudad, color } = body;
+  const { nombre, deporte, modalidad, ciudad, color, region, comuna } = body;
 
   if (!nombre?.trim() || !deporte || !modalidad) {
     return NextResponse.json(
@@ -64,6 +64,16 @@ export async function POST(request: Request) {
   if (ciudad !== undefined && ciudad !== null && (typeof ciudad !== 'string' || ciudad.length > 100)) {
     return NextResponse.json({ error: 'ciudad inválida (máx 100 caracteres)' }, { status: 400 });
   }
+  if (region !== undefined && region !== null) {
+    if (typeof region !== 'string' || region.trim().length === 0 || region.length > 100) {
+      return NextResponse.json({ error: 'region inválida (máx 100 caracteres)' }, { status: 400 });
+    }
+  }
+  if (comuna !== undefined && comuna !== null) {
+    if (typeof comuna !== 'string' || comuna.trim().length === 0 || comuna.length > 100) {
+      return NextResponse.json({ error: 'comuna inválida (máx 100 caracteres)' }, { status: 400 });
+    }
+  }
   // Color: must be a valid hex color if provided
   if (color !== undefined && color !== null) {
     if (typeof color !== 'string' || !/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(color)) {
@@ -80,6 +90,8 @@ export async function POST(request: Request) {
       ciudad: ciudad ?? null,
       color: color ?? '#F5C344',
       creador_id: user.id,
+      region: region ?? null,
+      comuna: comuna ?? null,
       // nivel and xp take DB defaults (1 and 0)
     })
     .select()

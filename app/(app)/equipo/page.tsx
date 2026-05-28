@@ -8,6 +8,7 @@ import { DisolverEquipoButton } from '@/components/equipo/DisolverEquipoButton';
 import { CrearEquipoForm } from '@/components/equipo/CrearEquipoForm';
 import { InvitacionesRecibidas } from '@/components/equipo/InvitacionesRecibidas';
 import { Badge } from '@/components/ui/Badge';
+import { BuscandoRivalToggle } from '@/components/equipo/BuscandoRivalToggle';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -68,7 +69,7 @@ export default async function EquipoPage() {
   // Step 2: datos del equipo por ID separado
   const equipoId = miMembresia?.equipo_id ?? null;
   const { data: equipoData } = equipoId
-    ? await supabase.from('equipos').select('id, nombre, deporte, modalidad, ciudad, color, nivel, xp, creador_id').eq('id', equipoId).maybeSingle()
+    ? await supabase.from('equipos').select('id, nombre, deporte, modalidad, ciudad, region, comuna, color, nivel, xp, creador_id, buscando_rival, rival_modalidad, descripcion').eq('id', equipoId).maybeSingle()
     : { data: null };
 
   // ------------------------------------------------------------------
@@ -181,7 +182,12 @@ export default async function EquipoPage() {
           <div className="flex-1 min-w-0">
             <div className="text-[18px] sm:text-[20px] font-medium text-white mb-0.5 truncate">{equipo.nombre}</div>
             <div className="text-[12px] text-[#555] mb-2 truncate">
-              {equipo.ciudad} · {deporteLabel} {equipo.modalidad}
+              {equipo.ciudad
+                ? `${equipo.ciudad} · `
+                : equipo.region
+                  ? `${equipo.region} · `
+                  : ''}
+              {deporteLabel} {equipo.modalidad}
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Badge variant="purple">Nivel {equipo.nivel}</Badge>
@@ -189,15 +195,29 @@ export default async function EquipoPage() {
               <Badge variant="green">{(roster?.length ?? 0)}/{rosterConfig.titulares + rosterConfig.suplentes} jugadores</Badge>
               <Badge variant="neutral">Sin temporada activa</Badge>
             </div>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(equipo as any).descripcion && (
+              <p className="text-[11px] text-[#666] mt-2 leading-relaxed line-clamp-2">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(equipo as any).descripcion}
+              </p>
+            )}
           </div>
         </div>
         {isAdmin && (
-          <div className="flex-shrink-0 w-full sm:w-auto">
+          <div className="flex-shrink-0 w-full sm:w-auto flex gap-2">
+            <Link
+              href="/equipo/editar"
+              className="flex items-center justify-center gap-1.5 bg-surface-container border border-outline-variant text-on-surface-variant rounded-lg px-3 py-2.5 text-[12px] font-medium hover:border-outline hover:text-on-surface transition-colors min-h-[44px]"
+              aria-label="Editar equipo"
+            >
+              ✏️ Editar
+            </Link>
             <Link
               href="/equipo/invitaciones"
-              className="bg-accent text-on-accent rounded-lg px-4 py-2.5 text-[12px] font-medium cursor-pointer hover:brightness-95 transition-all inline-flex items-center justify-center gap-1.5 w-full sm:w-auto min-h-[44px]"
+              className="flex-1 bg-accent text-on-accent rounded-lg px-4 py-2.5 text-[12px] font-medium cursor-pointer hover:brightness-95 transition-all inline-flex items-center justify-center gap-1.5 min-h-[44px]"
             >
-              + Invitar jugador
+              + Invitar
             </Link>
           </div>
         )}
@@ -250,6 +270,19 @@ export default async function EquipoPage() {
           </div>
         ))}
       </div>
+
+      {/* Buscando rival — solo admin */}
+      {isAdmin && (
+        <div className="mb-4">
+          <BuscandoRivalToggle
+            equipoId={equipo.id}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            initialBuscando={(equipo as any).buscando_rival ?? false}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            initialModalidad={(equipo as any).rival_modalidad ?? null}
+          />
+        </div>
+      )}
 
       {/* Roster header */}
       <div className="flex items-center justify-between gap-2 mb-3">

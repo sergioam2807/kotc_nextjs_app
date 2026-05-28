@@ -8,9 +8,11 @@ interface Props {
   equipoId: string;
   onClose: () => void;
   onSuccess: (resultado: ResultadoDesafio) => void;
+  /** When set, sends PATCH accion:re_proponer instead of POST */
+  resultadoId?: string;
 }
 
-export function ProponeResultadoModal({ desafio, equipoId, onClose, onSuccess }: Props) {
+export function ProponeResultadoModal({ desafio, equipoId, onClose, onSuccess, resultadoId }: Props) {
   const [ganadorSeleccionado, setGanadorSeleccionado] = useState<string | null>(null);
   const [puntosRetador, setPuntosRetador] = useState('');
   const [puntosRetado, setPuntosRetado] = useState('');
@@ -27,17 +29,34 @@ export function ProponeResultadoModal({ desafio, equipoId, onClose, onSuccess }:
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/resultados', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          desafio_id: desafio.id,
-          ganador_id: ganadorSeleccionado,
-          propuesto_por: equipoId,
-          puntos_retador: puntosRetador !== '' ? parseInt(puntosRetador, 10) : null,
-          puntos_retado:  puntosRetado  !== '' ? parseInt(puntosRetado,  10) : null,
-        }),
-      });
+      let res: Response;
+      if (resultadoId) {
+        // Re-proponer from disputado state
+        res = await fetch('/api/resultados', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id:            resultadoId,
+            accion:        're_proponer',
+            ganador_id:    ganadorSeleccionado,
+            puntos_retador: puntosRetador !== '' ? parseInt(puntosRetador, 10) : null,
+            puntos_retado:  puntosRetado  !== '' ? parseInt(puntosRetado,  10) : null,
+          }),
+        });
+      } else {
+        // Normal proposal from aceptado state
+        res = await fetch('/api/resultados', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            desafio_id:    desafio.id,
+            ganador_id:    ganadorSeleccionado,
+            propuesto_por: equipoId,
+            puntos_retador: puntosRetador !== '' ? parseInt(puntosRetador, 10) : null,
+            puntos_retado:  puntosRetado  !== '' ? parseInt(puntosRetado,  10) : null,
+          }),
+        });
+      }
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? `Error ${res.status}`);
       onSuccess(body.resultado);
@@ -58,7 +77,7 @@ export function ProponeResultadoModal({ desafio, equipoId, onClose, onSuccess }:
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[15px] font-bold text-on-surface">¿Quién ganó?</h2>
+          <h2 className="text-[15px] font-bold text-on-surface">{resultadoId ? '🔄 Re-proponer resultado' : '¿Quién ganó?'}</h2>
           <button
             onClick={onClose}
             aria-label="Cerrar"
@@ -164,11 +183,11 @@ export function ProponeResultadoModal({ desafio, equipoId, onClose, onSuccess }:
           disabled={!ganadorSeleccionado || loading}
           className="w-full rounded-lg px-3 py-3 text-[13px] font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-accent text-on-accent hover:brightness-90 min-h-[44px]"
         >
-          {loading ? 'Enviando...' : 'Proponer resultado'}
+          {loading ? 'Enviando...' : resultadoId ? 'Re-proponer resultado' : 'Proponer resultado'}
         </button>
 
         <p className="text-center text-[10px] text-outline mt-2">
-          El rival deberá confirmar
+          {resultadoId ? 'El rival deberá confirmar el nuevo resultado' : 'El rival deberá confirmar'}
         </p>
       </div>
     </div>

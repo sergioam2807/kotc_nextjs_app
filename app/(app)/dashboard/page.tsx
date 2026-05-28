@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { nombreNivel } from '@/lib/levels';
 import Link from 'next/link';
+import { InvitacionesRecibidas } from '@/components/equipo/InvitacionesRecibidas';
 
 // MVP: Basketball únicamente
 const DEPORTES_MAP: Record<string, { emoji: string; label: string }> = {
@@ -120,6 +121,17 @@ type TemporadaRow = {
   numero?: number | null;
 };
 
+type RivalesRow = {
+  id: string;
+  nombre: string;
+  color: string | null;
+  modalidad: string | null;
+  rival_modalidad: string | null;
+  comuna: string | null;
+  region: string | null;
+  nivel: number | null;
+};
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -143,7 +155,7 @@ export default async function DashboardPage() {
   const { data: equipoData } = membresia?.equipo_id
     ? await supabase
         .from('equipos')
-        .select('id, nombre, color, xp, racha_victorias, racha_derrotas')
+        .select('id, nombre, color, xp, racha_victorias, racha_derrotas, region, comuna')
         .eq('id', membresia.equipo_id)
         .maybeSingle()
     : { data: null };
@@ -171,6 +183,7 @@ export default async function DashboardPage() {
     { data: cortesRivalesRaw },
     { count: equiposDelanteCount },
     { data: ultimosResultadosRaw },
+    { data: rivalesData },
   ] = await Promise.all([
     // Canchas con victorias del equipo
     equipoId
@@ -230,14 +243,12 @@ export default async function DashboardPage() {
       .order('fecha_fin', { ascending: true })
       .limit(5),
 
-    // Invitaciones pendientes (solo sin equipo)
-    !equipoId
-      ? supabase
-          .from('invitaciones')
-          .select('id', { count: 'exact', head: true })
-          .eq('jugador_id', user.id)
-          .is('usado_at', null)
-      : Promise.resolve({ count: null }),
+    // Invitaciones pendientes (todos los jugadores)
+    supabase
+      .from('invitaciones')
+      .select('id', { count: 'exact', head: true })
+      .eq('jugador_id', user.id)
+      .is('usado_at', null),
 
     // Canchas controladas por rivales (para la sección "por conquistar")
     equipoId
@@ -269,6 +280,24 @@ export default async function DashboardPage() {
           .order('fecha', { ascending: false })
           .limit(10)
       : Promise.resolve({ data: null }),
+
+    // Rivales buscando match — siempre busca cuando hay equipo.
+    // Si el equipo tiene región configurada → filtra por esa región para
+    // mostrar rivalidades locales. Si no tiene región → devuelve todos
+    // (max 6) para que el usuario descubra quién está disponible.
+    equipoId
+      ? (async () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const myRegion: string | null = (miEquipo as any)?.region ?? null;
+          let q = supabase
+            .from('equipos')
+            .select('id, nombre, color, modalidad, rival_modalidad, comuna, region, nivel')
+            .eq('buscando_rival', true)
+            .neq('id', equipoId);
+          if (myRegion) q = q.eq('region', myRegion);
+          return q.order('nivel', { ascending: false }).limit(6);
+        })()
+      : Promise.resolve({ data: null }),
   ]);
 
   const canchaDominio: CanchaDominio[] = (canchaDominioRaw as CanchaDominio[] | null) ?? [];
@@ -278,6 +307,15 @@ export default async function DashboardPage() {
   const cortesRivales: CorteRivalRow[] = (cortesRivalesRaw as CorteRivalRow[] | null) ?? [];
   const ultimosResultados: UltimoResultadoRow[] = (ultimosResultadosRaw as UltimoResultadoRow[] | null) ?? [];
   const temporada = temporadaActiva as TemporadaRow | null;
+  const rivalesCercanos: RivalesRow[] = (rivalesData as RivalesRow[] | null) ?? [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const myComuna: string | null = (miEquipo as any)?.comuna ?? null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const myRegion: string | null = (miEquipo as any)?.region ?? null;
+  const rivalesEnMiComuna = myComuna
+    ? rivalesCercanos.filter(r => r.comuna === myComuna)
+    : [];
 
   // Desafíos que requieren confirmar resultado
   const disputados = desafiosPendientes.filter(d => d.estado === 'resultado_pendiente');
@@ -436,23 +474,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* ── Banner invitaciones (sin equipo) ─────────────────────────────── */}
-      {!miEquipo && invitacionesCount && invitacionesCount > 0 ? (
-        <Link
-          href="/equipo"
-          className="flex items-center gap-3 bg-accent/10 border border-accent/30 rounded-xl px-4 py-3 mb-4 hover:bg-accent/15 transition-colors"
-        >
-          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-error text-white text-[11px] font-bold flex-shrink-0">
-            {invitacionesCount}
-          </span>
-          <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-semibold text-on-surface">
-              {invitacionesCount === 1 ? 'Tienes una invitación' : `Tienes ${invitacionesCount} invitaciones`} de equipo
-            </div>
-            <div className="text-[11px] text-on-surface-variant">Toca para ver y aceptar →</div>
-          </div>
-        </Link>
-      ) : null}
+      {/* ── Invitaciones recibidas (in-app, todos los jugadores) ──────────── */}
+      <InvitacionesRecibidas />
 
       {/* ── Main grid: 2 cols desktop ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -728,6 +751,78 @@ export default async function DashboardPage() {
             </div>
           )}
 
+          {/* ── Rivales buscando match ────────────────────────────────── */}
+          {miEquipo && rivalesCercanos.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <span className="text-[10px] text-outline tracking-[0.08em] font-medium uppercase">
+                    🔥 Rivales buscando match
+                  </span>
+                  <div className="text-[10px] text-outline mt-0.5">
+                    {myRegion
+                      ? rivalesEnMiComuna.length > 0
+                        ? `${rivalesEnMiComuna.length} en tu comuna · ${rivalesCercanos.length - rivalesEnMiComuna.length} más en ${myRegion}`
+                        : `${rivalesCercanos.length} equipo${rivalesCercanos.length !== 1 ? 's' : ''} en ${myRegion}`
+                      : `${rivalesCercanos.length} equipo${rivalesCercanos.length !== 1 ? 's' : ''} disponible${rivalesCercanos.length !== 1 ? 's' : ''}`
+                    }
+                  </div>
+                </div>
+                <Link href="/equipos?rivales=1" className="text-[11px] text-accent hover:underline font-medium">
+                  Ver todos →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {rivalesCercanos.slice(0, 4).map(rival => {
+                  const color = rival.color ?? 'var(--color-accent)';
+                  const words = rival.nombre.trim().split(/\s+/);
+                  const ini = words.length >= 2
+                    ? (words[0][0] + words[1][0]).toUpperCase()
+                    : rival.nombre.slice(0, 2).toUpperCase();
+                  const esCercano = myComuna && rival.comuna === myComuna;
+                  const formato = rival.rival_modalidad ?? rival.modalidad;
+
+                  return (
+                    <Link
+                      key={rival.id}
+                      href={`/equipos/${rival.id}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant hover:border-outline transition-colors"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0 border"
+                        style={{ background: `${color}15`, color, borderColor: `${color}40` }}
+                      >
+                        {ini}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-semibold truncate" style={{ color }}>
+                          {rival.nombre}
+                        </div>
+                        <div className="text-[10px] text-outline flex items-center gap-1 flex-wrap">
+                          {esCercano && <span className="text-status-libre">●</span>}
+                          <span>{esCercano ? rival.comuna : (rival.region ?? rival.comuna ?? 'Sin ubicación')}</span>
+                          {formato && <><span>·</span><span>{formato}</span></>}
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold text-accent flex-shrink-0">Desafiar →</span>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* CTA para configurar región si no tiene */}
+              {!myRegion && (
+                <div className="mt-2 px-3 py-2 rounded-lg bg-accent/8 border border-accent/20">
+                  <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                    💡 <Link href="/equipo" className="text-accent hover:underline">Configura la región de tu equipo</Link>{' '}
+                    para ver rivales cercanos a ti primero.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Analíticas del equipo ────────────────────────────────────── */}
           {miEquipo && (
             <div>
@@ -869,6 +964,22 @@ export default async function DashboardPage() {
 
         {/* ════════════════ RIGHT COLUMN (1/3) ════════════════ */}
         <div className="space-y-5">
+
+          {/* Rivals widget moved to left column — only keep small shortcut here when there's no data */}
+          {rivalesCercanos.length === 0 && miEquipo && (
+            <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[12px] font-semibold text-on-surface">🔥 Buscar rivales</div>
+                <div className="text-[10px] text-outline mt-0.5">Ningún equipo busca match ahora</div>
+              </div>
+              <Link
+                href="/equipos"
+                className="text-[11px] text-accent hover:underline font-medium flex-shrink-0"
+              >
+                Ver equipos →
+              </Link>
+            </div>
+          )}
 
           {/* Temporada info card */}
           {/* <div

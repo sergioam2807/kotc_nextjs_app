@@ -24,7 +24,7 @@ export default async function MapaPage() {
     supabase
       .from('canchas')
       .select(
-        'id, nombre, direccion, lat, lng, deporte, es_publica, precio_hora, telefono_contacto, nombre_recinto, ' +
+        'id, nombre, direccion, lat, lng, deporte, es_publica, precio_hora, telefono_contacto, nombre_recinto, region, comuna, ' +
         'cancha_dominio(id, equipo_id, jugador_id, victorias, derrotas, es_king, formato, equipos(id, nombre, color, nivel, xp))'
       )
       .order('created_at', { ascending: false }),
@@ -141,6 +141,8 @@ export default async function MapaPage() {
       precio_hora:        c.precio_hora       as number  ?? null,
       telefono_contacto:  c.telefono_contacto as string  ?? null,
       nombre_recinto:     c.nombre_recinto    as string  ?? null,
+      region:             c.region            as string  ?? null,
+      comuna:             c.comuna            as string  ?? null,
     };
   });
 

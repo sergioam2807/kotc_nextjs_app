@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { CanchaConEstado } from './MapaClientWrapper';
+import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 
 interface Props {
   cancha: CanchaConEstado;
@@ -30,6 +31,10 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
   const [precioHora, setPrecioHora] = useState(cancha.precio_hora ? String(cancha.precio_hora) : '');
   const [telefonoContacto, setTelefonoContacto] = useState(cancha.telefono_contacto ?? '');
   const [nombreRecinto, setNombreRecinto] = useState(cancha.nombre_recinto ?? '');
+
+  // Región / comuna — pre-poblada desde cancha existente
+  const [region, setRegion] = useState(cancha.region ?? '');
+  const [comuna, setComuna] = useState(cancha.comuna ?? '');
 
   useEffect(() => {
     if (coordsNuevas) setCoords(coordsNuevas);
@@ -87,6 +92,8 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
           precio_hora:        esPublica ? null : precioNum,
           telefono_contacto:  telefonoContacto.trim() || null,
           nombre_recinto:     nombreRecinto.trim()    || null,
+          region:             region                  || null,
+          comuna:             comuna                  || null,
         }),
       });
 
@@ -108,6 +115,8 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
         precio_hora:        updated.precio_hora         ?? null,
         telefono_contacto:  updated.telefono_contacto   ?? null,
         nombre_recinto:     updated.nombre_recinto      ?? null,
+        region:             updated.region              ?? (region || null),
+        comuna:             updated.comuna              ?? (comuna || null),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado.');
@@ -159,6 +168,14 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
               required
             />
           </div>
+
+          {/* Región / Comuna */}
+          <RegionComunaSelect
+            region={region}
+            comuna={comuna}
+            onRegionChange={setRegion}
+            onComunaChange={setComuna}
+          />
 
           {/* Deportes */}
           <div>
