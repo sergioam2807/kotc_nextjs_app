@@ -34,7 +34,7 @@
  *   IMPORT_ADMIN_USER_ID=...        ← UUID del admin, obligatorio (canchas.agregada_por es NOT NULL)
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import WebSocket from 'ws';
@@ -403,7 +403,7 @@ function deduplicarPorProximidad(canchas: CanchaParaInsertar[]): CanchaParaInser
  */
 const COORD_FALLBACK_RE = /^-?\d+\.\d{4,}, -?\d+\.\d{4,}$/;
 
-async function backfillDirecciones(supabase: ReturnType<typeof createClient>) {
+async function backfillDirecciones(supabase: SupabaseClient) {
   console.log('🔍 Buscando canchas con dirección placeholder (lat, lng)…\n');
 
   const { data: candidatas, error } = await supabase
@@ -416,7 +416,8 @@ async function backfillDirecciones(supabase: ReturnType<typeof createClient>) {
     process.exit(1);
   }
 
-  const pendientes = (candidatas ?? []).filter(c => COORD_FALLBACK_RE.test(c.direccion ?? ''));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pendientes = ((candidatas ?? []) as any[]).filter(c => COORD_FALLBACK_RE.test(c.direccion ?? ''));
   console.log(`   → ${pendientes.length} canchas por re-geocodificar\n`);
 
   let actualizadas = 0;
@@ -493,7 +494,8 @@ async function main() {
 
   // Cliente Supabase — disponible para los pasos de lectura/escritura en DB
   const supabase = (supabaseUrl && serviceRoleKey)
-    ? createClient(supabaseUrl, serviceRoleKey, { realtime: { transport: WebSocket } })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ? createClient(supabaseUrl, serviceRoleKey, { realtime: { transport: WebSocket as any } })
     : null;
 
   if (backfill) {
