@@ -29,7 +29,11 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned (not "latest") — a CLI bump can silently change the local
+          # dev stack's default role grants and break CI without any code
+          # change. Bump deliberately and re-verify `pnpm test:integration`
+          # locally with a from-scratch `supabase start` before raising this.
+          version: 2.100.1
 
       - name: Start local Supabase (applies all migrations)
         run: supabase start
