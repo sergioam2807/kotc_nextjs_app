@@ -5,9 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "import:canchas": "npx tsx scripts/import-canchas-osm.ts",
+    "import:canchas:dry": "npx tsx scripts/import-canchas-osm.ts --dry-run --verbose",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "db:test:reset": "supabase db reset"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.19.0",
     "@react-google-maps/api": "^2.20.8",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
@@ -24,7 +31,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.10",
+    "ws": "^8.21.1"
   }
 }

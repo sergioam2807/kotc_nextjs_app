@@ -25,6 +25,7 @@ export default async function MapaPage() {
       .from('canchas')
       .select(
         'id, nombre, direccion, lat, lng, deporte, es_publica, precio_hora, telefono_contacto, nombre_recinto, region, comuna, ' +
+        'valoracion_promedio, valoracion_count, ' +
         'cancha_dominio(id, equipo_id, jugador_id, victorias, derrotas, es_king, formato, equipos(id, nombre, color, nivel, xp))'
       )
       .order('created_at', { ascending: false }),
@@ -143,6 +144,8 @@ export default async function MapaPage() {
       nombre_recinto:     c.nombre_recinto    as string  ?? null,
       region:             c.region            as string  ?? null,
       comuna:             c.comuna            as string  ?? null,
+      valoracion_promedio: c.valoracion_promedio as number | null ?? null,
+      valoracion_count:    c.valoracion_count    as number ?? 0,
     };
   });
 

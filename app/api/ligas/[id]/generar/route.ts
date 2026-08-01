@@ -118,10 +118,21 @@ export async function POST(request: Request, { params }: Params) {
       if (existingFases.has('grupos')) {
         return NextResponse.json({ error: 'La fase de grupos ya fue generada' }, { status: 409 });
       }
+      // All accepted teams must have a group assigned before generating —
+      // otherwise their matches would be scheduled under a fallback group
+      // while liga_equipos.grupo stays NULL, making them invisible in every
+      // standings query (which filters on grupo being set).
+      if ((ligaEquipos ?? []).some(le => !le.grupo)) {
+        return NextResponse.json(
+          { error: 'Todos los equipos aceptados deben tener grupo asignado antes de generar la fase de grupos' },
+          { status: 400 },
+        );
+      }
+
       // Build group map from liga_equipos.grupo
       const equiposPorGrupo: Record<string, string[]> = {};
       for (const le of ligaEquipos ?? []) {
-        const grupo = le.grupo ?? 'A';
+        const grupo = le.grupo as string;
         if (!equiposPorGrupo[grupo]) equiposPorGrupo[grupo] = [];
         equiposPorGrupo[grupo].push(le.equipo_id);
       }
@@ -192,7 +203,9 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'No se pudieron generar partidos' }, { status: 400 });
   }
 
-  // Insert matches
+  // Insert matches. Bye slots auto-advance: no visitante, already completado,
+  // with the local team as ganador — picked up as-is by the "winners" filter
+  // used to generate the next round.
   const { error } = await supabase.from('liga_partidos').insert(
     matches.map(m => ({
       liga_id:             id,
@@ -201,6 +214,8 @@ export async function POST(request: Request, { params }: Params) {
       ronda:               m.ronda,
       fase:                m.fase,
       grupo:               m.grupo ?? null,
+      estado:              m.bye ? 'completado' : 'pendiente',
+      ganador_id:          m.bye ? m.equipo_local_id : null,
     })),
   );
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

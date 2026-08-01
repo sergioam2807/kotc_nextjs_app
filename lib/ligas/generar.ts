@@ -4,10 +4,12 @@
 
 export interface PartidoInput {
   equipo_local_id: string;
-  equipo_visitante_id: string;
+  equipo_visitante_id: string | null;
   ronda: number;
   fase: string;
   grupo?: string;
+  /** True for a bye slot: equipo_local_id auto-advances with no match played. */
+  bye?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -48,6 +50,16 @@ export function generarRoundRobin(equipoIds: string[]): PartidoInput[] {
 // Elimination bracket — one round at a time.
 // Round 1: seed #1 vs #N, #2 vs #N-1, …
 // Subsequent rounds: call again with the winners array.
+//
+// `n` here is always the number of entrants THIS round (it shrinks on every
+// call, since callers pass in the winners of the previous round) — so the
+// rounds-remaining-until-the-final count is simply ceil(log2(n)), with no
+// need to also subtract rondaNum (doing so double-counted and mislabeled
+// every round after the first, e.g. sending the true final out as 'ronda',
+// a value outside liga_partidos.fase's CHECK constraint).
+//
+// Odd `n` gets a bye: the last-seeded team in this round auto-advances with
+// no match played (mirrors the '__bye__' handling in generarRoundRobin).
 // ---------------------------------------------------------------------------
 export function generarRondaEliminacion(
   equipoIds: string[],
@@ -57,7 +69,7 @@ export function generarRondaEliminacion(
   const teams = [...equipoIds];
   const n = teams.length;
   const totalRondas = Math.max(1, Math.ceil(Math.log2(n)));
-  const fase = faseOverride ?? getFase(totalRondas - rondaNum + 1);
+  const fase = faseOverride ?? getFase(totalRondas);
 
   const matches: PartidoInput[] = [];
   for (let i = 0; i < Math.floor(n / 2); i++) {
@@ -66,6 +78,15 @@ export function generarRondaEliminacion(
       fase,
       equipo_local_id: teams[i],
       equipo_visitante_id: teams[n - 1 - i],
+    });
+  }
+  if (n % 2 !== 0) {
+    matches.push({
+      ronda: rondaNum,
+      fase,
+      equipo_local_id: teams[Math.floor(n / 2)],
+      equipo_visitante_id: null,
+      bye: true,
     });
   }
   return matches;

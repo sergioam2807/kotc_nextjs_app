@@ -69,7 +69,7 @@ export default async function EquipoPage() {
   // Step 2: datos del equipo por ID separado
   const equipoId = miMembresia?.equipo_id ?? null;
   const { data: equipoData } = equipoId
-    ? await supabase.from('equipos').select('id, nombre, deporte, modalidad, ciudad, region, comuna, color, nivel, xp, creador_id, buscando_rival, rival_modalidad, descripcion').eq('id', equipoId).maybeSingle()
+    ? await supabase.from('equipos').select('id, nombre, deporte, modalidad, ciudad, region, comuna, color, nivel, xp, creador_id, buscando_rival, rival_modalidad, descripcion, logo_url').eq('id', equipoId).maybeSingle()
     : { data: null };
 
   // ------------------------------------------------------------------
@@ -174,10 +174,26 @@ export default async function EquipoPage() {
       <div className="bg-[#0f0f12] border border-[#1e1e24] rounded-[14px] p-4 flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <div
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-[12px] border-2 flex items-center justify-center text-[20px] sm:text-[22px] font-medium flex-shrink-0"
-            style={{ background: `${equipo.color}20`, borderColor: equipo.color, color: equipo.color }}
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-[12px] border-2 overflow-hidden flex items-center justify-center text-[20px] sm:text-[22px] font-medium flex-shrink-0"
+            style={{
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              background: (equipo as any).logo_url ? 'transparent' : `${equipo.color}20`,
+              borderColor: equipo.color,
+              color: equipo.color,
+            }}
           >
-            {equipoIniciales}
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(equipo as any).logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                src={(equipo as any).logo_url as string}
+                alt={equipo.nombre}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              equipoIniciales
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[18px] sm:text-[20px] font-medium text-white mb-0.5 truncate">{equipo.nombre}</div>

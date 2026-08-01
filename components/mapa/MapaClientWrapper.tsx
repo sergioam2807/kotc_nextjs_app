@@ -6,6 +6,7 @@ import { AgregarCanchaModal } from './AgregarCanchaModal';
 import { EditarCanchaModal } from './EditarCanchaModal';
 import { MapaTerritorial } from './MapaTerritorial';
 import { REGIONES_CHILE, COMUNAS_POR_REGION } from '@/lib/chile-geo';
+import { StarRating } from '@/components/ui/StarRating';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,9 @@ export interface CanchaConEstado {
   // Región / comuna (migración 039)
   region?: string | null;
   comuna?: string | null;
+  // Valoraciones (migración 043)
+  valoracion_promedio?: number | null;
+  valoracion_count?: number;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -117,6 +121,13 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
   const [modoEditarUbicacion, setModoEditarUbicacion] = useState(false);
   const [coordsEditando, setCoordsEditando] = useState<{ lat: number; lng: number } | null>(null);
   const [mobileListOpen, setMobileListOpen] = useState(false);
+
+  // Local overrides for court rating after the user votes
+  // Record<canchaId, { promedio, count, miValoracion }>
+  const [valoracionesLocales, setValoracionesLocales] = useState<
+    Record<string, { promedio: number | null; count: number; miValoracion: number }>
+  >({});
+  const [valoracionLoading, setValoracionLoading] = useState(false);
 
   // Formats that actually have at least one king across all courts
   const formatosDisponibles = useMemo<FiltroFormato[]>(() => {
@@ -274,6 +285,36 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
     setShowModal(true);
     setModoAgregar(true);
     setMobileListOpen(false);
+  }
+
+  async function handleValorar(canchaId: string, estrellas: number) {
+    if (!userId || valoracionLoading) return;
+    setValoracionLoading(true);
+    try {
+      const res = await fetch(`/api/canchas/${canchaId}/valorar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estrellas }),
+      });
+      if (!res.ok) return;
+      const data = await res.json() as {
+        valoracion_promedio: number | null;
+        valoracion_count: number;
+        mi_valoracion: number;
+      };
+      setValoracionesLocales(prev => ({
+        ...prev,
+        [canchaId]: {
+          promedio:      data.valoracion_promedio,
+          count:         data.valoracion_count,
+          miValoracion:  data.mi_valoracion,
+        },
+      }));
+    } catch {
+      // silently ignore
+    } finally {
+      setValoracionLoading(false);
+    }
   }
 
   function handleModalClose() {
@@ -795,6 +836,65 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
                   )}
                 </div>
               </div>
+
+              {/* ── VALORACIÓN ── */}
+              {(() => {
+                const localVal = valoracionesLocales[canchaSeleccionada.id];
+                const promedio = localVal?.promedio  ?? canchaSeleccionada.valoracion_promedio  ?? null;
+                const count    = localVal?.count     ?? canchaSeleccionada.valoracion_count     ?? 0;
+                const yaVoté   = localVal?.miValoracion != null;
+
+                return (
+                  <div className="px-5 py-3.5 border-b border-outline-variant">
+                    <div className="text-[9px] font-bold text-outline uppercase tracking-widest mb-2">
+                      Valoración de la cancha
+                    </div>
+
+                    {/* Aggregate display */}
+                    <div className="flex items-center gap-2 mb-3">
+                      {promedio != null ? (
+                        <>
+                          <StarRating value={promedio} size={15} />
+                          <span className="text-[13px] font-black text-accent">
+                            {Number(promedio).toFixed(1)}
+                          </span>
+                          <span className="text-[10px] text-outline">
+                            ({count} {count === 1 ? 'valoración' : 'valoraciones'})
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <StarRating value={0} size={15} />
+                          <span className="text-[10px] text-outline">Sin valoraciones aún</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Interactive section — only for logged-in users */}
+                    {userId && (
+                      <div>
+                        {yaVoté ? (
+                          <div className="flex items-center gap-2">
+                            <StarRating value={localVal.miValoracion} size={14} />
+                            <span className="text-[10px] text-status-libre">✓ ¡Gracias por valorar!</span>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="text-[9px] text-outline mb-1.5">Tu valoración:</div>
+                            <div className={valoracionLoading ? 'opacity-50 pointer-events-none' : ''}>
+                              <StarRating
+                                value={0}
+                                size={20}
+                                onChange={(stars) => handleValorar(canchaSeleccionada.id, stars)}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* ── PER-FORMAT KINGS (only if there are format-specific kings) ── */}
               {formatSpecificKings.length > 0 && (

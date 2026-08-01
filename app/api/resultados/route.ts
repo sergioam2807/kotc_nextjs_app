@@ -146,7 +146,12 @@ export async function POST(request: Request) {
       puntos_retado:  puntos_retado  ?? null,
     })
     .select().single();
-  if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+  if (insertError) {
+    if (insertError.code === '23505') {
+      return NextResponse.json({ error: 'Ya existe un resultado propuesto para este desafío' }, { status: 409 });
+    }
+    return NextResponse.json({ error: insertError.message }, { status: 500 });
+  }
 
   // Actualizar estado del desafio
   const { error: desafioUpdateError } = await supabase
@@ -221,20 +226,34 @@ export async function PATCH(request: Request) {
   }
 
   // ── DISPUTAR ─────────────────────────────────────────────────────────────
+  // Atomic gate on desafios.estado prevents a race with a concurrent
+  // 'confirmar' call (both read estado='resultado_pendiente' before either
+  // writes) — only one of the two can win the guarded update below.
   if (accion === 'disputar') {
-    const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
-      .update({ disputado: true, disputa_at: new Date().toISOString() })
-      .eq('id', id).select().single();
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
-
-    const { error: disputadoError } = await supabase
-      .from('desafios').update({ estado: 'disputado' }).eq('id', resultado.desafio_id);
+    const { data: disputadoRow, error: disputadoError } = await supabase
+      .from('desafios')
+      .update({ estado: 'disputado' })
+      .eq('id', resultado.desafio_id)
+      .eq('estado', 'resultado_pendiente')
+      .select().maybeSingle();
     if (disputadoError) {
       return NextResponse.json(
         { error: `No se pudo marcar el desafío como disputado: ${disputadoError.message}` },
         { status: 500 }
       );
     }
+    if (!disputadoRow) {
+      return NextResponse.json(
+        { error: 'El desafío ya no está en resultado_pendiente (posiblemente ya fue confirmado)' },
+        { status: 409 }
+      );
+    }
+
+    const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
+      .update({ disputado: true, disputa_at: new Date().toISOString() })
+      .eq('id', id).select().single();
+    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+
     return NextResponse.json({ resultado: updatedResultado, estado: 'disputado' });
   }
 
@@ -291,33 +310,94 @@ export async function PATCH(request: Request) {
   }
 
   // ── CONFIRMAR (normal flow from resultado_pendiente) ──────────────────────
-  // Atomic update — idempotency guard prevents double-XP on race conditions
-  const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
-    .update({ confirmado_por_perdedor: true, confirmado_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('confirmado_por_perdedor', false)
-    .select().single();
-  if (updateError || !updatedResultado) {
-    return NextResponse.json(
-      { error: 'El resultado ya fue confirmado o no se pudo actualizar' },
-      { status: 409 }
-    );
-  }
+  if (accion === 'confirmar') {
+    // Atomic update — idempotency guard prevents double-XP on race conditions
+    const { data: updatedResultado, error: updateError } = await supabase.from('resultados')
+      .update({ confirmado_por_perdedor: true, confirmado_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('confirmado_por_perdedor', false)
+      .select().single();
+    if (updateError || !updatedResultado) {
+      return NextResponse.json(
+        { error: 'El resultado ya fue confirmado o no se pudo actualizar' },
+        { status: 409 }
+      );
+    }
 
-  // Marcar desafio como completado
-  const { error: completadoError } = await supabase
-    .from('desafios').update({ estado: 'completado' }).eq('id', resultado.desafio_id);
-  if (completadoError) {
-    return NextResponse.json(
-      { error: `No se pudo marcar el desafío como completado: ${completadoError.message}` },
-      { status: 500 }
-    );
+    // Marcar desafio como completado
+    const { error: completadoError } = await supabase
+      .from('desafios').update({ estado: 'completado' }).eq('id', resultado.desafio_id);
+    if (completadoError) {
+      return NextResponse.json(
+        { error: `No se pudo marcar el desafío como completado: ${completadoError.message}` },
+        { status: 500 }
+      );
+    }
+
+    const ganadorId  = resultado.ganador_id as string;
+    const perdedorId = ganadorId === desafio.equipo_retador_id
+      ? desafio.equipo_retado_id
+      : desafio.equipo_retador_id;
+
+    // ── XP de equipo ──────────────────────────────────────────────────────────
+    await Promise.all([
+      supabase.rpc('add_team_xp', { team_id: ganadorId,  amount: 500 }),
+      supabase.rpc('add_team_xp', { team_id: perdedorId, amount: 150 }),
+    ]);
+
+    // ── XP personal ───────────────────────────────────────────────────────────
+    const [{ data: miembrosGanador }, { data: miembrosPerdedor }] = await Promise.all([
+      supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', ganadorId),
+      supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', perdedorId),
+    ]);
+    await Promise.all([
+      ...(miembrosGanador ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 100 })),
+      ...(miembrosPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 35  })),
+    ]);
+
+    // ── Dominio de cancha por formato ─────────────────────────────────────────
+    // Track both the specific format (e.g. '3v3') AND 'general' (cross-format aggregate).
+    const formato = desafio.formato as string;
+
+    // Temporada activa (for scoping, may be null)
+    const { data: temporada } = await supabase
+      .from('temporadas').select('id').eq('activa', true).maybeSingle();
+    const temporadaId = temporada?.id ?? null;
+
+    if (desafio.cancha_id) {
+      const canchaId = desafio.cancha_id as string;
+
+      // Upsert format-specific rows (only if formato !== 'general', which it won't be for team desafios)
+      if (formato && formato !== 'general') {
+        await Promise.all([
+          upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: ganadorId,  formato, temporada_id: temporadaId, isWin: true  }),
+          upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: perdedorId, formato, temporada_id: temporadaId, isWin: false }),
+        ]);
+      }
+
+      // Always upsert 'general' rows (aggregate across all formats)
+      await Promise.all([
+        upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: ganadorId,  formato: 'general', temporada_id: temporadaId, isWin: true  }),
+        upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: perdedorId, formato: 'general', temporada_id: temporadaId, isWin: false }),
+      ]);
+
+      // Recalculate King for both scopes
+      const recalcPromises: Promise<void>[] = [
+        recalcularKingEquipo(supabase, canchaId, 'general', temporadaId, ganadorId),
+      ];
+      if (formato && formato !== 'general') {
+        recalcPromises.push(
+          recalcularKingEquipo(supabase, canchaId, formato, temporadaId, ganadorId)
+        );
+      }
+      await Promise.all(recalcPromises);
+    }
+
+    return NextResponse.json({ resultado: updatedResultado, estado: 'completado' });
   }
 
   // ── ACEPTAR_ORIGINAL (from disputado → completado, triggers XP same as confirmar) ────
-  // Falls through to XP logic below — shares it with 'confirmar'
-  const isAceptarOriginal = accion === 'aceptar_original';
-  if (isAceptarOriginal) {
+  if (accion === 'aceptar_original') {
     // Mark resultado as confirmed and desafio as completed
     const { data: updatedResultadoDisputa, error: updateDisputaError } = await supabase.from('resultados')
       .update({ confirmado_por_perdedor: true, confirmado_at: new Date().toISOString() })
@@ -382,65 +462,6 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ resultado: updatedResultadoDisputa, estado: 'completado' });
   }
 
-  const ganadorId  = resultado.ganador_id as string;
-  const perdedorId = ganadorId === desafio.equipo_retador_id
-    ? desafio.equipo_retado_id
-    : desafio.equipo_retador_id;
-
-  // ── XP de equipo ──────────────────────────────────────────────────────────
-  await Promise.all([
-    supabase.rpc('add_team_xp', { team_id: ganadorId,  amount: 500 }),
-    supabase.rpc('add_team_xp', { team_id: perdedorId, amount: 150 }),
-  ]);
-
-  // ── XP personal ───────────────────────────────────────────────────────────
-  const [{ data: miembrosGanador }, { data: miembrosPerdedor }] = await Promise.all([
-    supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', ganadorId),
-    supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', perdedorId),
-  ]);
-  await Promise.all([
-    ...(miembrosGanador ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 100 })),
-    ...(miembrosPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 35  })),
-  ]);
-
-  // ── Dominio de cancha por formato ─────────────────────────────────────────
-  // Track both the specific format (e.g. '3v3') AND 'general' (cross-format aggregate).
-  // desafio.formato is the format of this specific challenge.
-  const formato = desafio.formato as string; // e.g. '3v3', '5v5', 'equipo_completo'
-
-  // Temporada activa (for scoping, may be null)
-  const { data: temporada } = await supabase
-    .from('temporadas').select('id').eq('activa', true).maybeSingle();
-  const temporadaId = temporada?.id ?? null;
-
-  if (desafio.cancha_id) {
-    const canchaId = desafio.cancha_id as string;
-
-    // Upsert format-specific rows (only if formato !== 'general', which it won't be for team desafios)
-    if (formato && formato !== 'general') {
-      await Promise.all([
-        upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: ganadorId,  formato, temporada_id: temporadaId, isWin: true  }),
-        upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: perdedorId, formato, temporada_id: temporadaId, isWin: false }),
-      ]);
-    }
-
-    // Always upsert 'general' rows (aggregate across all formats)
-    await Promise.all([
-      upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: ganadorId,  formato: 'general', temporada_id: temporadaId, isWin: true  }),
-      upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: perdedorId, formato: 'general', temporada_id: temporadaId, isWin: false }),
-    ]);
-
-    // Recalculate King for both scopes
-    const recalcPromises: Promise<void>[] = [
-      recalcularKingEquipo(supabase, canchaId, 'general', temporadaId, ganadorId),
-    ];
-    if (formato && formato !== 'general') {
-      recalcPromises.push(
-        recalcularKingEquipo(supabase, canchaId, formato, temporadaId, ganadorId)
-      );
-    }
-    await Promise.all(recalcPromises);
-  }
-
-  return NextResponse.json({ resultado: updatedResultado, estado: 'completado' });
+  // Unreachable: ACCIONES_VALIDAS covers exactly the branches above.
+  return NextResponse.json({ error: 'accion no manejada' }, { status: 400 });
 }

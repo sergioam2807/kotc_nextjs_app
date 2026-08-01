@@ -96,6 +96,24 @@ export default async function JoinPage({ params }: Props) {
       redirect(`/join/${equipoId}/${token}`);
     }
 
+    // Re-check the season gate at submit time, not just at page-render time —
+    // the season may have started between when the page loaded and now.
+    const { data: equipoActual } = await sb
+      .from('equipos')
+      .select('temporada_id')
+      .eq('id', equipoId)
+      .maybeSingle();
+    if (equipoActual?.temporada_id) {
+      const { data: tempActual } = await sb
+        .from('temporadas')
+        .select('inicio, activa')
+        .eq('id', equipoActual.temporada_id)
+        .maybeSingle();
+      if (tempActual?.activa && new Date(tempActual.inicio) <= new Date()) {
+        redirect(`/join/${equipoId}/${token}`);
+      }
+    }
+
     // Verificar que no sea ya miembro (doble check server-side)
     const { data: existe } = await sb
       .from('equipo_miembros')

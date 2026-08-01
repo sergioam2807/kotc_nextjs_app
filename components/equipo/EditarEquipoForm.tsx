@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 
@@ -29,6 +29,9 @@ const DEPORTE_LABELS: Record<string, string> = {
   padel:      '🏓 Pádel',
 };
 
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2 MB
+
 const inputClass =
   'bg-surface border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors w-full';
 
@@ -47,14 +50,17 @@ interface Props {
     region: string | null;
     comuna: string | null;
     descripcion: string | null;
+    logo_url: string | null;
   };
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function EditarEquipoForm({ initialData }: Props) {
+export function EditarEquipoForm({ equipoId, initialData }: Props) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Profile fields
   const [nombre,      setNombre]      = useState(initialData.nombre);
   const [color,       setColor]       = useState(initialData.color ?? '#F5C344');
   const [ciudad,      setCiudad]      = useState(initialData.ciudad ?? '');
@@ -63,6 +69,13 @@ export function EditarEquipoForm({ initialData }: Props) {
   const [descripcion, setDescripcion] = useState(initialData.descripcion ?? '');
   const [colorHex,    setColorHex]    = useState('');  // custom hex input
 
+  // Logo upload state
+  const [logoPreview,   setLogoPreview]   = useState<string | null>(initialData.logo_url);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError,     setLogoError]     = useState<string | null>(null);
+  const [logoSuccess,   setLogoSuccess]   = useState(false);
+
+  // Profile save state
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -74,6 +87,48 @@ export function EditarEquipoForm({ initialData }: Props) {
   const activeColor = colorHex && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(colorHex)
     ? colorHex
     : color;
+
+  // ── Logo upload ─────────────────────────────────────────────────────────────
+
+  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoError(null);
+    setLogoSuccess(false);
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setLogoError('Solo JPG, PNG, WebP o GIF.');
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setLogoError(`Imagen demasiado grande (${(file.size / 1024 / 1024).toFixed(1)} MB). Máximo 2 MB.`);
+      return;
+    }
+
+    // Show local preview immediately
+    setLogoPreview(URL.createObjectURL(file));
+    setLogoUploading(true);
+
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/equipo/logo', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`);
+      setLogoSuccess(true);
+      setLogoPreview(data.logo_url);
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : 'Error al subir imagen');
+      setLogoPreview(initialData.logo_url); // revert to original
+    } finally {
+      setLogoUploading(false);
+      // Reset input so same file can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
+  // ── Profile save ────────────────────────────────────────────────────────────
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,7 +155,6 @@ export function EditarEquipoForm({ initialData }: Props) {
 
       setSuccess(true);
       router.refresh();
-      // Short delay so the success message is visible, then navigate back
       setTimeout(() => router.push('/equipo'), 1200);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
@@ -109,10 +163,79 @@ export function EditarEquipoForm({ initialData }: Props) {
     }
   }
 
+  // ── Render ──────────────────────────────────────────────────────────────────
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-      {/* Nombre */}
+      {/* ── LOGO ── */}
+      <div className="flex flex-col gap-2">
+        <label className={labelClass}>Logo del equipo <span className="normal-case font-normal">(opcional)</span></label>
+
+        <div className="flex items-center gap-4">
+          {/* Preview circle */}
+          <div
+            className="w-16 h-16 rounded-xl flex-shrink-0 overflow-hidden border-2 flex items-center justify-center relative"
+            style={{
+              background:  logoPreview ? 'transparent' : `${activeColor}18`,
+              borderColor: `${activeColor}55`,
+            }}
+          >
+            {logoPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoPreview}
+                alt="Logo del equipo"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-[18px] font-bold" style={{ color: activeColor }}>
+                {nombre.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'}
+              </span>
+            )}
+            {logoUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              </div>
+            )}
+          </div>
+
+          {/* Upload controls */}
+          <div className="flex-1 min-w-0">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleLogoChange}
+              disabled={logoUploading}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={logoUploading}
+              className="text-[12px] font-medium border border-outline-variant rounded-lg px-3.5 py-2 text-on-surface-variant hover:border-outline hover:text-on-surface transition-colors disabled:opacity-50 min-h-[40px]"
+            >
+              {logoUploading ? 'Subiendo…' : logoPreview ? '🔄 Cambiar logo' : '📷 Subir logo'}
+            </button>
+            <div className="text-[10px] text-outline mt-1.5">JPG · PNG · WebP · GIF — máx. 2 MB</div>
+          </div>
+        </div>
+
+        {/* Logo feedback */}
+        {logoError && (
+          <div className="text-[11px] bg-error/10 border border-error/30 text-error rounded-lg px-3 py-2">
+            {logoError}
+          </div>
+        )}
+        {logoSuccess && (
+          <div className="text-[11px] bg-status-libre/10 border border-status-libre/30 text-status-libre rounded-lg px-3 py-2">
+            ✓ Logo guardado
+          </div>
+        )}
+      </div>
+
+      {/* ── NOMBRE ── */}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Nombre del equipo *</label>
         <input
@@ -127,7 +250,7 @@ export function EditarEquipoForm({ initialData }: Props) {
         <div className="text-[10px] text-outline text-right">{nombre.length}/50</div>
       </div>
 
-      {/* Deporte + Modalidad (read-only) */}
+      {/* ── DEPORTE + MODALIDAD (read-only) ── */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label className={labelClass}>Deporte</label>
@@ -146,7 +269,7 @@ export function EditarEquipoForm({ initialData }: Props) {
         Deporte y modalidad no se pueden cambiar una vez creado el equipo.
       </p>
 
-      {/* Descripción */}
+      {/* ── DESCRIPCIÓN ── */}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Descripción <span className="normal-case font-normal">(opcional)</span></label>
         <textarea
@@ -162,7 +285,7 @@ export function EditarEquipoForm({ initialData }: Props) {
         </div>
       </div>
 
-      {/* Ciudad */}
+      {/* ── CIUDAD ── */}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Ciudad <span className="normal-case font-normal">(opcional)</span></label>
         <input
@@ -175,7 +298,7 @@ export function EditarEquipoForm({ initialData }: Props) {
         />
       </div>
 
-      {/* Región / Comuna */}
+      {/* ── REGIÓN / COMUNA ── */}
       <div>
         <label className={`${labelClass} block mb-2`}>Ubicación</label>
         <RegionComunaSelect
@@ -189,7 +312,7 @@ export function EditarEquipoForm({ initialData }: Props) {
         </p>
       </div>
 
-      {/* Color */}
+      {/* ── COLOR ── */}
       <div className="flex flex-col gap-2">
         <label className={labelClass}>Color del equipo</label>
 
@@ -236,7 +359,7 @@ export function EditarEquipoForm({ initialData }: Props) {
         </div>
       </div>
 
-      {/* Error / success */}
+      {/* ── ERROR / SUCCESS ── */}
       {error && (
         <div className="text-[12px] bg-error/10 border border-error/30 text-error rounded-lg px-3 py-2.5">
           {error}
@@ -248,7 +371,7 @@ export function EditarEquipoForm({ initialData }: Props) {
         </div>
       )}
 
-      {/* Actions */}
+      {/* ── ACTIONS ── */}
       <div className="flex gap-3 pt-1">
         <button
           type="button"
