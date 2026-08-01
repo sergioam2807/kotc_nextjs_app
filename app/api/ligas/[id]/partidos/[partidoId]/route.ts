@@ -42,10 +42,15 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Los puntos no pueden ser negativos' }, { status: 400 });
   }
 
-  let ganador_id: string | null = null;
-  if (puntos_local > puntos_visitante)       ganador_id = partido.equipo_local_id;
-  else if (puntos_visitante > puntos_local)  ganador_id = partido.equipo_visitante_id;
-  // tie → null
+  // Basketball is always decided (overtime) — a draw is not a valid result.
+  if (puntos_local === puntos_visitante) {
+    return NextResponse.json(
+      { error: 'No se permiten empates — debe haber un ganador' },
+      { status: 400 },
+    );
+  }
+
+  const ganador_id = puntos_local > puntos_visitante ? partido.equipo_local_id : partido.equipo_visitante_id;
 
   const updates: Record<string, unknown> = {
     puntos_local,

@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main, feature/ligas]
+  pull_request:
+    branches: [main, feature/ligas]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Unit tests (pure logic — brackets, standings, levels)
+        run: pnpm test:unit
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase (applies all migrations)
+        run: supabase start
+
+      - name: Export local Supabase keys
+        run: |
+          eval "$(supabase status -o env | sed -n 's/^\(API_URL\|ANON_KEY\|SERVICE_ROLE_KEY\)=/\1=/p')"
+          echo "SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "SUPABASE_ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY" >> "$GITHUB_ENV"
+
+      - name: Integration tests (real Postgres + RLS)
+        run: pnpm test:integration
+
+      - name: Production build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.SUPABASE_ANON_KEY }}
+          # Build-time placeholders — routes that need these only fail at
+          # runtime if actually invoked, which the build step never does.
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: build-placeholder
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          ADMIN_EMAIL: admin@example.com
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop

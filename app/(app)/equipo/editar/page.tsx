@@ -21,7 +21,7 @@ export default async function EditarEquipoPage() {
 
   const { data: equipo } = await supabase
     .from('equipos')
-    .select('id, nombre, deporte, modalidad, color, ciudad, region, comuna, descripcion')
+    .select('id, nombre, deporte, modalidad, color, ciudad, region, comuna, descripcion, logo_url')
     .eq('id', membresia.equipo_id)
     .maybeSingle();
 
@@ -49,14 +49,24 @@ export default async function EditarEquipoPage() {
       {/* Team avatar preview */}
       <div className="flex items-center gap-3 mb-6 p-3.5 bg-surface-container-low border border-outline-variant rounded-xl">
         <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center text-[16px] font-bold flex-shrink-0 border-2"
+          className="w-12 h-12 rounded-xl flex-shrink-0 border-2 overflow-hidden flex items-center justify-center"
           style={{
-            background: `${equipo.color}18`,
-            color: equipo.color,
+            background: (equipo as Record<string, unknown>).logo_url ? 'transparent' : `${equipo.color}18`,
             borderColor: `${equipo.color}50`,
           }}
         >
-          {equipo.nombre.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()}
+          {(equipo as Record<string, unknown>).logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={(equipo as Record<string, unknown>).logo_url as string}
+              alt={equipo.nombre}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-[16px] font-bold" style={{ color: equipo.color }}>
+              {equipo.nombre.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()}
+            </span>
+          )}
         </div>
         <div>
           <div className="text-[13px] font-semibold text-on-surface">{equipo.nombre}</div>
@@ -75,6 +85,8 @@ export default async function EditarEquipoPage() {
           region:      equipo.region,
           comuna:      equipo.comuna,
           descripcion: equipo.descripcion,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          logo_url:    (equipo as any).logo_url ?? null,
         }}
       />
     </div>

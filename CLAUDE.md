@@ -31,18 +31,20 @@ App de desafíos territoriales de canchas deportivas (basketball, fútbol, vóle
 | Rama | Base | Estado | Migraciones |
 |------|------|--------|-------------|
 | `main` | — | producción | 001–021 |
-| `feature/ligas` | main | **pendiente merge** | 022–026 (todas las nuevas features + security) |
+| `feature/ligas` | main | **pendiente merge** | 022–043 (todas las features + security + fase 2 + logos + valoraciones) |
 | `feature/canchas-info` | main | pendiente merge | 023 |
 
-> ⚠️ `feature/ligas` contiene todo: ligas, reclutamiento, invitaciones in-app, equipos browse, API docs, security hardening.
+> ⚠️ `feature/ligas` contiene todo: ligas, reclutamiento, invitaciones in-app, equipos browse, filtros, matchmaking, resolución de disputas, edición de equipo.
 
 **Orden de merge recomendado:**
 ```bash
 git checkout main
 git merge feature/canchas-info   # migración 023
-git merge feature/ligas           # migraciones 022, 024, 025, 026
+git merge feature/ligas           # migraciones 022, 024–041
 supabase db push                  # aplica todas (en orden numérico)
 ```
+
+> ⚠️ **Pendiente crítico:** `supabase db push` aún no se ha ejecutado. Las migraciones 039–041 existen en código pero NO en la DB de producción. Aplicar antes de desplegar.
 
 ---
 
@@ -55,7 +57,8 @@ app/
     dashboard/page.tsx              ← Home: player banner, deportes, canchas, desafíos, card ligas
     mapa/page.tsx                   ← Mapa de canchas con Google Maps
     desafios/page.tsx               ← Gestión de desafíos del equipo
-    equipo/page.tsx                 ← Perfil del equipo + roster (admins: solicitudes badge + buscar jugadores)
+    equipo/page.tsx                 ← Perfil del equipo + roster (admins: botón ✏️ Editar, solicitudes badge, BuscandoRivalToggle)
+    equipo/editar/page.tsx          ← Editar perfil del equipo: logo (GCS), nombre, color, ciudad, región, comuna, descripción (solo admin)
     equipo/invitaciones/            ← Gestión de invitaciones
     equipo/solicitudes/             ← Solicitudes de ingreso (solo admin/capitán)
     ranking/page.tsx                ← Ranking territorial (equipos + jugadores)
@@ -80,12 +83,15 @@ app/
     equipos/route.ts                ← POST crear equipo
     canchas/route.ts                ← GET list / POST crear cancha (acepta nuevos campos de recinto)
     canchas/[id]/route.ts           ← GET detalle / PATCH editar cancha (acepta nuevos campos de recinto)
+    canchas/[id]/valorar/route.ts   ← POST upsert valoración 1–5 estrellas → trigger actualiza canchas.valoracion_promedio + valoracion_count
     desafios/route.ts               ← POST crear desafío
     desafios/[id]/route.ts          ← PATCH aceptar/rechazar
-    resultados/route.ts             ← POST proponer / PATCH confirmar|disputar
+    resultados/route.ts             ← POST proponer / PATCH confirmar|disputar|re_proponer|aceptar_original|anular
     equipo/miembros/route.ts        ← PATCH cambiar posición titular/suplente (admin); DELETE salir/expulsar
     equipo/disolver/route.ts        ← DELETE disolver equipo (admin), FK-safe
-    invitaciones/route.ts           ← POST crear (solo admin, UUID/enum/email validados) / GET recibidas|enviadas
+    equipo/perfil/route.ts          ← PATCH editar equipo: nombre, color, ciudad, region, comuna, descripcion, buscando_rival, rival_modalidad
+    equipo/logo/route.ts            ← POST subir logo a GCS → UPDATE equipos.logo_url (solo admin; multipart/form-data; max 2MB)
+    invitaciones/route.ts           ← POST crear (metodo: email|whatsapp|link|directo; solo admin) / GET recibidas|enviadas
     perfil/route.ts                 ← PATCH actualizar perfil propio
     solicitudes/route.ts            ← POST crear / GET listar solicitudes de equipo
     solicitudes/[id]/route.ts       ← PATCH aceptar/rechazar/cancelar; DELETE cancelar
@@ -112,16 +118,40 @@ app/
 -- Core (main)
 profiles          (id→auth.users, username, display_name, avatar_url, ciudad, nivel, xp,
                    bio, posicion_principal, posiciones_adicionales text[], especialidades text[],
-                   altura_cm, peso_kg, mano_habil, anos_experiencia, disponible_reclutamiento)
+                   altura_cm, peso_kg, mano_habil, anos_experiencia, disponible_reclutamiento,
+                   -- migración 039:
+                   region text NULL, comuna text NULL)
 temporadas        (id, nombre, deporte, inicio, fin, activa)
-equipos           (id, nombre, deporte, modalidad, ciudad, color, nivel, xp, creador_id, temporada_id nullable)
+equipos           (id, nombre, deporte, modalidad, ciudad, color, nivel, xp, creador_id, temporada_id nullable,
+                   -- migración 032:
+                   descripcion text NULL, cancha_local_id uuid NULL, racha_victorias int, racha_derrotas int,
+                   -- migración 042:
+                   logo_url text NULL,
+                   -- migración 039:
+                   region text NULL, comuna text NULL,
+                   -- migración 040:
+                   buscando_rival boolean NOT NULL DEFAULT false,
+                   rival_modalidad text NULL CHECK (rival_modalidad IN ('1v1','2v2','3v3','4v4','5v5','equipo_completo')))
 equipo_miembros   (id, equipo_id, jugador_id→profiles, rol, posicion, temporada_id nullable, deporte)
 canchas           (id, nombre, direccion, lat, lng, fotos, deporte[], agregada_por,
-                   -- Campos de recinto (migración 023, feature/canchas-info):
-                   es_publica      bool  NOT NULL DEFAULT true,   -- pública/gratuita vs de pago
-                   precio_hora     int   NULL,                    -- CLP por hora (solo si es de pago)
-                   telefono_contacto text NULL,                   -- contacto para reservas
-                   nombre_recinto  text  NULL)                    -- nombre del complejo/recinto
+                   -- migración 023 (feature/canchas-info):
+                   es_publica      bool  NOT NULL DEFAULT true,
+                   precio_hora     int   NULL,
+                   telefono_contacto text NULL,
+                   nombre_recinto  text  NULL,
+                   -- migración 031:
+                   superficie text NULL CHECK (superficie IN ('asfalto','cemento','interior','madera','sintetico','otro')),
+                   iluminacion boolean NULL,
+                   tipo_aro text NULL CHECK (tipo_aro IN ('estandar','cadena','fijo','portatil','sin_aro')),
+                   -- migración 039:
+                   region text NULL, comuna text NULL,
+                   -- migración 043:
+                   valoracion_promedio numeric(3,2) NULL,
+                   valoracion_count int NOT NULL DEFAULT 0)
+cancha_valoraciones (id, cancha_id→canchas, jugador_id→auth.users,
+                   estrellas smallint CHECK(1–5), created_at, updated_at
+                   UNIQUE(cancha_id, jugador_id))
+-- Trigger _update_cancha_valoracion: after INSERT/UPDATE/DELETE → recalcula promedio+count en canchas
 cancha_dominio    (id, cancha_id,
                    equipo_id uuid NULL → equipos,   -- NULL for 1v1 player rows
                    jugador_id uuid NULL → auth.users, -- set for 1v1 rows; NULL for team rows
@@ -134,7 +164,9 @@ desafios          (id, equipo_retador_id, equipo_retado_id, cancha_id, deporte, 
                    fecha, mensaje, estado)
 resultados        (id, desafio_id, ganador_id, propuesto_por→equipos,
                    puntos_retador nullable, puntos_retado nullable,
-                   confirmado_por_perdedor, disputado, confirmado_at)
+                   confirmado_por_perdedor, disputado, confirmado_at,
+                   -- migración 041:
+                   disputa_at timestamptz NULL)  -- timestamp when disputed, used for 5-day auto-cancel
 invitaciones      (id, equipo_id, token, email, metodo, estado, expira_at,
                    jugador_id uuid NULL REFERENCES auth.users — in-app notification target (migración 024))
 solicitudes_equipo (id, equipo_id, jugador_id→auth.users, mensaje,
@@ -180,8 +212,14 @@ ranking_1v1          (id, jugador_id→auth.users, temporada_id nullable→tempo
 - `trg_equipo_miembro_delete` → SET `fecha_salida = now()` en `historial_equipos`
 
 **Estado de desafío en equipo (FSM):**
-`pendiente → aceptado → resultado_pendiente → completado | disputado`
-También: `pendiente → rechazado`, `aceptado → resultado_pendiente` (via POST /api/resultados)
+```
+pendiente → aceptado → resultado_pendiente → completado
+                                           → disputado → completado  (aceptar_original)
+                                                       → resultado_pendiente  (re_proponer)
+                                                       → cancelado  (auto-timeout 5 días)
+pendiente → rechazado
+```
+- `disputar`: graba `disputa_at = now()`. `re_proponer`: PATCH resultado con nuevo ganador → vuelve a `resultado_pendiente`. `aceptar_original`: acepta el resultado pre-disputa → XP + King. `anular`: cancela sin XP. Auto-cancel en `desafios/page.tsx` (server): cancela disputas con `disputa_at > 5 días` en cada carga.
 
 **Estado de desafío 1v1 (FSM):**
 `pendiente → aceptado → resultado_pendiente → completado`
@@ -247,6 +285,7 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `XPBar` — Props: `xp, nivel, showLabel?, compact?`. Muestra progreso del nivel, XP total, nombre nivel siguiente.
 - `RefreshButton` — llama `router.refresh()` via `useTransition`. Spinner animado. `w-9 h-9` tap target. Usado en Dashboard y DesafiosClientWrapper.
 - `ThemeToggle` — alterna entre `data-theme="dark"` y `"light"` en `<html>`.
+- `StarRating` — Props: `value (0-5), onChange?, size?`. Read-only sin `onChange`; interactivo con `onChange`. Muestra estrellas SVG color accent (#ffe083).
 
 ### Layout (`components/layout/`)
 - `MobileBottomNav` — nav fijo inferior, solo en mobile (`md:hidden`). Items: **Inicio** `/dashboard` · **Mapa** `/mapa` · **Desafíos** `/desafios` · **Ligas** `/ligas` · **Equipo** `/equipo`. `aria-current` en item activo. Padding safe-area.
@@ -283,7 +322,11 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `SolicitarEquipoButton` ('use client') — botón/modal para solicitar unirse a equipo. Props: `equipoId, equipoNombre`.
 
 ### Jugadores (`components/jugadores/`)
-- `InvitarJugadorButton` ('use client') — botón para que admins/capitanes inviten a un jugador desde su perfil o del listado. Props: `equipoId, equipoNombre, jugadorId, jugadorNombre`. POST `/api/invitaciones` con `metodo: 'directo'`. Post-envío: muestra link colapsable + WhatsApp deeplink.
+- `InvitarJugadorButton` ('use client') — botón para que admins/capitanes inviten a un jugador. POST `/api/invitaciones` con `metodo: 'directo'`. Props: `equipoId, equipoNombre, jugadorId, jugadorNombre`.
+- `JugadoresClientWrapper` ('use client') — lista de jugadores con 5 filtros: búsqueda texto, posición (chips), especialidades (multi-chips), región (select), comuna (cascading). Contador "N de M jugadores".
+
+### Equipos (`components/equipos/`)
+- `EquiposClientWrapper` ('use client') — lista de equipos con filtros: búsqueda, deporte (chips), región, modalidad, "🔥 Buscando rival" toggle. Props: `equipos, userEquipoId, userId, initialSoloRivales?`. Badge "🔥 Buscando rival · 3v3" en cards activos.
 
 ### Equipo (`components/equipo/`)
 - `SolicitudActions` ('use client') — botones Accept/Reject con confirmación. Props: `solicitudId, jugadorNombre`.
@@ -291,6 +334,8 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `RosterRow` ('use client') — fila del roster. Chip Titular/Suplente clickeable para admin (optimistic PATCH). Admin expulsa; jugador sale. Props: `miembroId, jugadorId, nombre, iniciales, avatarColor, avatarUrl?, roles[], posicion, nivel, xp, isCurrentUser, isAdmin`.
 - `RosterSlots` — barra visual de plazas titulares/suplentes. Props: `modalidad, titulares, maxTitulares, suplentes, maxSuplentes`.
 - `InvitacionesRecibidas` ('use client') — fetcha `GET /api/invitaciones?tipo=recibidas` al montar. Muestra cards con equipo + invitador + botones Aceptar/Ver equipo/Rechazar (PATCH `expirada`). Retorna null si no hay invitaciones (no flash).
+- `BuscandoRivalToggle` ('use client') — pill toggle + 6 chips de formato. PATCH `/api/equipo/perfil`. Props: `equipoId, initialBuscando, initialModalidad`. Solo visible para admins.
+- `EditarEquipoForm` ('use client') — form completo de edición del equipo. Campos: nombre, descripción (500), ciudad, región+comuna, color (12 presets + hex custom). PATCH `/api/equipo/perfil`. Redirige a `/equipo` on success. Props: `equipoId, initialData`.
 
 ### 1v1 (`components/desafios1v1/`) — feature/ligas
 - `Desafiar1v1Button` ('use client') — botón expandible para desafiar a otro jugador en 1v1. Props: `retadoId, retadoNombre, desafioPendienteId?`. Estados: idle → form → loading → pendiente | enviado. POST `/api/desafios-1v1`. Si viene `desafioPendienteId` del servidor → inicia en `'pendiente'` con botón Cancelar.
@@ -393,6 +438,14 @@ const eqObj = Array.isArray(eqRaw) ? eqRaw[0] : eqRaw;
 | 036 | **1v1 individual:** `desafios_individual`, `resultados_individual`, `ranking_1v1` con RLS | feature/ligas |
 | 037 | **Fix ranking_1v1 RLS:** políticas insert/update permisivas para writes cross-user | feature/ligas |
 | 038 | **KOTC por formato:** `cancha_dominio` + `formato`, `jugador_id`, `equipo_id` nullable; índices parciales; APIs actualizadas | feature/ligas |
+| 039 | **Geo:** `region text NULL`, `comuna text NULL` en `profiles`, `equipos`, `canchas`; 6 índices | feature/ligas |
+| 040 | **Buscando rival:** `buscando_rival bool DEFAULT false`, `rival_modalidad text NULL CHECK(...)` en `equipos`; índice parcial WHERE buscando_rival=true | feature/ligas |
+| 041 | **Disputa resolución:** `disputa_at timestamptz NULL` en `resultados`; `cancelado` añadido al CHECK de `desafios.estado` | feature/ligas |
+| 042 | **Team logo:** `logo_url text NULL` en `equipos` | feature/ligas |
+| 043 | **Court ratings:** tabla `cancha_valoraciones` (1–5 ⭐); `valoracion_promedio/count` en `canchas`; trigger `_update_cancha_valoracion` | feature/ligas |
+| 044 | **OSM import:** `osm_id bigint NULL`, `osm_type text NULL` en `canchas`; unique index `canchas_osm_unique` (permite re-runs idempotentes) | feature/ligas |
+
+> ⚠️ **Migraciones 039–044 pendientes de aplicar en DB** (`supabase db push`)
 
 ---
 
@@ -467,6 +520,14 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000   ← cambiar en producción
 RESEND_API_KEY=...
 ADMIN_EMAIL=...                              ← email del admin para panel /admin (server-only, NO NEXT_PUBLIC)
+
+# Google Cloud Storage — logos de equipos (migración 042)
+# Setup: console.cloud.google.com → Cloud Storage → crear bucket público
+# Service account con rol "Storage Object Admin" → descargar JSON key
+GCS_PROJECT_ID=...
+GCS_BUCKET_NAME=kotc-team-logos
+GCS_CLIENT_EMAIL=...@....iam.gserviceaccount.com
+GCS_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----\n"
 ```
 
 ---
@@ -651,6 +712,52 @@ Sin generated types, Supabase infiere FK joins como arrays. Usar el helper `unwr
 - **HTTP Security Headers** — CSP, X-Frame-Options, HSTS, Permissions-Policy en `next.config.ts`
 - **RLS liga_equipos** — admin/cap de equipo solo puede cambiar estado (no grupo/seed) vía DB directo
 
+## Import masivo de canchas — `scripts/import-canchas-osm.ts`
+
+Script para poblar la DB desde OpenStreetMap. Requiere que las migraciones 039–044 estén aplicadas.
+
+**Fuentes:**
+| Fuente | Uso | Costo | Rate limit |
+|--------|-----|-------|------------|
+| Overpass API | Query principal — todas las canchas por bbox+deporte | Gratis | ~1 req/5s por buena práctica |
+| Nominatim | Geocodificación inversa para completar direcciones | Gratis | 1 req/s (ToS) |
+
+**Env vars extra** (solo en `.env.local`, nunca exponer):
+```
+SUPABASE_SERVICE_ROLE_KEY=...   ← Supabase Dashboard → Settings → API
+IMPORT_ADMIN_USER_ID=...        ← UUID del admin (aparece como "agregada_por")
+```
+
+**Workflow:**
+```bash
+# 1. Probar query en browser (sin código):
+#    → overpass-turbo.eu → pegar query → Run → ver cobertura en mapa
+
+# 2. Dry-run sin insertar:
+pnpm import:canchas:dry --ciudad=santiago
+
+# 3. Import real:
+pnpm import:canchas --ciudad=santiago
+pnpm import:canchas --ciudad=vinaDelMar
+pnpm import:canchas --ciudad=valparaiso
+
+# 4. Re-run seguro (duplicados saltados por osm_id UNIQUE):
+pnpm import:canchas --ciudad=santiago   # ← idempotente
+```
+
+**Ciudades configuradas:** `santiago` (Gran Santiago), `vinaDelMar`, `valparaiso`, `todas`
+
+**Deportes:** `basketball, futbol, tenis, voleibol, padel` — filtrable con `--deportes=basketball,futbol`
+
+**Deduplicación:** por `osm_id` (no re-inserta) + por proximidad <30m (misma cancha = combina deportes)
+
+**Estimado de canchas por ciudad (OSM Chile ~2026):**
+- Santiago: ~400–700 (fútbol domina)
+- Viña del Mar: ~80–150
+- Valparaíso: ~60–100
+
+**Google Places NO usar** para import masivo: ToS §3.2.3 prohíbe almacenar resultados indefinidamente.
+
 **Pendiente de infra (no código):**
 - Google Maps API Key → agregar restricción HTTP Referrer en Google Cloud Console
 - Rate limiting → implementar con `@upstash/ratelimit` en middleware antes de producción
@@ -659,9 +766,18 @@ Sin generated types, Supabase infiere FK joins como arrays. Usar el helper `unwr
 
 ## Cosas pendientes / conocidas
 
-- **Dashboard y equipo page** usan estilos hardcodeados legacy (`bg-[#0f0f12]`, `text-[#F5C344]`) — refactoring a tokens pendiente (parcialmente hecho en equipo/page.tsx botones)
+### 🔴 Crítico (bloqueante para producción)
+- **`supabase db push` pendiente** — migraciones 039–043 existen en código pero no en DB. Los filtros de región/comuna, rivales, disputas, logos y valoraciones no funcionan sin esto.
+- **GCS bucket pendiente** — crear bucket `kotc-team-logos` en GCP y configurar 4 env vars (GCS_*). Sin esto, la subida de logos falla en runtime pero no en build.
+- **Dashboard y equipo page** usan estilos hardcodeados legacy (`bg-[#0f0f12]`, `text-[#F5C344]`) — refactoring a tokens pendiente
+
+### 🟡 Funcional pero incompleto
+- **Rivales buscando match**: requiere que al menos un equipo active `buscando_rival = true` en su perfil (`/equipo/editar`) para que el widget del dashboard muestre resultados
+- **Filtros region/comuna**: solo funcionan para equipos/jugadores que tengan seteada la columna `region` (nueva en migr. 039). Datos existentes tienen NULL → filtro muestra todo correctamente, pero "rivales cercanos" requiere que el equipo configure su región
 - **Sin temporadas activas** — `temporada_id` nullable en todas las tablas relevantes
 - **Sin Supabase Realtime** — cambios requieren recarga manual (`router.refresh()` o `<RefreshButton />`)
+
+### 🟢 Mejoras futuras
 - **Ranking** accesible por URL directa `/ranking` (nav lo tiene como "Ranking" en sidebar desktop)
 - **Precio en planes** — `$9.990/mes` es un placeholder; cambiar en `app/(app)/planes/page.tsx` antes de producción
 - **WhatsApp CTA** — número placeholder `+56912345678`; cambiar en `PLAN_ORGANIZADOR.ctaWhatsapp` en `/planes`
@@ -669,3 +785,4 @@ Sin generated types, Supabase infiere FK joins como arrays. Usar el helper `unwr
 - **Rate limiting** — endpoints de creación sin protección anti-spam (POST invitaciones, desafios, solicitudes)
 - **Ranking calculado en JS** — `ranking/page.tsx` hace joins en memoria; migrar a RPC SQL cuando escale
 - **Constantes DEPORTE_LABELS/EMOJI** — definidas localmente en varios archivos; centralizar en `lib/player-constants.ts`
+- **Import masivo canchas OSM** — script `scripts/import-canchas-osm.ts` planificado (ver memory `import-canchas-osm.md`)

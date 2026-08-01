@@ -225,73 +225,17 @@ export async function PATCH(request: Request) {
 
   const temporadaId = temporada?.id ?? null;
 
-  // Fetch both rows in parallel to minimise round-trips
-  const [{ data: winnerRow }, { data: loserRow }] = await Promise.all([
-    supabase
-      .from('ranking_1v1')
-      .select('id, victorias, racha_actual, racha_max, puntos')
-      .eq('jugador_id', ganadorId)
-      .is('temporada_id', temporadaId)
-      .maybeSingle(),
-    supabase
-      .from('ranking_1v1')
-      .select('id, derrotas, victorias, puntos, racha_actual, racha_max')
-      .eq('jugador_id', perdedorId)
-      .is('temporada_id', temporadaId)
-      .maybeSingle(),
-  ]);
-
-  // ── Winner ──────────────────────────────────────────────────────────────────
-  if (winnerRow) {
-    const newRacha    = (winnerRow.racha_actual ?? 0) + 1;
-    const newRachaMax = Math.max(winnerRow.racha_max ?? 0, newRacha);
-    const { error: wErr } = await supabase
-      .from('ranking_1v1')
-      .update({
-        victorias:    (winnerRow.victorias ?? 0) + 1,
-        puntos:       (winnerRow.puntos ?? 0) + PUNTOS_VICTORIA,
-        racha_actual: newRacha,
-        racha_max:    newRachaMax,
-        updated_at:   new Date().toISOString(),
-      })
-      .eq('id', winnerRow.id);
-    if (wErr) console.error('[ranking_1v1] winner update error:', wErr.message);
-  } else {
-    const { error: wErr } = await supabase.from('ranking_1v1').insert({
-      jugador_id:   ganadorId,
-      temporada_id: temporadaId,
-      victorias:    1,
-      puntos:       PUNTOS_VICTORIA,
-      racha_actual: 1,
-      racha_max:    1,
-      derrotas:     0,
-    });
-    if (wErr) console.error('[ranking_1v1] winner insert error:', wErr.message);
-  }
-
-  // ── Loser ───────────────────────────────────────────────────────────────────
-  if (loserRow) {
-    const { error: lErr } = await supabase
-      .from('ranking_1v1')
-      .update({
-        derrotas:     (loserRow.derrotas ?? 0) + 1,
-        racha_actual: 0,
-        updated_at:   new Date().toISOString(),
-      })
-      .eq('id', loserRow.id);
-    if (lErr) console.error('[ranking_1v1] loser update error:', lErr.message);
-  } else {
-    const { error: lErr } = await supabase.from('ranking_1v1').insert({
-      jugador_id:   perdedorId,
-      temporada_id: temporadaId,
-      derrotas:     1,
-      racha_actual: 0,
-      victorias:    0,
-      puntos:       0,
-      racha_max:    0,
-    });
-    if (lErr) console.error('[ranking_1v1] loser insert error:', lErr.message);
-  }
+  // Atomic RPC (migration 045) — replaces a non-atomic read-modify-write that
+  // was vulnerable to lost updates when a player confirms two 1v1 duels
+  // around the same time, and that also used `.is('temporada_id', temporadaId)`
+  // with a UUID (only valid for NULL), which would have silently stopped
+  // updating the ranking as soon as a season went active.
+  const { error: rankingErr } = await supabase.rpc('add_ranking_1v1_result', {
+    p_ganador_id:  ganadorId,
+    p_perdedor_id: perdedorId,
+    p_temporada_id: temporadaId,
+  });
+  if (rankingErr) console.error('[ranking_1v1] add_ranking_1v1_result error:', rankingErr.message);
 
   // ── 1v1 Court dominio tracking ─────────────────────────────────────────────
   // If the challenge was on a court, track the individual player dominio there.
