@@ -5,8 +5,17 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@heroui/react';
 import { Badge } from '@/components/ui/Badge';
 import { SoftButton } from '@/components/ui/SoftButton';
+import { CountUp } from '@/components/ui/CountUp';
 import type { DesafioConDatos, EstadoDesafio, ResultadoDesafio } from './types';
 import { ProponeResultadoModal } from './ProponeResultadoModal';
+
+interface Resolucion {
+  gane: boolean;
+  xpEquipo: number;
+  xpJugador: number;
+  /** Tu equipo quedó King de la cancha con este resultado. */
+  king: boolean;
+}
 
 interface Props {
   desafio: DesafioConDatos;
@@ -39,6 +48,13 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
   const [showProponer, setShowProponer] = useState(false);
   const [showReproponer, setShowReproponer] = useState(false);
   const [desafioLocal, setDesafioLocal] = useState<DesafioConDatos>(desafio);
+  // Solo true cuando la victoria se resuelve en esta sesion: la animacion
+  // marca el momento del reclamo, no una card que ya carga completada.
+  const [justResolved, setJustResolved] = useState(false);
+  // Lo que el server confirmó que pasó: XP otorgado y si la cancha quedó tuya.
+  // Nada de esto se muestra hasta que el server responde — el estado optimista
+  // adelanta el desenlace, no las recompensas.
+  const [resolucion, setResolucion] = useState<Resolucion | null>(null);
 
   const badge = estadoBadgeStyle[desafioLocal.estado];
   const esEnviado = desafioLocal.equipo_retador_id === equipoId;
@@ -85,30 +101,7 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
   }
 
   async function handleConfirmar() {
-    if (!resultado) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/resultados', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: resultado.id, accion: 'confirmar' }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `Error ${res.status}`);
-      }
-      const body = await res.json();
-      const updatedResultado: ResultadoDesafio = body.resultado;
-      const updated = { ...desafioLocal, estado: 'completado' as EstadoDesafio, resultado: updatedResultado };
-      setDesafioLocal(updated);
-      onEstadoCambiado(desafioLocal.id, 'completado', updatedResultado);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
-    } finally {
-      setLoading(false);
-    }
+    await resolver('confirmar');
   }
 
   async function handleDisputar() {
@@ -139,26 +132,50 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
   }
 
   async function handleAceptarOriginal() {
+    await resolver('aceptar_original');
+  }
+
+  /**
+   * Confirmar y aceptar-el-original terminan en el mismo lugar: el desafío se
+   * cierra y reparte XP. La card salta al desenlace antes de que responda el
+   * server — es el momento del producto, no merece un "..." — y vuelve atrás
+   * con el error visible si el server rechaza.
+   */
+  async function resolver(accion: 'confirmar' | 'aceptar_original') {
     if (!resultado) return;
+    const previo = desafioLocal;
+
     setLoading(true);
     setError(null);
+    setDesafioLocal({ ...desafioLocal, estado: 'completado' });
+    setJustResolved(true);
+
     try {
       const res = await fetch('/api/resultados', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: resultado.id, accion: 'aceptar_original' }),
+        body: JSON.stringify({ id: resultado.id, accion }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? `Error ${res.status}`);
-      }
-      const data = await res.json();
-      const updatedResultado: ResultadoDesafio = data.resultado;
-      const updated = { ...desafioLocal, estado: 'completado' as EstadoDesafio, resultado: updatedResultado };
-      setDesafioLocal(updated);
-      onEstadoCambiado(desafioLocal.id, 'completado', updatedResultado);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? `Error ${res.status}`);
+
+      const updatedResultado: ResultadoDesafio = body.resultado;
+      setDesafioLocal({ ...previo, estado: 'completado', resultado: updatedResultado });
+
+      const gane = resultado.ganador_id === equipoId;
+      setResolucion({
+        gane,
+        xpEquipo:  gane ? body.xp?.equipo_ganador  ?? 0 : body.xp?.equipo_perdedor  ?? 0,
+        xpJugador: gane ? body.xp?.jugador_ganador ?? 0 : body.xp?.jugador_perdedor ?? 0,
+        king: body.king_equipo_id === equipoId,
+      });
+
+      onEstadoCambiado(previo.id, 'completado', updatedResultado);
       router.refresh();
     } catch (err) {
+      setDesafioLocal(previo);
+      setJustResolved(false);
+      setResolucion(null);
       setError(err instanceof Error ? err.message : 'Error inesperado');
     } finally {
       setLoading(false);
@@ -352,16 +369,47 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
           );
         })()}
 
-        {/* Estado: completado o jugado con resultado */}
+        {/* Estado: completado o jugado con resultado.
+            Cuando se resuelve en esta sesión entra coreografiado: primero el
+            desenlace, después lo que ganaste, y al final la corona — que solo
+            aparece si el server dice que la cancha quedó tuya. */}
         {(desafioLocal.estado === 'completado' || desafioLocal.estado === 'jugado') && ganador && (
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-[11px] font-semibold" style={{ color: ganador.color }}>
-              🏆 {ganador.nombre} ganó
-            </span>
-            {resultado && (resultado.puntos_retador != null || resultado.puntos_retado != null) && (
-              <span className="text-[11px] text-outline font-mono">
-                {resultado.puntos_retador ?? '—'} - {resultado.puntos_retado ?? '—'}
+          <div className="mt-1 flex flex-col gap-1.5">
+            <div className={`flex items-center gap-2${justResolved ? ' kotc-king-claim' : ''}`}>
+              <span className="text-[11px] font-semibold" style={{ color: ganador.color }}>
+                🏆 {ganador.nombre} ganó
               </span>
+              {resultado && (resultado.puntos_retador != null || resultado.puntos_retado != null) && (
+                <span className="text-[11px] text-outline font-mono">
+                  {resultado.puntos_retador ?? '—'} - {resultado.puntos_retado ?? '—'}
+                </span>
+              )}
+            </div>
+
+            {resolucion && (
+              <div
+                className="kotc-confirm-in flex items-center gap-3 text-[11px] text-outline"
+                style={{ '--kotc-stagger': '180ms' } as React.CSSProperties}
+              >
+                <span>
+                  <CountUp value={resolucion.xpEquipo} prefix="+" delayMs={180} className="text-on-surface font-semibold" />
+                  {' '}XP equipo
+                </span>
+                <span>
+                  <CountUp value={resolucion.xpJugador} prefix="+" delayMs={180} className="text-on-surface font-semibold" />
+                  {' '}XP para vos
+                </span>
+              </div>
+            )}
+
+            {resolucion?.king && (
+              <div
+                className="kotc-king-claim flex items-center gap-1.5 text-[11px] font-semibold text-accent"
+                style={{ '--kotc-stagger': '420ms' } as React.CSSProperties}
+              >
+                <span>👑</span>
+                <span>{desafioLocal.cancha.nombre} es tuya</span>
+              </div>
             )}
           </div>
         )}

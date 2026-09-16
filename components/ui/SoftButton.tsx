@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Button } from '@heroui/react';
 
-type SoftButtonColor = 'green' | 'red' | 'accent' | 'primary';
+type SoftButtonColor = 'green' | 'red' | 'accent' | 'primary' | 'neutral';
 
 interface SoftButtonProps {
   color: SoftButtonColor;
@@ -26,6 +26,8 @@ const TOKEN: Record<SoftButtonColor, string> = {
   red: 'var(--error)',
   accent: 'var(--accent)',
   primary: 'var(--primary)',
+  // Acción alternativa: presente, pero sin competir con la acción principal.
+  neutral: 'var(--on-surface-variant)',
 };
 
 export function SoftButton({ color, children, onPress, isDisabled, fullWidth, className = '' }: SoftButtonProps) {

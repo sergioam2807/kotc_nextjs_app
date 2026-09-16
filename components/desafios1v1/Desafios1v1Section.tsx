@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card } from '@heroui/react';
 import { SoftButton } from '@/components/ui/SoftButton';
+import { CountUp } from '@/components/ui/CountUp';
 import type { Desafio1v1ConDatos, ProfileSimple } from './types';
 import { NuevoDesafio1v1Modal } from './NuevoDesafio1v1Modal';
 
@@ -36,6 +37,15 @@ function ProfileIniciales(nombre: string): string {
     : nombre.slice(0, 2).toUpperCase();
 }
 
+interface Resolucion1v1 {
+  desafioId: string;
+  gane: boolean;
+  xp: number;
+  /** Quedaste King 1v1 de esa cancha con este resultado. */
+  king: boolean;
+  canchaNombre: string | null;
+}
+
 interface Props {
   desafios: Desafio1v1ConDatos[];
   userId: string;
@@ -56,6 +66,10 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
   const [propPtsR, setPropPtsR] = useState('');
   const [propPtsD, setPropPtsD] = useState('');
   const [propError, setPropError] = useState<string | null>(null);
+  // Desenlace del duelo que se resolvió en esta sesión: XP otorgado y si la
+  // cancha quedó tuya. Solo se llena con lo que responde el server.
+  const [resolucion, setResolucion] = useState<Resolucion1v1 | null>(null);
+  const [confirmError, setConfirmError] = useState<{ desafioId: string; mensaje: string } | null>(null);
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -114,23 +128,44 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
   }
 
   async function handleConfirmar(desafioId: string) {
+    const previos = desafios;
     setLoadingId(desafioId);
+    setConfirmError(null);
+    // El duelo se cierra en pantalla antes de que responda el server; si algo
+    // falla se vuelve al estado anterior con el error visible (antes el fallo
+    // era silencioso y el botón simplemente no hacía nada).
+    setDesafios(prev =>
+      prev.map(d =>
+        d.id === desafioId
+          ? { ...d, estado: 'completado', resultado: d.resultado ? { ...d.resultado, confirmado_por_perdedor: true } : null }
+          : d,
+      ),
+    );
+
     const res = await fetch('/api/resultados-1v1', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ desafio_id: desafioId, accion: 'confirmar' }),
     });
-    if (res.ok) {
-      setDesafios(prev =>
-        prev.map(d =>
-          d.id === desafioId
-            ? { ...d, estado: 'completado', resultado: d.resultado ? { ...d.resultado, confirmado_por_perdedor: true } : null }
-            : d,
-        ),
-      );
-      refresh();
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setDesafios(previos);
+      setConfirmError({ desafioId, mensaje: data.error ?? 'No se pudo confirmar el resultado' });
+      setLoadingId(null);
+      return;
     }
+
+    const gane = data.ganador_id === userId;
+    setResolucion({
+      desafioId,
+      gane,
+      xp: gane ? data.xp?.ganador ?? 0 : data.xp?.perdedor ?? 0,
+      king: data.king_jugador_id === userId,
+      canchaNombre: data.cancha_nombre ?? null,
+    });
     setLoadingId(null);
+    refresh();
   }
 
   // ── Groups ──────────────────────────────────────────────────────────────────
@@ -182,18 +217,43 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
           </p>
         )}
 
-        {/* Resultado completado */}
-        {d.estado === 'completado' && d.resultado && (
-          <div className="bg-surface-container rounded-lg px-3 py-2 text-[12px] mb-3 flex items-center gap-2">
-            <span>{d.resultado.ganador_id === userId ? '🏆' : '😞'}</span>
-            <span className="font-semibold">{d.resultado.ganador_id === userId ? 'Ganaste' : 'Perdiste'}</span>
-            {(d.resultado.puntos_retador !== null || d.resultado.puntos_retado !== null) && (
-              <span className="text-on-surface-variant ml-1">
-                {d.resultado.puntos_retador ?? '?'} – {d.resultado.puntos_retado ?? '?'}
-              </span>
-            )}
-          </div>
-        )}
+        {/* Resultado completado. Si se resolvió recién, entra coreografiado:
+            desenlace → XP → corona (esta última solo si el server la confirma). */}
+        {d.estado === 'completado' && d.resultado && (() => {
+          const recien = resolucion?.desafioId === d.id ? resolucion : null;
+          return (
+            <div className="bg-surface-container rounded-lg px-3 py-2 mb-3 flex flex-col gap-1.5">
+              <div className={`flex items-center gap-2 text-[12px]${recien ? ' kotc-king-claim' : ''}`}>
+                <span>{d.resultado.ganador_id === userId ? '🏆' : '😞'}</span>
+                <span className="font-semibold">{d.resultado.ganador_id === userId ? 'Ganaste' : 'Perdiste'}</span>
+                {(d.resultado.puntos_retador !== null || d.resultado.puntos_retado !== null) && (
+                  <span className="text-on-surface-variant ml-1">
+                    {d.resultado.puntos_retador ?? '?'} – {d.resultado.puntos_retado ?? '?'}
+                  </span>
+                )}
+              </div>
+
+              {recien && (
+                <div
+                  className="kotc-confirm-in text-[11px] text-outline"
+                  style={{ '--kotc-stagger': '180ms' } as React.CSSProperties}
+                >
+                  <CountUp value={recien.xp} prefix="+" delayMs={180} className="text-on-surface font-semibold" /> XP
+                </div>
+              )}
+
+              {recien?.king && recien.canchaNombre && (
+                <div
+                  className="kotc-king-claim flex items-center gap-1.5 text-[11px] font-semibold text-accent"
+                  style={{ '--kotc-stagger': '420ms' } as React.CSSProperties}
+                >
+                  <span>👑</span>
+                  <span>{recien.canchaNombre} es tuya en 1v1</span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Recibido pendiente: accept / reject */}
         {d.retado_id === userId && d.estado === 'pendiente' && (
@@ -244,16 +304,33 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
               </div>
             )}
 
+            {confirmError?.desafioId === d.id && (
+              <div className="text-[10px] px-2 py-1 rounded-md mb-2 bg-error/15 text-error border border-error/25">
+                {confirmError.mensaje}
+              </div>
+            )}
+
             {/* Botones */}
             {!isProponiendoThis && (
               <div className="flex gap-2">
                 {(!d.resultado || d.resultado.propuesto_por !== userId) && (
-                  <Button
-                    variant="primary"
-                    onPress={() => { setProponiendo(d.id); setPropGanador(''); setPropPtsR(''); setPropPtsD(''); setPropError(null); }}
-                    className="flex-1">
-                    Proponer resultado
-                  </Button>
+                  // Si el rival ya propuso, la acción real es confirmar: proponer
+                  // otro resultado pasa a ser la alternativa, no el botón que grita.
+                  d.resultado ? (
+                    <SoftButton
+                      color="neutral"
+                      onPress={() => { setProponiendo(d.id); setPropGanador(''); setPropPtsR(''); setPropPtsD(''); setPropError(null); }}
+                      className="flex-1">
+                      Proponer otro
+                    </SoftButton>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      onPress={() => { setProponiendo(d.id); setPropGanador(''); setPropPtsR(''); setPropPtsD(''); setPropError(null); }}
+                      className="flex-1">
+                      Proponer resultado
+                    </Button>
+                  )
                 )}
                 {d.resultado && d.resultado.propuesto_por !== userId && (
                   <SoftButton color="green" onPress={() => handleConfirmar(d.id)} isDisabled={isBusy} className="flex-1">

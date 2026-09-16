@@ -92,7 +92,7 @@ export function Desafiar1v1Button({ retadoId, retadoNombre, desafioPendienteId }
 
   if (step === 'enviado') {
     return (
-      <Card className="bg-status-libre/8 border border-status-libre/25 rounded-xl p-3">
+      <Card className="kotc-confirm-in bg-status-libre/8 border border-status-libre/25 rounded-xl p-3">
         <div className="flex items-center gap-2">
           <span className="text-[15px] flex-shrink-0">✅</span>
           <div>
@@ -142,7 +142,7 @@ export function Desafiar1v1Button({ retadoId, retadoNombre, desafioPendienteId }
 
         <button
           onClick={handleEnviar}
-          className="w-full bg-accent text-on-accent font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity cursor-pointer min-h-[44px]"
+          className="kotc-btn-press w-full bg-accent text-on-accent font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity cursor-pointer min-h-[44px]"
         >
           Enviar desafío
         </button>
@@ -154,7 +154,7 @@ export function Desafiar1v1Button({ retadoId, retadoNombre, desafioPendienteId }
   return (
     <button
       onClick={() => setStep('form')}
-      className="w-full border-2 border-accent/40 bg-accent/8 text-accent hover:bg-accent/15 font-semibold text-[13px] py-2.5 rounded-lg transition-colors cursor-pointer min-h-[44px] flex items-center justify-center gap-2"
+      className="kotc-btn-press w-full border-2 border-accent/40 bg-accent/8 text-accent hover:bg-accent/15 font-semibold text-[13px] py-2.5 rounded-lg transition-colors cursor-pointer min-h-[44px] flex items-center justify-center gap-2"
     >
       <span>⚔️</span>
       <span>Desafiar 1v1</span>

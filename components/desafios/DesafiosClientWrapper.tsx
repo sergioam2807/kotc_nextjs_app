@@ -101,7 +101,7 @@ export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas, ju
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-accent text-on-accent rounded-lg px-3 py-2 text-[12px] font-bold hover:brightness-90 transition-all min-h-[40px] whitespace-nowrap"
+            className="kotc-btn-press bg-accent text-on-accent rounded-lg px-3 py-2 text-[12px] font-bold hover:brightness-90 min-h-[40px] whitespace-nowrap"
           >
             <span className="sm:hidden">+ Nuevo</span>
             <span className="hidden sm:inline">+ Nuevo desafío</span>
@@ -142,7 +142,7 @@ export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas, ju
             {filtro !== 'jugados' && (
               <button
                 onClick={() => setShowModal(true)}
-                className="bg-accent text-on-accent rounded-lg px-4 py-2 text-[12px] font-bold hover:brightness-90 transition-all min-h-[40px]"
+                className="kotc-btn-press bg-accent text-on-accent rounded-lg px-4 py-2 text-[12px] font-bold hover:brightness-90 min-h-[40px]"
               >
                 + Nuevo desafío
               </button>

@@ -287,6 +287,10 @@ body {
 }
 .kotc-king-claim {
   animation: kotc-king-claim 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* --kotc-stagger permite coreografiar varias piezas de un mismo momento
+   * (el resultado, el XP, la corona) sin duplicar keyframes. `both` mantiene
+   * el elemento invisible hasta que le toca entrar. */
+  animation-delay: var(--kotc-stagger, 0ms);
 }
 
 /* Supporting state: a result/success confirmation settling in — the
@@ -299,21 +303,77 @@ body {
 }
 .kotc-confirm-in {
   animation: kotc-confirm-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--kotc-stagger, 0ms);
 }
 
-/* Feedback: consistent press acknowledgment for primary (lime) actions. */
+/* Feedback: consistent press acknowledgment for primary (lime) actions.
+ * Uses the individual `scale`/`translate` properties so it composes with
+ * Tailwind v4 transform utilities (hover lift + press dip can coexist), and
+ * carries the whole hover vocabulary so it can replace `transition-all`. */
 .kotc-btn-press {
-  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), filter 150ms ease;
+  transition:
+    scale 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    translate 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    opacity 150ms ease;
 }
 .kotc-btn-press:active {
-  transform: scale(0.97);
+  scale: 0.97;
+}
+
+/* ── Morph pin → panel (View Transitions) ──────────────────────────────────
+ * El panel de una cancha sale del pin que se tocó. El nombre lo lleva una sola
+ * pieza a la vez: primero el puente que se pinta sobre el pin, después el panel.
+ * Sin soporte de View Transitions no pasa nada — el panel abre directo.
+ */
+.kotc-morph-target {
+  view-transition-name: kotc-cancha;
+}
+
+/* El grupo hace el recorrido (posición y tamaño, del pin al panel). */
+::view-transition-group(kotc-cancha) {
+  animation-duration: 320ms;
+  /* La curva del sistema (0.16,1,0.3,1) llega al 75% en el primer 20% del
+   * tiempo: acá eso convierte el recorrido en una aparición. Esta desacelera
+   * igual de firme pero deja ver el trayecto del pin al panel. */
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La foto del punto se estira hasta el tamaño del panel: si se queda visible
+ * el recorrido entero, lo que se ve es un manchón de color. Se disuelve rápido,
+ * mientras el panel entra en su lugar. */
+@keyframes kotc-morph-out { to { opacity: 0; } }
+@keyframes kotc-morph-in  { from { opacity: 0; } }
+
+::view-transition-old(kotc-cancha) {
+  animation: kotc-morph-out 70ms linear both;
+}
+::view-transition-new(kotc-cancha) {
+  animation: kotc-morph-in 260ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Fuera del panel no cambia nada: sin esto el documento entero hace un
+ * cross-fade inútil que además cuesta caro sobre las tiles del mapa. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
 /* prefers-reduced-motion — stop animations for users with vestibular disorders */
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none !important; }
+  /* El JS ya evita iniciar la transición; esto cubre una que esté en curso
+   * si la preferencia cambia a mitad de camino. */
+  .kotc-morph-target { view-transition-name: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    /* Sin esto, una pieza coreografiada con --kotc-stagger quedaría invisible
+     * durante su delay (animation-fill-mode: both) antes de aparecer de golpe. */
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;

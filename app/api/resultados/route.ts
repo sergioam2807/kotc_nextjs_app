@@ -7,6 +7,17 @@ import { createClient } from '@/lib/supabase/server';
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
+/**
+ * XP por partido de equipo. Se devuelven en la respuesta para que la UI muestre
+ * lo que realmente se otorgó, en vez de duplicar los números en el cliente.
+ */
+const XP = {
+  equipo_ganador:   500,
+  equipo_perdedor:  150,
+  jugador_ganador:  100,
+  jugador_perdedor:  35,
+} as const;
+
 /** Upsert a cancha_dominio row for a given (court, entity, format) scope. */
 async function upsertDominioEquipo(
   supabase: SupabaseClient,
@@ -57,7 +68,7 @@ async function recalcularKingEquipo(
   formato: string,
   temporada_id: string | null,
   ganadorEquipoId: string
-) {
+): Promise<string | null> {
   let query = supabase
     .from('cancha_dominio')
     .select('id, equipo_id, victorias, derrotas')
@@ -71,7 +82,7 @@ async function recalcularKingEquipo(
   query = query.not('equipo_id', 'is', null);
 
   const { data: dominio } = await query;
-  if (!dominio || dominio.length === 0) return;
+  if (!dominio || dominio.length === 0) return null;
 
   const king = (dominio as { id: string; equipo_id: string; victorias: number; derrotas: number }[])
     .reduce((best, curr) => {
@@ -88,6 +99,8 @@ async function recalcularKingEquipo(
       supabase.from('cancha_dominio').update({ es_king: d.id === king.id }).eq('id', d.id)
     )
   );
+
+  return king.equipo_id;
 }
 
 // ---------------------------------------------------------------------------
@@ -341,8 +354,8 @@ export async function PATCH(request: Request) {
 
     // ── XP de equipo ──────────────────────────────────────────────────────────
     await Promise.all([
-      supabase.rpc('add_team_xp', { team_id: ganadorId,  amount: 500 }),
-      supabase.rpc('add_team_xp', { team_id: perdedorId, amount: 150 }),
+      supabase.rpc('add_team_xp', { team_id: ganadorId,  amount: XP.equipo_ganador  }),
+      supabase.rpc('add_team_xp', { team_id: perdedorId, amount: XP.equipo_perdedor }),
     ]);
 
     // ── XP personal ───────────────────────────────────────────────────────────
@@ -351,8 +364,8 @@ export async function PATCH(request: Request) {
       supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', perdedorId),
     ]);
     await Promise.all([
-      ...(miembrosGanador ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 100 })),
-      ...(miembrosPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 35  })),
+      ...(miembrosGanador ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: XP.jugador_ganador  })),
+      ...(miembrosPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: XP.jugador_perdedor })),
     ]);
 
     // ── Dominio de cancha por formato ─────────────────────────────────────────
@@ -363,6 +376,8 @@ export async function PATCH(request: Request) {
     const { data: temporada } = await supabase
       .from('temporadas').select('id').eq('activa', true).maybeSingle();
     const temporadaId = temporada?.id ?? null;
+
+    let kingEquipoId: string | null = null;
 
     if (desafio.cancha_id) {
       const canchaId = desafio.cancha_id as string;
@@ -381,8 +396,9 @@ export async function PATCH(request: Request) {
         upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: perdedorId, formato: 'general', temporada_id: temporadaId, isWin: false }),
       ]);
 
-      // Recalculate King for both scopes
-      const recalcPromises: Promise<void>[] = [
+      // Recalculate King for both scopes. El King del scope 'general' es el que
+      // la UI muestra al confirmar, así que se conserva para la respuesta.
+      const recalcPromises: Promise<string | null>[] = [
         recalcularKingEquipo(supabase, canchaId, 'general', temporadaId, ganadorId),
       ];
       if (formato && formato !== 'general') {
@@ -390,10 +406,15 @@ export async function PATCH(request: Request) {
           recalcularKingEquipo(supabase, canchaId, formato, temporadaId, ganadorId)
         );
       }
-      await Promise.all(recalcPromises);
+      [kingEquipoId] = await Promise.all(recalcPromises);
     }
 
-    return NextResponse.json({ resultado: updatedResultado, estado: 'completado' });
+    return NextResponse.json({
+      resultado: updatedResultado,
+      estado: 'completado',
+      king_equipo_id: kingEquipoId,
+      xp: XP,
+    });
   }
 
   // ── ACEPTAR_ORIGINAL (from disputado → completado, triggers XP same as confirmar) ────
@@ -425,17 +446,18 @@ export async function PATCH(request: Request) {
       ? desafio.equipo_retado_id
       : desafio.equipo_retador_id;
     await Promise.all([
-      supabase.rpc('add_team_xp', { team_id: ganadorIdDisp,  amount: 500 }),
-      supabase.rpc('add_team_xp', { team_id: perdedorIdDisp, amount: 150 }),
+      supabase.rpc('add_team_xp', { team_id: ganadorIdDisp,  amount: XP.equipo_ganador  }),
+      supabase.rpc('add_team_xp', { team_id: perdedorIdDisp, amount: XP.equipo_perdedor }),
     ]);
     const [{ data: mGanador }, { data: mPerdedor }] = await Promise.all([
       supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', ganadorIdDisp),
       supabase.from('equipo_miembros').select('jugador_id').eq('equipo_id', perdedorIdDisp),
     ]);
     await Promise.all([
-      ...(mGanador  ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 100 })),
-      ...(mPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: 35  })),
+      ...(mGanador  ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: XP.jugador_ganador  })),
+      ...(mPerdedor ?? []).map(m => supabase.rpc('add_xp', { target_user_id: m.jugador_id, amount: XP.jugador_perdedor })),
     ]);
+    let kingEquipoIdDisp: string | null = null;
     if (desafio.cancha_id) {
       const canchaId  = desafio.cancha_id as string;
       const formatoD  = desafio.formato   as string;
@@ -451,15 +473,20 @@ export async function PATCH(request: Request) {
         upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: ganadorIdDisp,  formato: 'general', temporada_id: temporadaIdD, isWin: true  }),
         upsertDominioEquipo(supabase, { cancha_id: canchaId, equipo_id: perdedorIdDisp, formato: 'general', temporada_id: temporadaIdD, isWin: false }),
       ]);
-      const recalcPs: Promise<void>[] = [
+      const recalcPs: Promise<string | null>[] = [
         recalcularKingEquipo(supabase, canchaId, 'general', temporadaIdD, ganadorIdDisp),
       ];
       if (formatoD && formatoD !== 'general') {
         recalcPs.push(recalcularKingEquipo(supabase, canchaId, formatoD, temporadaIdD, ganadorIdDisp));
       }
-      await Promise.all(recalcPs);
+      [kingEquipoIdDisp] = await Promise.all(recalcPs);
     }
-    return NextResponse.json({ resultado: updatedResultadoDisputa, estado: 'completado' });
+    return NextResponse.json({
+      resultado: updatedResultadoDisputa,
+      estado: 'completado',
+      king_equipo_id: kingEquipoIdDisp,
+      xp: XP,
+    });
   }
 
   // Unreachable: ACCIONES_VALIDAS covers exactly the branches above.

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { AgregarCanchaModal } from './AgregarCanchaModal';
 import { EditarCanchaModal } from './EditarCanchaModal';
@@ -121,6 +122,9 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
   const [modoEditarUbicacion, setModoEditarUbicacion] = useState(false);
   const [coordsEditando, setCoordsEditando] = useState<{ lat: number; lng: number } | null>(null);
   const [mobileListOpen, setMobileListOpen] = useState(false);
+  // Puente visual entre el pin tocado y el panel: un punto que se pinta encima
+  // del pin durante un frame y que la View Transition convierte en el panel.
+  const [morphOrigen, setMorphOrigen] = useState<{ x: number; y: number; cancha: CanchaConEstado } | null>(null);
 
   // Local overrides for court rating after the user votes
   // Record<canchaId, { promedio, count, miValoracion }>
@@ -233,6 +237,46 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtroFormato]);
+
+  const puedeMorfear = () =>
+    typeof document !== 'undefined' &&
+    typeof document.startViewTransition === 'function' &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /**
+   * Tocar un pin abre el panel de esa cancha.
+   *
+   * Si el navegador soporta View Transitions, el panel sale del pin en vez de
+   * aparecer de la nada: se pinta un punto sobre el pin, y esa misma pieza se
+   * transforma en el panel. Sin soporte (o con reduced-motion) el panel abre
+   * directo — el morph es un agregado, nunca un requisito para poder navegar.
+   */
+  function seleccionarDesdeMapa(cancha: CanchaConEstado, origen?: { x: number; y: number } | null) {
+    if (!origen || !puedeMorfear()) {
+      setCanchaSeleccionada(cancha);
+      return;
+    }
+    if (canchaSeleccionada) {
+      // Ya hay panel abierto: no hay pin del que salir, el panel se transforma
+      // en sí mismo con el contenido de la otra cancha.
+      document.startViewTransition(() => flushSync(() => setCanchaSeleccionada(cancha)));
+      return;
+    }
+    setMorphOrigen({ ...origen, cancha });
+  }
+
+  // El puente tiene que estar pintado antes de que se tome la foto "antes",
+  // por eso la transición arranca recién en el efecto posterior al render.
+  useEffect(() => {
+    if (!morphOrigen) return;
+    const { cancha } = morphOrigen;
+    document.startViewTransition(() =>
+      flushSync(() => {
+        setMorphOrigen(null);
+        setCanchaSeleccionada(cancha);
+      }),
+    );
+  }, [morphOrigen]);
 
   function handleSelectFromDropdown(cancha: CanchaConEstado) {
     setCanchaSeleccionada(cancha);
@@ -580,11 +624,33 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
 
         <MapaTerritorial
           canchas={canchasFiltradas}
-          onSelectCancha={(c) => setCanchaSeleccionada(c)}
+          onSelectCancha={seleccionarDesdeMapa}
           modoAgregar={modoAgregar || modoEditarUbicacion}
           onMapClick={handleMapClick}
           panToCoords={panToCoords}
+          selectedId={canchaSeleccionada?.id ?? null}
         />
+
+        {/* Puente del morph: vive un solo frame, el necesario para que la
+            View Transition tenga de dónde salir. */}
+        {morphOrigen && (
+          <div
+            aria-hidden
+            className="kotc-morph-target absolute z-20 rounded-xl pointer-events-none"
+            style={{
+              left: morphOrigen.x - 19,
+              top: morphOrigen.y - 19,
+              width: 38,
+              height: 38,
+              // El puente es una versión chica del panel, no una copia del pin:
+              // la foto del elemento viejo se estira hasta el tamaño del panel,
+              // y estirar un círculo de color lleno da un manchón. Un recuadro
+              // oscuro con borde de color se estira como lo que va a ser.
+              background: 'var(--color-surface-container-low)',
+              border: `2px solid ${ESTADO_COLORS[morphOrigen.cancha.estado]}`,
+            }}
+          />
+        )}
 
         {/* Legend (desktop only) */}
         <div className="hidden md:block absolute bottom-3 left-3 bg-surface-container-low/80 border border-outline-variant rounded-lg px-3 py-2.5 z-10">
@@ -664,7 +730,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
 
           return (
             <div
-              className="absolute left-3 right-3 md:left-auto md:right-3 md:w-[290px] z-20 bg-surface-container-low border border-outline-variant rounded-2xl overflow-hidden shadow-[0_8px_48px_rgba(0,0,0,0.65)] md:!bottom-3"
+              className="kotc-morph-target absolute left-3 right-3 md:left-auto md:right-3 md:w-[290px] z-20 bg-surface-container-low border border-outline-variant rounded-2xl overflow-hidden shadow-[0_8px_48px_rgba(0,0,0,0.65)] md:!bottom-3"
               style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
             >
               {/* ── HEADER ── */}
@@ -934,7 +1000,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
                 {canchaSeleccionada.estado === 'rival' && equipoId && canchaSeleccionada.equipoId ? (
                   <button
                     onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
-                    className="w-full font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                    className="kotc-btn-press w-full font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 hover:brightness-110 hover:-translate-y-0.5"
                     style={{ background: 'var(--color-status-rival)', color: '#fff', boxShadow: '0 8px 24px rgba(248,113,113,0.35)' }}
                   >
                     <span>⚔️</span>
@@ -943,7 +1009,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
                 ) : canchaSeleccionada.estado === 'libre' && equipoId ? (
                   <button
                     onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}`)}
-                    className="w-full bg-accent text-on-accent font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(213,255,64,0.3)] hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                    className="kotc-btn-press w-full bg-accent text-on-accent font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(213,255,64,0.3)] hover:brightness-110 hover:-translate-y-0.5"
                   >
                     <span>⚡</span>
                     <span>Conquistar cancha</span>

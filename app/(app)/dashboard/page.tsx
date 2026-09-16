@@ -447,7 +447,7 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/mapa"
-                className="flex flex-col items-start gap-2 bg-accent text-on-accent rounded-xl p-4 hover:brightness-95 transition-all"
+                className="kotc-btn-press flex flex-col items-start gap-2 bg-accent text-on-accent rounded-xl p-4 hover:brightness-95"
               >
                 <span className="text-[26px] leading-none">⚔️</span>
                 <div>

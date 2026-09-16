@@ -136,12 +136,18 @@ export async function PATCH(request: Request) {
   // Load challenge + result together
   const { data: desafio, error: fetchErr } = await supabase
     .from('desafios_individual')
-    .select('id, retador_id, retado_id, estado, cancha_id')
+    .select('id, retador_id, retado_id, estado, cancha_id, canchas(nombre)')
     .eq('id', desafio_id)
     .maybeSingle();
 
   if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
   if (!desafio) return NextResponse.json({ error: 'Desafío no encontrado' }, { status: 404 });
+
+  // Supabase infiere el join como array cuando no hay tipos generados.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const canchaRaw = (desafio as any).canchas;
+  const canchaNombre: string | null =
+    (Array.isArray(canchaRaw) ? canchaRaw[0]?.nombre : canchaRaw?.nombre) ?? null;
 
   const isRetador = desafio.retador_id === user.id;
   const isRetado  = desafio.retado_id  === user.id;
@@ -240,6 +246,9 @@ export async function PATCH(request: Request) {
   // ── 1v1 Court dominio tracking ─────────────────────────────────────────────
   // If the challenge was on a court, track the individual player dominio there.
   const canchaId = desafio.cancha_id as string | null;
+  // Quién quedó King 1v1 de la cancha: ya se calcula acá abajo, y la UI lo
+  // necesita para no anunciar una corona que no ocurrió.
+  let kingJugadorId: string | null = null;
   if (canchaId) {
     try {
       // Helper: upsert a cancha_dominio row for a player (1v1 format)
@@ -306,6 +315,7 @@ export async function PATCH(request: Request) {
             supabase.from('cancha_dominio').update({ es_king: d.id === king.id }).eq('id', d.id)
           )
         );
+        kingJugadorId = king.jugador_id;
       }
     } catch (err) {
       console.error('[cancha_dominio 1v1] error:', err);
@@ -313,5 +323,12 @@ export async function PATCH(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, confirmado: true });
+  return NextResponse.json({
+    ok: true,
+    confirmado: true,
+    ganador_id: ganadorId,
+    king_jugador_id: kingJugadorId,
+    cancha_nombre: canchaNombre,
+    xp: { ganador: XP_GANADOR, perdedor: XP_PERDEDOR },
+  });
 }
