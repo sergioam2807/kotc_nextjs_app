@@ -1,16 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { EventoAdminActions } from '@/components/admin/EventoAdminActions';
+import { tipoEvento } from '@/lib/eventos';
 
-const TIPO_INFO: Record<string, { label: string; emoji: string; color: string }> = {
-  torneo_express:  { label: 'Torneo exprés',   emoji: '🏆', color: '#eab308' },
-  bonus_xp:        { label: 'Bonus XP',        emoji: '⚡', color: '#a855f7' },
-  cancha_especial: { label: 'Cancha especial', emoji: '📍', color: '#3b82f6' },
-  nightball:       { label: 'Nightball',        emoji: '🌙', color: '#374151' },
-  king_challenge:  { label: 'King Challenge',  emoji: '👑', color: '#ef4444' },
-  reto_semanal:    { label: 'Reto semanal',    emoji: '🎯', color: '#22c55e' },
-  otro:            { label: 'Evento especial', emoji: '🎉', color: '#f97316' },
-};
 
 export default async function EventoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,7 +16,7 @@ export default async function EventoDetailPage({ params }: { params: Promise<{ i
 
   if (!evento) notFound();
 
-  const info = TIPO_INFO[evento.tipo] ?? TIPO_INFO.otro;
+  const info = tipoEvento(evento.tipo);
   const displayColor = evento.color ?? info.color;
   const displayEmoji = evento.emoji ?? info.emoji;
 

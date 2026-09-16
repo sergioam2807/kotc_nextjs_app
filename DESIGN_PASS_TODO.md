@@ -215,7 +215,56 @@ con Playwright del mecanismo real (mismas clases, mismo patrón de estado) a los
 de coordenadas del pin (`item.x - PAD`, `item.y - PIN_CY - PAD`); si el panel
 sale de un punto corrido, eso es lo que hay que mirar.
 
-## 🔎 Hallazgos fuera del pase de diseño (no tocados)
+## ✅ Cola final del pase (cierre)
+
+Un barrido de colores hardcodeados encontró que faltaban cosas que se habían
+dado por hechas:
+
+- **`equipo/invitaciones/page.tsx` estaba entera en la paleta vieja**
+  (`#0f0f12`, `#1a1a1f`, `text-[#555]`). Lo que se había limpiado antes era el
+  componente `InvitacionesRecibidas.tsx`, no esta página. Migrada a tokens, con
+  el estado vacío reescrito para que diga algo útil.
+- **Fallbacks que heredaban colores retirados**: `'#F5C344'` (dorado viejo) en
+  `equipo/page.tsx` y `equipos/[id]`, `'#d5ff40'` en `InvitacionesRecibidas`
+  (un equipo sin color se pintaba con el acento de la marca — la dilución de
+  One Voice que el pase venía sacando), `'#888888'` en dashboard y
+  `jugadores/[id]`. Todos al neutro del sistema.
+- **La paleta hash de avatares** (5 colores arbitrarios encabezados por el
+  dorado viejo) se eliminó: los avatares fallback usan el chrome neutro, igual
+  que en el resto del pase. Se fue el prop `avatarColor` de `RosterRow` y
+  `PlayerRow`.
+- **Racha W/L y barras de stats de `equipo/page.tsx`** usaban verde/rojo/azul/
+  violeta crudos → `status-libre`, `status-rival`, `primary`, `status-purple`.
+- **Interpolación de alfa**: donde el color puede venir de la DB o de un token,
+  `${color}15` no sirve (un `var()` no concatena). Pasó a `color-mix(in oklab, …)`.
+- **Sombras de color**: la CTA "Desafiar al Rey", "Conquistar cancha" y el FAB
+  del mapa tenían halos rojos/lima. El sistema define profundidad por tono. Las
+  sombras negras de los elementos que flotan **sobre el mapa** se dejaron a
+  propósito: ahí el tono solo no alcanza para separarlos del contenido del mapa.
+- **Landing**: los colores de equipo de la demo del ranking incluían `#ffe083`,
+  el amarillo retirado en la migración. Ahora salen de tokens.
+
+**Dos bugs reales que aparecieron en el barrido:**
+1. `dashboard/page.tsx` usaba `rgba(var(--color-accent-rgb), …)` para el banner
+   de temporada — **ese token no existe en ningún lado**. Cuando la temporada no
+   tenía color propio, el banner se quedaba sin fondo y sin borde.
+2. La tabla de tipos de evento estaba **copiada en cuatro archivos** y ya había
+   divergido: `nightball` se pintaba `#374151` en admin y `#6366f1` en el
+   dashboard, y `otro` tenía dos etiquetas distintas — el mismo evento se veía
+   diferente según dónde lo miraras. Centralizada en `lib/eventos.ts`.
+
+**Lo que NO era violación**, aunque un grep de hex lo marque: los swatches de
+los selectores de color (admin de eventos y temporadas, formularios de equipo)
+son datos que el usuario elige y se guardan en la DB; el JSON de estilo de
+tiles de `MapaGoogle.tsx` necesita hex literal porque la API de Google no lee
+CSS variables; y los hex de `login/page.tsx` son el logo de marca de Google.
+
+**One Voice en admin**: `admin/eventos` y `admin/temporadas` mostraban dos CTA
+lima idénticas a la vez (la del header y la del estado vacío). Ahora la del
+header aparece solo cuando hay contenido. De paso, el estado vacío de
+temporadas decía "Crear primera temporada" aun habiendo historial.
+
+## 🔎 Hallazgos fuera del pase de diseño
 
 - **`BillingNotEnabledMapError`** — con la key de `.env.local`, Google Maps no
   carga (billing deshabilitado en el proyecto de Google Cloud). Si pasa también

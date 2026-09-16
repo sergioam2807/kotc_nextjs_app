@@ -695,7 +695,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
           <button
             onClick={handleAgregarCanchaClick}
             aria-label="Agregar cancha"
-            className="md:hidden absolute right-3 z-20 w-14 h-14 bg-accent text-on-accent rounded-full text-2xl font-bold flex items-center justify-center shadow-[0_4px_16px_rgba(213,255,64,0.35)]"
+            className="md:hidden absolute right-3 z-20 w-14 h-14 bg-accent text-on-accent rounded-full text-2xl font-bold flex items-center justify-center shadow-[0_4px_16px_rgba(0,0,0,0.5)]"
             style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
           >
             +
@@ -1001,7 +1001,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
                   <button
                     onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
                     className="kotc-btn-press w-full font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 hover:brightness-110 hover:-translate-y-0.5"
-                    style={{ background: 'var(--color-status-rival)', color: '#fff', boxShadow: '0 8px 24px rgba(248,113,113,0.35)' }}
+                    style={{ background: 'var(--color-status-rival)', color: 'var(--color-surface)' }}
                   >
                     <span>⚔️</span>
                     <span>Desafiar al Rey</span>
@@ -1009,7 +1009,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
                 ) : canchaSeleccionada.estado === 'libre' && equipoId ? (
                   <button
                     onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}`)}
-                    className="kotc-btn-press w-full bg-accent text-on-accent font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(213,255,64,0.3)] hover:brightness-110 hover:-translate-y-0.5"
+                    className="kotc-btn-press w-full bg-accent text-on-accent font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 hover:brightness-110 hover:-translate-y-0.5"
                   >
                     <span>⚡</span>
                     <span>Conquistar cancha</span>

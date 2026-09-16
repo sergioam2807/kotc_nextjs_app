@@ -159,7 +159,7 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
   const nivelNombre = nombreNivel(nivel);
   const equipoIniciales = getEquipoIniciales(equipo.nombre);
   const deporteLabel = DEPORTE_LABELS[equipo.deporte] ?? equipo.deporte;
-  const equipoColor = equipo.color ?? '#F5C344';
+  const equipoColor = equipo.color ?? 'var(--color-on-surface-variant)';
 
   return (
     <div className="p-5 max-w-lg mx-auto">
@@ -176,7 +176,11 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
       <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 flex items-center gap-4 mb-4">
         <div
           className="w-16 h-16 rounded-xl flex items-center justify-center text-[22px] font-semibold flex-shrink-0 border-2"
-          style={{ background: `${equipoColor}15`, color: equipoColor, borderColor: `${equipoColor}60` }}
+          style={{
+            background: `color-mix(in oklab, ${equipoColor} 15%, transparent)`,
+            color: equipoColor,
+            borderColor: `color-mix(in oklab, ${equipoColor} 45%, transparent)`,
+          }}
         >
           {equipoIniciales}
         </div>
@@ -322,7 +326,7 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
                   ) : (
                     <div
                       className="w-10 h-10 rounded-lg flex items-center justify-center text-[13px] font-semibold flex-shrink-0"
-                      style={{ background: `${equipoColor}15`, color: equipoColor }}
+                      style={{ background: `color-mix(in oklab, ${equipoColor} 15%, transparent)`, color: equipoColor }}
                     >
                       {iniciales}
                     </div>

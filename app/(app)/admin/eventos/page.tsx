@@ -1,15 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { tipoEvento } from '@/lib/eventos';
 
-const TIPO_INFO: Record<string, { label: string; emoji: string; color: string }> = {
-  torneo_express: { label: 'Torneo exprés',    emoji: '🏆', color: '#eab308' },
-  bonus_xp:       { label: 'Bonus XP',         emoji: '⚡', color: '#a855f7' },
-  cancha_especial:{ label: 'Cancha especial',   emoji: '📍', color: '#3b82f6' },
-  nightball:      { label: 'Nightball',         emoji: '🌙', color: '#374151' },
-  king_challenge: { label: 'King Challenge',    emoji: '👑', color: '#ef4444' },
-  reto_semanal:   { label: 'Reto semanal',      emoji: '🎯', color: '#22c55e' },
-  otro:           { label: 'Evento especial',   emoji: '🎉', color: '#f97316' },
-};
 
 function formatRange(inicio: string, fin: string) {
   const i = new Date(inicio);
@@ -44,12 +36,16 @@ export default async function AdminEventosPage() {
             Torneos exprés, bonus XP, retos semanales y más — aparecen en el dashboard de todos.
           </p>
         </div>
-        <Link
-          href="/admin/eventos/nuevo"
-          className="px-3 py-1.5 rounded-lg bg-accent text-on-accent text-[12px] font-medium hover:brightness-90 transition-all flex-shrink-0"
-        >
-          + Nuevo evento
-        </Link>
+        {/* Con la lista vacía la acción ya la lleva el estado vacío: dos CTA
+            lima idénticas en la misma pantalla se anulan entre sí. */}
+        {lista.length > 0 && (
+          <Link
+            href="/admin/eventos/nuevo"
+            className="kotc-btn-press px-3 py-1.5 rounded-lg bg-accent text-on-accent text-[12px] font-medium hover:brightness-90 flex-shrink-0"
+          >
+            + Nuevo evento
+          </Link>
+        )}
       </div>
 
       {lista.length === 0 && (
@@ -59,7 +55,7 @@ export default async function AdminEventosPage() {
           <p className="text-[11px] text-on-surface-variant mb-4">
             Crea torneos, retos y bonus para mantener activa la comunidad.
           </p>
-          <Link href="/admin/eventos/nuevo" className="inline-flex px-4 py-2 rounded-lg bg-accent text-on-accent text-[12px] font-medium hover:brightness-90 transition-all">
+          <Link href="/admin/eventos/nuevo" className="kotc-btn-press inline-flex px-4 py-2 rounded-lg bg-accent text-on-accent text-[12px] font-medium hover:brightness-90">
             Crear primer evento
           </Link>
         </div>
@@ -104,7 +100,7 @@ function Section({ title, items, muted }: { title: string; items: Evento[]; mute
 }
 
 function EventoCard({ evento, muted }: { evento: Evento; muted?: boolean }) {
-  const info = TIPO_INFO[evento.tipo] ?? TIPO_INFO.otro;
+  const info = tipoEvento(evento.tipo);
   const displayColor = evento.color ?? info.color;
   const displayEmoji = evento.emoji ?? info.emoji;
 

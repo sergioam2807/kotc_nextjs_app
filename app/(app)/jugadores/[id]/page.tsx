@@ -535,7 +535,7 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
                 {/* Entradas de la temporada */}
                 <div className="px-4 pb-3 flex flex-col gap-0">
                   {grupo.entradas.map((entrada, idx) => {
-                    const color = entrada.equipo_color ?? '#888888';
+                    const color = entrada.equipo_color ?? 'var(--color-on-surface-variant)';
                     const esActual = entrada.fecha_salida === null;
                     const palabrasEquipo = entrada.equipo_nombre.trim().split(/\s+/);
                     const inicialesEquipo =
@@ -557,7 +557,11 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
                         <div className="flex flex-col items-center flex-shrink-0 pt-0.5">
                           <div
                             className="w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold border"
-                            style={{ background: `${color}18`, color, borderColor: `${color}45` }}
+                            style={{
+                              background: `color-mix(in oklab, ${color} 15%, transparent)`,
+                              color,
+                              borderColor: `color-mix(in oklab, ${color} 35%, transparent)`,
+                            }}
                           >
                             {inicialesEquipo}
                           </div>

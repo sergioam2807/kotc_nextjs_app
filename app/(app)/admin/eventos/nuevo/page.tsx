@@ -2,16 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { TIPOS_EVENTO } from '@/lib/eventos';
 
-const TIPOS = [
-  { id: 'torneo_express',  label: 'Torneo exprés',     emoji: '🏆', color: '#eab308', desc: 'Competencia corta durante un fin de semana o semana' },
-  { id: 'bonus_xp',        label: 'Bonus XP',          emoji: '⚡', color: '#a855f7', desc: 'Multiplica el XP ganado en todos los partidos' },
-  { id: 'cancha_especial', label: 'Cancha especial',   emoji: '📍', color: '#3b82f6', desc: 'Una cancha destacada con beneficios al ganar' },
-  { id: 'nightball',       label: 'Nightball',          emoji: '🌙', color: '#374151', desc: 'Edición nocturna — partidos en canchas iluminadas' },
-  { id: 'king_challenge',  label: 'King Challenge',    emoji: '👑', color: '#ef4444', desc: 'El King actual debe defender contra retadores especiales' },
-  { id: 'reto_semanal',    label: 'Reto semanal',      emoji: '🎯', color: '#22c55e', desc: 'Objetivo de la semana para ganar bonus o badge' },
-  { id: 'otro',            label: 'Otro evento',       emoji: '🎉', color: '#f97316', desc: 'Evento personalizado' },
-];
 
 const PRESET_COLORS = [
   { hex: '#eab308', label: 'Oro' },
@@ -42,10 +34,10 @@ export default function NuevoEventoPage() {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
-  const tipoInfo = TIPOS.find(t => t.id === tipo);
+  const tipoInfo = TIPOS_EVENTO.find(t => t.id === tipo);
 
   function selectTipo(id: string) {
-    const t = TIPOS.find(x => x.id === id);
+    const t = TIPOS_EVENTO.find(x => x.id === id);
     if (!t) return;
     setTipo(id);
     setColor(t.color);
@@ -108,7 +100,7 @@ export default function NuevoEventoPage() {
             Tipo de evento *
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {TIPOS.map(t => (
+            {TIPOS_EVENTO.map(t => (
               <button
                 key={t.id}
                 type="button"
