@@ -139,7 +139,8 @@ export default async function DesafiosPage() {
         ? supabase.from('canchas').select('id, nombre, direccion').in('id', cancIds)
         : Promise.resolve({ data: [] }),
       supabase.from('equipos').select('id, nombre, color'),
-      supabase.from('canchas').select('id, nombre, direccion').order('nombre'),
+      // Solo canchas aprobadas: no se puede desafiar en una que sigue pendiente de revisión.
+      supabase.from('canchas').select('id, nombre, direccion').eq('status', 'verified').order('nombre'),
       dsIds.length
         ? supabase.from('resultados').select('*').in('desafio_id', dsIds)
         : Promise.resolve({ data: [] }),

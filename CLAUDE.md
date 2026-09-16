@@ -71,6 +71,7 @@ app/
     admin/temporadas/page.tsx       ← Lista de temporadas (activa + historial) [feature/ligas]
     admin/temporadas/nueva/page.tsx ← Formulario crear temporada (nombre, descripción, fechas, deportes, activar) [feature/ligas]
     admin/temporadas/[id]/page.tsx  ← Detalle temporada: stats, progreso, botones activar/cerrar [feature/ligas]
+    admin/canchas/page.tsx          ← Court Discovery: importar desde Google Places + moderar canchas PENDING
   join/[equipoId]/[token]/page.tsx  ← Aceptar invitación (token validation + TOCTOU-safe server action)
     planes/page.tsx                 ← Página pública de planes: Gratuito vs Organizador, precios, FAQ, CTA WhatsApp [feature/ligas]
     ligas/page.tsx                  ← Lista de ligas; "Crear liga" si tiene suscripción; "Ver planes →" si no [feature/ligas]
@@ -97,6 +98,8 @@ app/
     solicitudes/[id]/route.ts       ← PATCH aceptar/rechazar/cancelar; DELETE cancelar
     admin/temporadas/route.ts       ← GET list / POST crear temporada (solo ADMIN_EMAIL) [feature/ligas]
     admin/temporadas/[id]/route.ts  ← PATCH activar|cerrar (snapshots historial_kings al cerrar) / DELETE [feature/ligas]
+    admin/canchas/importar/route.ts ← POST descubrir canchas vía Google Places (solo ADMIN_EMAIL)
+    admin/canchas/[id]/route.ts     ← PATCH aprobar|rechazar|cerrar una cancha descubierta
     ligas/route.ts                  ← GET listar ligas / POST crear liga (requiere suscripción) [feature/ligas]
     ligas/[id]/route.ts             ← GET detalle / PATCH estado / DELETE eliminar [feature/ligas]
     ligas/[id]/equipos/route.ts     ← GET listar / POST invitar o inscribir equipo [feature/ligas]
@@ -147,7 +150,13 @@ canchas           (id, nombre, direccion, lat, lng, fotos, deporte[], agregada_p
                    region text NULL, comuna text NULL,
                    -- migración 043:
                    valoracion_promedio numeric(3,2) NULL,
-                   valoracion_count int NOT NULL DEFAULT 0)
+                   valoracion_count int NOT NULL DEFAULT 0,
+                   -- migración 046 (Google Places discovery):
+                   google_place_id text NULL UNIQUE,
+                   status text NOT NULL DEFAULT 'verified'
+                     CHECK (status IN ('pending','verified','rejected','closed')))
+cancha_discovery_runs (id, ejecutado_por→auth.users, zona, lat, lng, radio_m,
+                   started_at, finished_at, found, created, duplicated, errors, error_detail)
 cancha_valoraciones (id, cancha_id→canchas, jugador_id→auth.users,
                    estrellas smallint CHECK(1–5), created_at, updated_at
                    UNIQUE(cancha_id, jugador_id))
@@ -443,6 +452,7 @@ const eqObj = Array.isArray(eqRaw) ? eqRaw[0] : eqRaw;
 | 042 | **Team logo:** `logo_url text NULL` en `equipos` | feature/ligas |
 | 043 | **Court ratings:** tabla `cancha_valoraciones` (1–5 ⭐); `valoracion_promedio/count` en `canchas`; trigger `_update_cancha_valoracion` | feature/ligas |
 | 044 | **OSM import:** `osm_id bigint NULL`, `osm_type text NULL` en `canchas`; unique index `canchas_osm_unique` (permite re-runs idempotentes) | feature/ligas |
+| 046 | **Google Places discovery:** `google_place_id text UNIQUE`, `status text` en `canchas`; tabla `cancha_discovery_runs` con RLS | — |
 
 > ⚠️ **Migraciones 039–044 pendientes de aplicar en DB** (`supabase db push`)
 
@@ -519,6 +529,8 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000   ← cambiar en producción
 RESEND_API_KEY=...
 ADMIN_EMAIL=...                              ← email del admin para panel /admin (server-only, NO NEXT_PUBLIC)
+GOOGLE_MAPS_API_KEY=...                      ← key SERVER-ONLY para Places API (New); distinta de la NEXT_PUBLIC_
+                                                ver docs/GOOGLE_PLACES_IMPORT.md
 
 # Google Cloud Storage — logos de equipos (migración 042)
 # Setup: console.cloud.google.com → Cloud Storage → crear bucket público
@@ -755,7 +767,11 @@ pnpm import:canchas --ciudad=santiago   # ← idempotente
 - Viña del Mar: ~80–150
 - Valparaíso: ~60–100
 
-**Google Places NO usar** para import masivo: ToS §3.2.3 prohíbe almacenar resultados indefinidamente.
+**Google Places** se usa para *descubrimiento* administrativo, no para import masivo — ver
+`docs/GOOGLE_PLACES_IMPORT.md` y migración 046. El ToS permite almacenar *place IDs*
+indefinidamente; el resto de los campos entra como propuesta y pasa a ser dato de KOC recién
+cuando un admin aprueba la cancha. Nunca se llama a Place Details ni se guardan fotos, horarios
+ni reseñas de Google.
 
 **Pendiente de infra (no código):**
 - Google Maps API Key → agregar restricción HTTP Referrer en Google Cloud Console
