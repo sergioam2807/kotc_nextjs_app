@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { SoftButton } from '@/components/ui/SoftButton';
 
 interface Equipo { id: string; nombre: string; color: string }
 
@@ -94,13 +95,17 @@ export function ResultadoForm({
           />
         </div>
 
-        <button
-          onClick={handleGuardar}
-          disabled={loading || pLocal === '' || pVisit === ''}
-          className="bg-accent text-on-accent border-none rounded-lg px-3 py-1.5 text-[11px] font-semibold cursor-pointer hover:brightness-95 transition-all disabled:opacity-40 flex-shrink-0"
+        {/* Guardar un resultado es "confirmar un marcador", el mismo significado que
+            los botones verdes de confirmar/aceptar en DesafioCard — no una acción
+            lima, para no competir con el CTA lima real de la página (Generar calendario/ronda). */}
+        <SoftButton
+          color="green"
+          onPress={handleGuardar}
+          isDisabled={loading || pLocal === '' || pVisit === ''}
+          className="flex-shrink-0"
         >
           {loading ? '…' : 'Guardar'}
-        </button>
+        </SoftButton>
       </div>
 
       {error && (

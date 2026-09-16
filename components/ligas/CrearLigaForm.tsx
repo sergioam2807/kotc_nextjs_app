@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button, Input, Label, ListBox, Select, TextArea } from '@heroui/react';
 
 const DEPORTES = [
   { value: 'basketball', label: '🏀 Basketball' },
@@ -37,6 +38,8 @@ const FORMATOS = [
   },
 ];
 
+const labelClass = 'text-[11px] text-outline uppercase tracking-[0.08em] font-semibold';
+
 export function CrearLigaForm() {
   const router = useRouter();
 
@@ -60,6 +63,7 @@ export function CrearLigaForm() {
   const [error,   setError]   = useState<string | null>(null);
 
   const modalidadesDisp = MODALIDADES[deporte] ?? ['5v5'];
+  const descripcionCharLeft = 400 - descripcion.length;
 
   const handleDeporteChange = (d: string) => {
     setDeporte(d);
@@ -108,73 +112,93 @@ export function CrearLigaForm() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
       {/* Nombre */}
-      <div>
-        <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-          Nombre de la liga *
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>Nombre de la liga *</label>
+        <Input
           type="text"
+          aria-label="Nombre de la liga"
           value={nombre}
           onChange={e => setNombre(e.target.value)}
           placeholder="Ej: Liga Barrial de Verano 2026"
           required
           maxLength={80}
-          className="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2.5 text-[14px] text-on-surface placeholder:text-outline outline-none focus:border-accent/60 transition-colors"
+          fullWidth
         />
       </div>
 
       {/* Descripción */}
-      <div>
-        <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-          Descripción
-        </label>
-        <textarea
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>Descripción <span className="normal-case font-normal">(opcional)</span></label>
+        <TextArea
+          aria-label="Descripción"
           value={descripcion}
           onChange={e => setDescripcion(e.target.value)}
           placeholder="Reglamento, premios, información adicional…"
           rows={2}
           maxLength={400}
-          className="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface placeholder:text-outline outline-none focus:border-accent/60 transition-colors resize-none"
+          className="resize-none"
+          fullWidth
         />
+        <div className={`text-[10px] text-right ${descripcionCharLeft < 50 ? 'text-error' : 'text-outline'}`}>
+          {descripcionCharLeft} caracteres restantes
+        </div>
       </div>
 
       {/* Deporte + Modalidad */}
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-            Deporte *
-          </label>
-          <select
+        <div className="flex flex-col gap-1.5">
+          <Label className={labelClass}>Deporte *</Label>
+          <Select
+            aria-label="Deporte"
             value={deporte}
-            onChange={e => handleDeporteChange(e.target.value)}
-            className="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface outline-none focus:border-accent/60 transition-colors"
+            onChange={(key) => handleDeporteChange((key as string) ?? 'basketball')}
+            className="w-full"
           >
-            {DEPORTES.map(d => (
-              <option key={d.value} value={d.value}>{d.label}</option>
-            ))}
-          </select>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {DEPORTES.map(d => (
+                  <ListBox.Item key={d.value} id={d.value} textValue={d.label}>
+                    {d.label}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
         </div>
-        <div>
-          <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-            Modalidad *
-          </label>
-          <select
+        <div className="flex flex-col gap-1.5">
+          <Label className={labelClass}>Modalidad *</Label>
+          <Select
+            aria-label="Modalidad"
             value={modalidad}
-            onChange={e => setModalidad(e.target.value)}
-            className="w-full bg-surface-container border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface outline-none focus:border-accent/60 transition-colors"
+            onChange={(key) => setModalidad((key as string) ?? modalidadesDisp[0])}
+            className="w-full"
           >
-            {modalidadesDisp.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {modalidadesDisp.map(m => (
+                  <ListBox.Item key={m} id={m} textValue={m}>
+                    {m}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
         </div>
       </div>
 
       {/* Formato */}
       <div>
-        <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-2 block">
-          Formato de competencia *
-        </label>
+        <label className={`${labelClass} mb-2 block`}>Formato de competencia *</label>
         <div className="flex flex-col gap-2">
           {FORMATOS.map(f => (
             <label
@@ -208,9 +232,7 @@ export function CrearLigaForm() {
       {formato === 'grupos_playoffs' && (
         <div className="grid grid-cols-2 gap-3 bg-primary/5 border border-primary/20 rounded-xl p-3">
           <div>
-            <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-              Número de grupos
-            </label>
+            <label className={`${labelClass} mb-1.5 block`}>Número de grupos</label>
             <input
               type="number" min={2} max={8}
               value={numGrupos}
@@ -219,9 +241,7 @@ export function CrearLigaForm() {
             />
           </div>
           <div>
-            <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-              Clasifican por grupo
-            </label>
+            <label className={`${labelClass} mb-1.5 block`}>Clasifican por grupo</label>
             <input
               type="number" min={1} max={4}
               value={equiposClasific}
@@ -235,9 +255,7 @@ export function CrearLigaForm() {
       {/* Max equipos + inscripción pública */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-            Máx. equipos
-          </label>
+          <label className={`${labelClass} mb-1.5 block`}>Máx. equipos</label>
           <input
             type="number" min={2} max={64}
             value={maxEquipos}
@@ -246,17 +264,21 @@ export function CrearLigaForm() {
           />
         </div>
         <div>
-          <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-            Inscripción
-          </label>
+          <label className={`${labelClass} mb-1.5 block`}>Inscripción</label>
           <label className="flex items-center gap-2 mt-2.5 cursor-pointer">
-            <div
+            <button
+              type="button"
               onClick={() => setInscPublica(v => !v)}
-              className={`w-10 h-5.5 rounded-full transition-colors flex-shrink-0 ${inscPublica ? 'bg-accent' : 'bg-surface-container-high border border-outline-variant'}`}
-              style={{ height: '22px', width: '40px', position: 'relative', cursor: 'pointer' }}
+              aria-pressed={inscPublica}
+              aria-label={inscPublica ? 'Inscripción pública activada' : 'Inscripción pública desactivada'}
+              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+                inscPublica ? 'bg-accent' : 'bg-outline-variant'
+              }`}
             >
-              <div className={`absolute top-0.5 w-[18px] h-[18px] rounded-full bg-white transition-all ${inscPublica ? 'left-[20px]' : 'left-[2px]'}`} />
-            </div>
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-surface rounded-full shadow transition-transform ${
+                inscPublica ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
             <span className="text-[12px] text-on-surface-variant">Pública</span>
           </label>
         </div>
@@ -265,9 +287,7 @@ export function CrearLigaForm() {
       {/* Fechas */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-            Fecha inicio
-          </label>
+          <label className={`${labelClass} mb-1.5 block`}>Fecha inicio</label>
           <input
             type="date" value={fechaInicio}
             onChange={e => setFechaInicio(e.target.value)}
@@ -275,9 +295,7 @@ export function CrearLigaForm() {
           />
         </div>
         <div>
-          <label className="text-[11px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5 block">
-            Fecha fin
-          </label>
+          <label className={`${labelClass} mb-1.5 block`}>Fecha fin</label>
           <input
             type="date" value={fechaFin}
             onChange={e => setFechaFin(e.target.value)}
@@ -286,12 +304,12 @@ export function CrearLigaForm() {
         </div>
       </div>
 
-      {/* Puntos (collapsible) */}
+      {/* Puntos (collapsible) — disclosure toggle, not a CTA, so it stays neutral not lime */}
       <div>
         <button
           type="button"
           onClick={() => setMostrarPuntos(v => !v)}
-          className="text-[12px] text-accent hover:underline"
+          className="text-[12px] text-on-surface-variant hover:text-on-surface transition-colors"
         >
           {mostrarPuntos ? '▲ Ocultar' : '▼ Configurar'} sistema de puntos
         </button>
@@ -303,7 +321,7 @@ export function CrearLigaForm() {
               { label: 'Derrota',  value: ptsDerrota,  set: setPtsDerrota },
             ].map(({ label, value, set }) => (
               <div key={label}>
-                <label className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1 block">
+                <label className="text-[10px] text-outline uppercase tracking-[0.08em] font-semibold mb-1 block">
                   {label}
                 </label>
                 <input
@@ -325,14 +343,15 @@ export function CrearLigaForm() {
         </div>
       )}
 
-      {/* Submit */}
-      <button
+      {/* Submit — the one lime CTA of this screen */}
+      <Button
         type="submit"
-        disabled={loading || !nombre.trim()}
-        className="w-full bg-accent text-on-accent border-none rounded-xl py-3 text-[14px] font-semibold cursor-pointer hover:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        isDisabled={loading || !nombre.trim()}
+        size="md"
+        className="w-full justify-center"
       >
         {loading ? 'Creando liga…' : 'Crear liga'}
-      </button>
+      </Button>
     </form>
   );
 }

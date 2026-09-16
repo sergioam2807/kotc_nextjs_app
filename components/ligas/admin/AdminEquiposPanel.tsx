@@ -201,8 +201,9 @@ export function AdminEquiposPanel({
                 <button
                   onClick={() => handleEliminar(le.equipo_id)}
                   disabled={!!loading}
-                  className="text-outline border-none bg-transparent cursor-pointer hover:text-error transition-colors p-1 disabled:opacity-30"
+                  className="kotc-tap-target flex items-center justify-center flex-shrink-0 text-outline border-none bg-transparent cursor-pointer hover:text-error transition-colors disabled:opacity-30"
                   title="Retirar equipo"
+                  aria-label="Retirar equipo"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
@@ -227,7 +228,7 @@ export function AdminEquiposPanel({
           <button
             type="submit"
             disabled={loading === 'invite' || !invitarId.trim()}
-            className="bg-accent text-on-accent border-none rounded-lg px-4 py-2 text-[12px] font-semibold cursor-pointer hover:brightness-95 transition-all disabled:opacity-50"
+            className="bg-surface-container-low text-on-surface border border-outline-variant rounded-lg px-4 py-2 text-[12px] font-semibold cursor-pointer hover:border-outline transition-colors disabled:opacity-50"
           >
             {loading === 'invite' ? '…' : 'Invitar'}
           </button>

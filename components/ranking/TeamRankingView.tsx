@@ -31,7 +31,6 @@ function TeamAvatar({ team, size }: { team: TeamRankingStat; size: 'sm' | 'lg' }
         background: `${team.color}20`,
         borderColor: size === 'lg' ? team.color : `${team.color}60`,
         color: team.color,
-        boxShadow: size === 'lg' ? `0 0 20px ${team.color}40` : undefined,
       }}
     >
       {initials}
@@ -45,7 +44,7 @@ export function TeamRankingView({ stats }: Props) {
       <div className="px-4 py-16 text-center">
         <div className="text-[32px] mb-3">🏟️</div>
         <div className="text-[13px] text-on-surface font-medium mb-1">Sin equipos en este filtro</div>
-        <div className="text-[11px] text-outline">Prueba seleccionando otra ciudad.</div>
+        <div className="text-[11px] text-outline">Prueba seleccionando otra región.</div>
       </div>
     );
   }

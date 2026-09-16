@@ -151,7 +151,7 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
       <Card key={d.id} variant="secondary" className="border border-outline-variant rounded-xl p-4">
         {/* Header */}
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-lg bg-accent/15 text-accent flex items-center justify-center text-[13px] font-bold flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center text-[13px] font-bold flex-shrink-0">
             {ProfileIniciales(rivalNombre)}
           </div>
           <div className="flex-1 min-w-0">

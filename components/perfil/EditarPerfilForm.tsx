@@ -375,7 +375,7 @@ export function EditarPerfilForm({ initialData }: Props) {
               }`}
             >
               <div
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
                   disponible ? 'translate-x-5' : 'translate-x-1'
                 }`}
               />

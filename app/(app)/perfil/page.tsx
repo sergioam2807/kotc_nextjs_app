@@ -18,15 +18,18 @@ export default async function PerfilPage() {
 
   return (
     <div className="p-5 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-1">
         <h1 className="text-[18px] font-semibold text-on-surface">Mi Perfil de Jugador</h1>
         <Link
           href={`/jugadores/${user.id}`}
-          className="text-[12px] text-accent hover:underline"
+          className="text-[12px] text-on-surface-variant hover:text-on-surface hover:underline"
         >
           Ver perfil público →
         </Link>
       </div>
+      <p className="text-[12px] text-on-surface-variant mb-5">
+        Un perfil completo te hace más fácil de encontrar para equipos que buscan reclutar.
+      </p>
       <EditarPerfilForm initialData={profile ?? {}} />
     </div>
   );

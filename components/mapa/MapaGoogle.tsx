@@ -15,25 +15,25 @@ interface Props {
 const DEFAULT_CENTER = { lat: -33.46, lng: -70.645 };
 const DEFAULT_ZOOM = 13;
 
-// Pro League Asphalt — navy dark palette
+// Blacktop Neon — near-black palette (matches app/globals.css tonal scale)
 const DARK_STYLES = [
-  { elementType: 'geometry', stylers: [{ color: '#0a1628' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0a1628' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#3a4a5e' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#4a5a72' }] },
+  { elementType: 'geometry', stylers: [{ color: '#0a0a0a' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0a0a0a' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#4a4a46' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#5c5c58' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#0d1f32' }] },
-  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#2a3a4e' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#122438' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#0a1830' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#3a4a5e' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#162a42' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#0d1c30' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#4a5a72' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#141410' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#3a3a36' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1c1c1c' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#141414' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#4a4a46' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#242424' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#181818' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#5c5c58' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#010f1f' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#1a2a3e' }] },
-  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#1e2e42' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#000000' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#2c2c2c' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#2a2a2a' }] },
   { featureType: 'administrative.land_parcel', stylers: [{ visibility: 'off' }] },
 ];
 
@@ -42,7 +42,7 @@ const MAP_OPTIONS = {
   disableDefaultUI: true,
   clickableIcons: false,
   gestureHandling: 'greedy',
-  backgroundColor: '#0d1c2d',
+  backgroundColor: '#0a0a0a',
   keyboardShortcuts: false,
 };
 
@@ -55,16 +55,16 @@ function buildMarkerSvg(cancha: CanchaConEstado): string {
   if (cancha.estado === 'libre') {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
   <circle cx="20" cy="20" r="19" fill="#4ade80" />
-  <circle cx="20" cy="20" r="14" fill="#14532d" />
+  <circle cx="20" cy="20" r="14" fill="#141414" />
   <text x="20" y="26" text-anchor="middle" fill="#4ade80" font-size="16" font-family="Arial, sans-serif">🏀</text>
   <polygon points="14,37 20,50 26,37" fill="#4ade80" />
 </svg>`;
   }
-  const ringColor = cancha.estado === 'king' ? '#ffe083' : '#f87171';
+  const ringColor = cancha.estado === 'king' ? '#d5ff40' : '#f87171';
   const initials = getInitials(cancha.equipoNombre);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
   <circle cx="20" cy="20" r="19" fill="${ringColor}" />
-  <circle cx="20" cy="20" r="14" fill="#111827" />
+  <circle cx="20" cy="20" r="14" fill="#141414" />
   <text x="20" y="25" text-anchor="middle" fill="${ringColor}" font-size="12" font-weight="bold" font-family="Arial, sans-serif">${initials}</text>
   <polygon points="14,37 20,50 26,37" fill="${ringColor}" />
 </svg>`;
@@ -173,7 +173,7 @@ export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = fals
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 9,
-          fillColor: '#ffe083',
+          fillColor: '#d5ff40',
           fillOpacity: 1,
           strokeColor: '#ffffff',
           strokeWeight: 2,

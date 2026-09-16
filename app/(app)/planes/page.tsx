@@ -96,7 +96,7 @@ export default async function PlanesPage() {
           {!user ? (
             <Link
               href="/login"
-              className="w-full text-center bg-surface-container border border-outline-variant rounded-lg py-2.5 text-[13px] font-medium text-on-surface-variant hover:border-outline transition-colors"
+              className="w-full min-h-11 flex items-center justify-center text-center bg-surface-container border border-outline-variant rounded-lg text-[13px] font-medium text-on-surface-variant hover:border-outline transition-colors"
             >
               Crear cuenta gratuita
             </Link>
@@ -110,15 +110,13 @@ export default async function PlanesPage() {
         {/* Plan Organizador */}
         <div className={`relative bg-surface-container-low rounded-xl p-5 flex flex-col ${
           tieneOrganizador
-            ? 'border-2 border-accent'
+            ? 'border-2 border-status-libre'
             : 'border border-outline-variant'
         }`}>
-          {/* Popular badge */}
+          {/* Ribbon informativo — periwinkle, no lime: la acción (botón) es la única voz lima de esta card */}
           {!tieneOrganizador && (
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="bg-accent text-on-accent text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-                Para organizadores
-              </span>
+              <Badge variant="primary">Para organizadores</Badge>
             </div>
           )}
 
@@ -126,11 +124,11 @@ export default async function PlanesPage() {
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-[16px] font-semibold text-on-surface">Organizador</h2>
               {tieneOrganizador && (
-                <Badge variant="accent">Activo ✓</Badge>
+                <Badge variant="green">Activo ✓</Badge>
               )}
             </div>
             <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-[28px] font-bold text-accent">{PLAN_ORGANIZADOR.precio}</span>
+              <span className="text-[28px] font-bold text-on-surface">{PLAN_ORGANIZADOR.precio}</span>
               <span className="text-[13px] text-on-surface-variant">{PLAN_ORGANIZADOR.periodo}</span>
             </div>
             {tieneOrganizador && suscripcion?.fecha_fin && (
@@ -151,7 +149,7 @@ export default async function PlanesPage() {
           <ul className="flex flex-col gap-2 flex-1 mb-5">
             {ORG_FEATURES.map(f => (
               <li key={f} className="flex items-start gap-2 text-[12px] text-on-surface-variant">
-                <span className={`mt-0.5 flex-shrink-0 ${tieneOrganizador ? 'text-accent' : 'text-status-libre'}`}>✓</span>
+                <span className="text-status-libre mt-0.5 flex-shrink-0">✓</span>
                 {f}
               </li>
             ))}
@@ -160,7 +158,7 @@ export default async function PlanesPage() {
           {tieneOrganizador ? (
             <Link
               href="/ligas"
-              className="w-full text-center bg-accent text-on-accent rounded-lg py-2.5 text-[13px] font-semibold hover:brightness-95 transition-all"
+              className="w-full min-h-11 flex items-center justify-center text-center bg-accent text-on-accent rounded-lg text-[13px] font-semibold hover:brightness-95 transition-all"
             >
               Ir a mis ligas →
             </Link>
@@ -170,7 +168,7 @@ export default async function PlanesPage() {
                 href={PLAN_ORGANIZADOR.ctaWhatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full text-center bg-accent text-on-accent rounded-lg py-2.5 text-[13px] font-semibold hover:brightness-95 transition-all flex items-center justify-center gap-2"
+                className="w-full min-h-11 text-center bg-accent text-on-accent rounded-lg text-[13px] font-semibold hover:brightness-95 transition-all flex items-center justify-center gap-2"
               >
                 <span>💬</span> Solicitar acceso
               </a>
@@ -211,7 +209,7 @@ export default async function PlanesPage() {
       {!user && (
         <p className="text-center text-[11px] text-on-surface-variant mt-5">
           ¿Ya tienes cuenta?{' '}
-          <Link href="/login" className="text-accent hover:underline">Inicia sesión →</Link>
+          <Link href="/login" className="text-on-surface-variant hover:text-on-surface transition-colors">Inicia sesión →</Link>
         </p>
       )}
     </div>

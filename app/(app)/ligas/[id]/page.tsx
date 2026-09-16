@@ -168,7 +168,10 @@ export default async function LigaPublicaPage({ params }: { params: Promise<{ id
         </div>
         {esOrganizador && (
           <div className="mt-3 pt-3 border-t border-outline-variant">
-            <Link href={`/ligas/${liga.id}/admin`} className="text-[12px] text-accent hover:underline font-medium">
+            <Link
+              href={`/ligas/${liga.id}/admin`}
+              className="inline-flex items-center gap-1.5 bg-accent text-on-accent rounded-lg px-3.5 py-2 text-[12px] font-semibold hover:brightness-95 transition-all"
+            >
               ✎ Panel de administración →
             </Link>
           </div>
@@ -178,7 +181,7 @@ export default async function LigaPublicaPage({ params }: { params: Promise<{ id
       {/* Tabla Round-Robin */}
       {liga.formato === 'round_robin' && (
         <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-4">
-          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-3">Tabla de posiciones</div>
+          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-3">Tabla de posiciones</div>
           <TablaLiga rows={tablaRR} />
         </div>
       )}
@@ -186,7 +189,7 @@ export default async function LigaPublicaPage({ params }: { params: Promise<{ id
       {/* Tablas por grupo */}
       {liga.formato === 'grupos_playoffs' && Object.keys(tablaGrupos).length > 0 && (
         <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-4">
-          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-4">Fase de grupos</div>
+          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-4">Fase de grupos</div>
           <div className="flex flex-col gap-5">
             {Object.entries(tablaGrupos).map(([grupo, rows]) => (
               <TablaLiga key={grupo} rows={rows} titulo={`Grupo ${grupo}`} equiposClasifican={liga.equipos_clasifican ?? 2} />
@@ -198,7 +201,7 @@ export default async function LigaPublicaPage({ params }: { params: Promise<{ id
       {/* Bracket */}
       {(liga.formato === 'eliminacion_directa' || liga.formato === 'grupos_playoffs') && partidosBracket.length > 0 && (
         <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-4">
-          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-4">
+          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-4">
             {liga.formato === 'grupos_playoffs' ? 'Fase de playoffs' : 'Bracket'}
           </div>
           <BracketView partidos={partidosBracket} />
@@ -208,7 +211,7 @@ export default async function LigaPublicaPage({ params }: { params: Promise<{ id
       {/* Próximos */}
       {proximos.length > 0 && (
         <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-4">
-          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-3">Próximos partidos</div>
+          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-3">Próximos partidos</div>
           <div className="flex flex-col gap-2">
             {proximos.map(p => <PartidoCard key={p.id} partido={p} compact />)}
           </div>
@@ -218,7 +221,7 @@ export default async function LigaPublicaPage({ params }: { params: Promise<{ id
       {/* Recientes */}
       {completados.length > 0 && (
         <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-4">
-          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-3">Resultados recientes</div>
+          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-3">Resultados recientes</div>
           <div className="flex flex-col gap-2">
             {completados.map(p => <PartidoCard key={p.id} partido={p} compact />)}
           </div>
@@ -228,7 +231,7 @@ export default async function LigaPublicaPage({ params }: { params: Promise<{ id
       {/* Equipos */}
       {aceptados.length > 0 && (
         <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
-          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-3">
+          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-3">
             Equipos participantes ({aceptados.length})
           </div>
           <div className="flex flex-col gap-1.5">

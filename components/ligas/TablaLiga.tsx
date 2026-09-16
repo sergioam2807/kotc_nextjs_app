@@ -4,9 +4,16 @@ interface TablaLigaProps {
   rows: StandingRow[];
   titulo?: string;
   equiposClasifican?: number; // highlight top N rows
+  /**
+   * Equipo del usuario que está viendo la tabla, si se conoce. Opcional y sin
+   * usar por ahora: ninguna página de este cluster resuelve todavía el
+   * equipo_id del visitante sin agregar una query nueva (fuera de alcance de
+   * este pase), así que este prop queda listo para conectarse más adelante.
+   */
+  miEquipoId?: string;
 }
 
-export function TablaLiga({ rows, titulo, equiposClasifican }: TablaLigaProps) {
+export function TablaLiga({ rows, titulo, equiposClasifican, miEquipoId }: TablaLigaProps) {
   return (
     <div>
       {titulo && (
@@ -22,9 +29,9 @@ export function TablaLiga({ rows, titulo, equiposClasifican }: TablaLigaProps) {
               <th className="text-left py-2 px-3 text-on-surface-variant font-medium">Equipo</th>
               <th className="text-center py-2 px-2 text-on-surface-variant font-medium w-9" title="Jugados">PJ</th>
               <th className="text-center py-2 px-2 text-on-surface-variant font-medium w-9" title="Ganados">PG</th>
-              <th className="text-center py-2 px-2 text-on-surface-variant font-medium w-9" title="Empatados">PE</th>
+              <th className="hidden sm:table-cell text-center py-2 px-2 text-on-surface-variant font-medium w-9" title="Empatados">PE</th>
               <th className="text-center py-2 px-2 text-on-surface-variant font-medium w-9" title="Perdidos">PP</th>
-              <th className="text-center py-2 px-2 text-on-surface-variant font-medium w-12" title="Diferencia">DP</th>
+              <th className="hidden sm:table-cell text-center py-2 px-2 text-on-surface-variant font-medium w-12" title="Diferencia">DP</th>
               <th className="text-center py-2 px-3 text-on-surface-variant font-medium w-12" title="Puntos">Pts</th>
             </tr>
           </thead>
@@ -38,13 +45,14 @@ export function TablaLiga({ rows, titulo, equiposClasifican }: TablaLigaProps) {
             )}
             {rows.map((row, i) => {
               const clasifica = equiposClasifican ? i < equiposClasifican : false;
+              const esMiEquipo = miEquipoId ? row.equipo_id === miEquipoId : false;
               const iniciales = row.nombre.trim().split(/\s+/).slice(0, 2)
                 .map(w => w[0]).join('').toUpperCase();
               return (
                 <tr
                   key={row.equipo_id}
                   className={`border-b border-outline-variant/50 last:border-0 transition-colors ${
-                    clasifica ? 'bg-status-libre/5' : ''
+                    clasifica ? 'bg-status-libre/8' : esMiEquipo ? 'bg-primary/8' : ''
                   }`}
                 >
                   {/* Pos */}
@@ -61,7 +69,9 @@ export function TablaLiga({ rows, titulo, equiposClasifican }: TablaLigaProps) {
                       >
                         {iniciales}
                       </div>
-                      <span className="text-on-surface font-medium truncate max-w-[110px]">{row.nombre}</span>
+                      <span className={`truncate max-w-[110px] ${esMiEquipo ? 'text-primary font-semibold' : 'text-on-surface font-medium'}`}>
+                        {row.nombre}
+                      </span>
                       {clasifica && (
                         <span className="text-[9px] text-status-libre font-bold">↑</span>
                       )}
@@ -70,9 +80,9 @@ export function TablaLiga({ rows, titulo, equiposClasifican }: TablaLigaProps) {
 
                   <td className="py-2.5 px-2 text-center text-on-surface-variant">{row.PJ}</td>
                   <td className="py-2.5 px-2 text-center text-status-libre font-medium">{row.PG}</td>
-                  <td className="py-2.5 px-2 text-center text-on-surface-variant">{row.PE}</td>
+                  <td className="hidden sm:table-cell py-2.5 px-2 text-center text-on-surface-variant">{row.PE}</td>
                   <td className="py-2.5 px-2 text-center text-error">{row.PP}</td>
-                  <td className={`py-2.5 px-2 text-center font-medium ${
+                  <td className={`hidden sm:table-cell py-2.5 px-2 text-center font-medium ${
                     row.GD > 0 ? 'text-status-libre' : row.GD < 0 ? 'text-error' : 'text-on-surface-variant'
                   }`}>
                     {row.GD > 0 ? '+' : ''}{row.GD}

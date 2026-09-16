@@ -95,7 +95,7 @@ export function InvitarJugadorButton({
           </div>
           <button
             onClick={() => setShowLink(v => !v)}
-            className="text-[11px] text-accent hover:underline cursor-pointer flex-shrink-0 ml-2"
+            className="text-[11px] text-on-surface-variant hover:text-on-surface hover:underline cursor-pointer flex-shrink-0 ml-2"
           >
             {showLink ? 'Ocultar' : 'Ver link'}
           </button>
@@ -115,7 +115,7 @@ export function InvitarJugadorButton({
               </button>
               <button
                 onClick={handleWhatsApp}
-                className="flex-1 bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-semibold text-[12px] py-1.5 rounded-lg hover:bg-[#25D366]/25 transition-colors cursor-pointer"
+                className="flex-1 bg-status-libre/15 text-status-libre border border-status-libre/30 font-semibold text-[12px] py-1.5 rounded-lg hover:bg-status-libre/25 transition-colors cursor-pointer"
               >
                 WhatsApp
               </button>
@@ -163,7 +163,7 @@ export function InvitarJugadorButton({
               </button>
               <button
                 onClick={handleWhatsApp}
-                className="flex-1 bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 font-semibold text-[12px] py-2 rounded-lg hover:bg-[#25D366]/25 transition-colors cursor-pointer"
+                className="flex-1 bg-status-libre/15 text-status-libre border border-status-libre/30 font-semibold text-[12px] py-2 rounded-lg hover:bg-status-libre/25 transition-colors cursor-pointer"
               >
                 WhatsApp
               </button>

@@ -8,7 +8,7 @@ import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const COLOR_OPTIONS = [
-  { value: '#ffe083', label: 'Amarillo' },
+  { value: '#d5ff40', label: 'Lima' },
   { value: '#F5C344', label: 'Dorado' },
   { value: '#a78bfa', label: 'Violeta' },
   { value: '#818cf8', label: 'Índigo' },

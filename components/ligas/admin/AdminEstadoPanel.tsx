@@ -11,10 +11,19 @@ interface AdminEstadoPanelProps {
   nombre: string;
 }
 
-const TRANSICIONES: Record<string, { label: string; siguiente: string; confirmMsg?: string; variant: 'primary' | 'green' | 'error' | 'neutral' }> = {
-  borrador:      { label: 'Abrir inscripciones',       siguiente: 'inscripciones', variant: 'primary' },
-  inscripciones: { label: 'Ir a generar calendario →', siguiente: 'en_curso',      variant: 'green' },
-  en_curso:      { label: 'Finalizar liga',             siguiente: 'finalizada',    variant: 'neutral', confirmMsg: '¿Confirmas que quieres finalizar la liga?' },
+// Nota: no hay una transición manual "inscripciones → en_curso" aquí a propósito.
+// Esa transición ocurre automáticamente al generar el primer calendario (ver
+// GenerarCalendarioButton más abajo en la misma página); un botón separado que
+// solo navegara a /admin/partidos era un callejón sin salida mientras no exista
+// calendario (esa ruta redirige de vuelta) y además duplicaba la misma acción.
+const TRANSICIONES: Record<string, { label: string; siguiente: string; confirmMsg?: string; variant: 'accent' | 'neutral' }> = {
+  borrador: { label: 'Abrir inscripciones', siguiente: 'inscripciones', variant: 'accent' },
+  en_curso: {
+    label: 'Finalizar liga',
+    siguiente: 'finalizada',
+    variant: 'neutral',
+    confirmMsg: 'Esta acción es irreversible: la liga se cerrará y no podrás cargar más resultados ni volver a "En curso".',
+  },
 };
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -33,7 +42,7 @@ const ESTADO_VARIANT: Record<string, 'accent' | 'primary' | 'green' | 'neutral' 
   cancelada:     'error',
 };
 
-export function AdminEstadoPanel({ ligaId, estadoActual, nombre }: AdminEstadoPanelProps) {
+export function AdminEstadoPanel({ ligaId, estadoActual }: AdminEstadoPanelProps) {
   const router = useRouter();
   const [loading, setLoading]       = useState(false);
   const [confirmando, setConfirmando] = useState(false);
@@ -43,11 +52,6 @@ export function AdminEstadoPanel({ ligaId, estadoActual, nombre }: AdminEstadoPa
 
   const handleTransicion = async () => {
     if (!transicion) return;
-    // Special case: inscripciones → en_curso is handled by the generate page
-    if (estadoActual === 'inscripciones') {
-      router.push(`/ligas/${ligaId}/admin/partidos`);
-      return;
-    }
 
     if (transicion.confirmMsg && !confirmando) {
       setConfirmando(true);
@@ -83,37 +87,46 @@ export function AdminEstadoPanel({ ligaId, estadoActual, nombre }: AdminEstadoPa
           </Badge>
         </div>
 
-        {transicion && (
-          <div className="flex items-center gap-2">
-            {confirmando && (
-              <span className="text-[12px] text-on-surface-variant">{transicion.confirmMsg}</span>
-            )}
+        {transicion && !confirmando && (
+          <button
+            onClick={handleTransicion}
+            disabled={loading}
+            className={`px-4 py-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-all disabled:opacity-50 ${
+              transicion.variant === 'accent'
+                ? 'bg-accent text-on-accent hover:brightness-95'
+                : 'bg-surface-container text-on-surface border border-outline-variant hover:border-outline'
+            }`}
+          >
+            {loading ? '…' : transicion.label}
+          </button>
+        )}
+      </div>
+
+      {/* Confirmación de acción irreversible — misma idea que "Disolver equipo":
+          nombrar la consecuencia explícitamente antes de pedir confirmación. */}
+      {transicion && confirmando && (
+        <div className="mt-3 bg-error/5 border border-error/20 rounded-lg p-3">
+          <p className="text-[12px] text-on-surface-variant leading-relaxed mb-3">
+            {transicion.confirmMsg}
+          </p>
+          <div className="flex gap-2">
             <button
               onClick={handleTransicion}
               disabled={loading}
-              className={`px-4 py-2 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-all disabled:opacity-50 ${
-                transicion.variant === 'green'
-                  ? 'bg-status-libre text-white hover:brightness-90'
-                  : transicion.variant === 'error'
-                  ? 'bg-error text-on-error hover:brightness-90'
-                  : transicion.variant === 'primary'
-                  ? 'bg-primary text-white hover:brightness-90'
-                  : 'bg-surface-container text-on-surface border border-outline-variant hover:border-outline'
-              }`}
+              className="flex-1 bg-error text-on-error border-none rounded-lg py-2 text-[12px] font-semibold cursor-pointer hover:brightness-90 transition-all disabled:opacity-50"
             >
-              {loading ? '…' : confirmando ? 'Confirmar' : transicion.label}
+              {loading ? 'Finalizando…' : 'Sí, finalizar liga'}
             </button>
-            {confirmando && (
-              <button
-                onClick={() => setConfirmando(false)}
-                className="px-3 py-2 rounded-lg text-[12px] text-on-surface-variant bg-surface-container border-none cursor-pointer hover:text-on-surface"
-              >
-                Cancelar
-              </button>
-            )}
+            <button
+              onClick={() => setConfirmando(false)}
+              disabled={loading}
+              className="bg-surface-container text-on-surface-variant border-none rounded-lg px-4 py-2 text-[12px] cursor-pointer hover:text-on-surface transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {error && (
         <p className="text-[12px] text-error mt-2">{error}</p>

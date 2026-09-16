@@ -111,10 +111,10 @@ export default async function LigaAdminPartidosPage({ params }: { params: Promis
         </div>
       </div>
 
-      {/* Progress */}
+      {/* Progress — informativo, no una acción: usa el periwinkle de datos, no lima */}
       <div className="bg-surface-container rounded-full overflow-hidden mb-5" style={{ height: '6px' }}>
         <div
-          className="bg-accent h-full rounded-full transition-all"
+          className="bg-primary h-full rounded-full transition-all"
           style={{ width: `${partidos.length > 0 ? Math.round((completados / partidos.length) * 100) : 0}%` }}
         />
       </div>

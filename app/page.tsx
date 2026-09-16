@@ -73,51 +73,37 @@ export default function LandingPage() {
         id="hero"
         className="relative min-h-screen flex flex-col items-center justify-center text-center pt-14 md:pt-16 overflow-hidden"
         style={{
-          background: 'radial-gradient(ellipse at 50% -10%, #1e3a8a 0%, #0d1c2d 30%, #051424 65%, #010f1f 100%)',
+          background:
+            'radial-gradient(ellipse at 50% -10%, color-mix(in oklab, var(--color-accent) 16%, var(--color-surface)) 0%, var(--color-surface) 45%, var(--color-surface-container-lowest) 100%)',
         }}
       >
-        {/* Glow blob azul */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] md:w-[600px] h-[200px] md:h-[300px] blur-[100px] rounded-full pointer-events-none"
-          style={{ background: 'color-mix(in srgb, var(--primary) 10%, transparent)' }}
-        />
-
-        <div className="relative z-10 px-5 sm:px-8 max-w-5xl mx-auto flex-1 flex flex-col items-center justify-center">
-          {/* Temporada badge */}
-          <span
-            id="temporada"
-            className="inline-block bg-accent text-on-accent font-bold text-[10px] sm:text-xs rounded-sm tracking-[0.2em] uppercase px-3 py-1 mb-5 md:mb-6"
-          >
-            TEMPORADA 4
-          </span>
-
+        <div id="temporada" className="relative z-10 px-5 sm:px-8 max-w-5xl mx-auto flex-1 flex flex-col items-center justify-center">
           <h1 className="text-[2.8rem] sm:text-6xl md:text-8xl font-black italic uppercase tracking-tighter text-on-surface mb-4 md:mb-6 leading-[0.95]">
             REINA EN<br />
             <span className="text-accent">LAS CALLES</span>
           </h1>
 
           <p className="text-base md:text-lg text-on-surface-variant max-w-xl mx-auto mb-8 md:mb-10 font-light px-2">
-            Desafía equipos, conquista canchas y conviértete en el rey de tu ciudad.
+            Desafía equipos, conquista canchas y conviértete en el rey de tu ciudad. Únete a la temporada inaugural.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center w-full sm:w-auto">
             <Link
               href="/login"
               className="w-full sm:w-auto text-center bg-accent text-on-accent px-8 py-3.5 md:px-10 md:py-4 rounded-md font-black text-base md:text-lg uppercase italic hover:brightness-90 hover:scale-105 transition-all no-underline"
-              style={{ boxShadow: 'color-mix(in srgb, var(--accent) 40%, transparent) 0 0 20px' }}
             >
               Únete a la temporada
             </Link>
             <Link
               href="/ranking"
-              className="w-full sm:w-auto text-center bg-primary/10 backdrop-blur border border-primary/30 text-primary px-8 py-3.5 md:px-10 md:py-4 rounded-md font-bold text-base md:text-lg uppercase hover:bg-primary/20 transition-all no-underline"
+              className="w-full sm:w-auto text-center bg-primary/10 border border-primary/30 text-primary px-8 py-3.5 md:px-10 md:py-4 rounded-md font-bold text-base md:text-lg uppercase hover:bg-primary/20 transition-all no-underline"
             >
               Ver el ranking
             </Link>
           </div>
         </div>
 
-        {/* Marquee stats ticker */}
+        {/* Marquee — deportes de la plataforma, sin cifras de uso inventadas */}
         <div className="absolute bottom-0 left-0 right-0 bg-accent py-2.5 overflow-hidden">
           <div className="marquee-track flex whitespace-nowrap">
             {[0, 1].map((i) => (
@@ -125,7 +111,7 @@ export default function LandingPage() {
                 key={i}
                 className="font-black italic uppercase tracking-widest text-[11px] sm:text-sm text-on-accent mr-12 shrink-0"
               >
-                1,240 PLAYERS &nbsp;·&nbsp; 312 EQUIPOS &nbsp;·&nbsp; 45 CANCHAS &nbsp;·&nbsp; 180 DESAFÍOS &nbsp;·&nbsp;&nbsp;
+                BASKETBALL &nbsp;·&nbsp; FÚTBOL &nbsp;·&nbsp; VÓLEIBOL &nbsp;·&nbsp; TENIS &nbsp;·&nbsp; PÁDEL &nbsp;·&nbsp; DESAFÍA. CONQUISTA. DEFIENDE. &nbsp;·&nbsp;&nbsp;
               </span>
             ))}
           </div>
@@ -134,15 +120,8 @@ export default function LandingPage() {
 
       {/* ── CÓMO FUNCIONA ── */}
       <section id="como-funciona" className="relative py-16 md:py-24 px-5 lg:px-20 bg-surface">
-        {/* Glow decorativo */}
-        <div
-          className="absolute top-0 right-0 w-1/3 h-64 blur-[120px] pointer-events-none"
-          style={{ background: 'color-mix(in srgb, var(--primary) 6%, transparent)' }}
-        />
-
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-10 md:mb-16">
-            <p className="text-[var(--text-brand)] font-bold uppercase tracking-[0.3em] mb-2 md:mb-3 text-xs sm:text-sm">EL PROCESO</p>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-on-surface">
               3 PASOS AL ÉXITO
             </h2>
@@ -174,10 +153,12 @@ export default function LandingPage() {
       <section id="reyes" className="py-16 md:py-24 px-5 lg:px-20 bg-surface-container-low/40">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8 md:mb-12">
-            <p className="text-[var(--text-brand)] font-bold uppercase tracking-[0.3em] mb-2 md:mb-3 text-xs sm:text-sm">ELITE TIER</p>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-on-surface">
-              LOS REYES ACTUALES
+              ASÍ LUCE EL RANKING
             </h2>
+            <p className="text-on-surface-variant text-sm md:text-base mt-2 md:mt-3">
+              Vista previa — cada temporada empieza en cero, el trono se gana en la cancha.
+            </p>
           </div>
 
           <div className="max-w-2xl mx-auto mb-6 md:mb-8 space-y-2.5 md:space-y-3">
@@ -221,7 +202,7 @@ export default function LandingPage() {
               <span className="font-extrabold italic uppercase text-sm tracking-tight text-on-surface">KING OF THE COURT</span>
             </Link>
             <p className="text-on-surface-variant text-sm mb-3">Reina en las calles.</p>
-            <p className="text-outline text-xs">© 2025 KOTC</p>
+            <p className="text-outline text-xs">© 2026 KOTC</p>
           </div>
 
           {/* Links — 2 cols mobile, 3 desktop */}

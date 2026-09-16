@@ -67,7 +67,7 @@ export default async function LigasPage() {
       {/* Mis ligas */}
       {misLigas.length > 0 && (
         <div className="mb-6">
-          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-3">
+          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-3">
             Mis ligas
           </div>
           <div className="flex flex-col gap-2">
@@ -82,7 +82,7 @@ export default async function LigasPage() {
       {otrasLigas.length > 0 ? (
         <div>
           {misLigas.length > 0 && (
-            <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-3">
+            <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-3">
               Otras ligas
             </div>
           )}
@@ -102,7 +102,7 @@ export default async function LigasPage() {
           {puedeCrear && (
             <Link
               href="/ligas/nueva"
-              className="inline-block mt-4 text-[13px] text-accent hover:underline"
+              className="inline-block mt-4 text-[13px] text-on-surface-variant hover:text-on-surface transition-colors"
             >
               Crear la primera liga →
             </Link>

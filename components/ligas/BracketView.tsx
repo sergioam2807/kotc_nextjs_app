@@ -57,8 +57,8 @@ export function BracketView({ partidos }: BracketViewProps) {
     <div className="flex flex-col gap-6">
       {fasesSorted.map(fase => (
         <div key={fase}>
-          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.1em] font-medium mb-3">
-            {FASE_LABEL[fase] ?? fase}
+          <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-3">
+            {fase === 'final' ? '🏆 ' : ''}{FASE_LABEL[fase] ?? fase}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {(byFase.get(fase) ?? []).map(p => (

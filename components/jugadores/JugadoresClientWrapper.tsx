@@ -97,7 +97,7 @@ export function JugadoresClientWrapper({ jugadores, viewerEquipo, invitacionesMa
         </div>
         <Link
           href="/equipos"
-          className="text-[11px] text-accent hover:underline font-medium"
+          className="text-[11px] text-on-surface-variant hover:text-on-surface hover:underline font-medium"
         >
           Ver equipos →
         </Link>
@@ -198,7 +198,7 @@ export function JugadoresClientWrapper({ jugadores, viewerEquipo, invitacionesMa
             </span>
             <button
               onClick={limpiarFiltros}
-              className="text-[11px] text-accent hover:underline cursor-pointer font-medium"
+              className="text-[11px] text-on-surface-variant hover:text-on-surface hover:underline cursor-pointer font-medium"
             >
               Limpiar
             </button>
@@ -229,7 +229,7 @@ export function JugadoresClientWrapper({ jugadores, viewerEquipo, invitacionesMa
             </p>
             <button
               onClick={limpiarFiltros}
-              className="text-[12px] text-accent hover:underline cursor-pointer font-medium"
+              className="text-[12px] text-on-surface-variant hover:text-on-surface hover:underline cursor-pointer font-medium"
             >
               Limpiar filtros
             </button>
@@ -270,8 +270,8 @@ export function JugadoresClientWrapper({ jugadores, viewerEquipo, invitacionesMa
                             referrerPolicy="no-referrer"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center">
-                            <span className="text-[16px] font-semibold text-accent">{iniciales}</span>
+                          <div className="w-12 h-12 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
+                            <span className="text-[16px] font-semibold text-primary">{iniciales}</span>
                           </div>
                         )}
                       </div>
@@ -285,7 +285,7 @@ export function JugadoresClientWrapper({ jugadores, viewerEquipo, invitacionesMa
                           <Badge variant="libre">Disponible</Badge>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-[11px] text-accent font-medium">
+                          <span className="text-[11px] text-primary font-medium">
                             Lv.{nivel} — {nombreNivel(nivel)}
                           </span>
                           {jugador.ciudad && (

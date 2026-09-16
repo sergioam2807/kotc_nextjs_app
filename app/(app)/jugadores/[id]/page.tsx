@@ -296,7 +296,7 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
         {isOwnProfile && (
           <Link
             href="/perfil"
-            className="flex-shrink-0 text-[12px] text-accent hover:underline"
+            className="flex-shrink-0 text-[12px] text-on-surface-variant hover:text-on-surface hover:underline"
           >
             Editar
           </Link>
@@ -311,6 +311,30 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
         </div>
         <XPBar xp={xp} nivel={nivel} showLabel />
       </div>
+
+      {/* Invitar al equipo — promovido junto al hero: acción principal para admins/capitanes */}
+      {viewerEquipo && !membresia && (
+        <div className="mb-4">
+          <InvitarJugadorButton
+            equipoId={viewerEquipo.id}
+            equipoNombre={viewerEquipo.nombre}
+            jugadorId={id}
+            jugadorNombre={displayName}
+            tokenExistente={inviteTokenExistente}
+          />
+        </div>
+      )}
+
+      {/* Desafiar 1v1 — promovido junto al hero: acción principal para cualquier visitante logueado */}
+      {user && !isOwnProfile && (
+        <div className="mb-4">
+          <Desafiar1v1Button
+            retadoId={id}
+            retadoNombre={displayName}
+            desafioPendienteId={desafio1v1PendienteId}
+          />
+        </div>
+      )}
 
       {/* Team card */}
       {equipo && (
@@ -337,7 +361,7 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
                 {DEPORTE_LABELS[equipo.deporte] ?? equipo.deporte} · {equipo.modalidad} · {equipo.ciudad}
               </div>
             </div>
-            <Link href={`/equipos/${equipo.id}`} className="text-[12px] text-accent hover:underline flex-shrink-0">
+            <Link href={`/equipos/${equipo.id}`} className="text-[12px] text-on-surface-variant hover:text-on-surface hover:underline flex-shrink-0">
               Ver equipo →
             </Link>
           </div>
@@ -408,13 +432,13 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {profile.altura_cm && (
               <div className="bg-surface-container rounded-lg p-3 text-center">
-                <div className="text-[18px] font-semibold text-on-surface">{profile.altura_cm}</div>
+                <div className="text-[18px] font-black text-on-surface">{profile.altura_cm}</div>
                 <div className="text-[10px] text-on-surface-variant mt-0.5">Altura (cm)</div>
               </div>
             )}
             {profile.peso_kg && (
               <div className="bg-surface-container rounded-lg p-3 text-center">
-                <div className="text-[18px] font-semibold text-on-surface">{profile.peso_kg}</div>
+                <div className="text-[18px] font-black text-on-surface">{profile.peso_kg}</div>
                 <div className="text-[10px] text-on-surface-variant mt-0.5">Peso (kg)</div>
               </div>
             )}
@@ -422,13 +446,13 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
               profile.anos_experiencia !== null &&
               profile.anos_experiencia > 0 && (
               <div className="bg-surface-container rounded-lg p-3 text-center">
-                <div className="text-[18px] font-semibold text-on-surface">{profile.anos_experiencia}</div>
+                <div className="text-[18px] font-black text-on-surface">{profile.anos_experiencia}</div>
                 <div className="text-[10px] text-on-surface-variant mt-0.5">Años exp.</div>
               </div>
             )}
             {profile.mano_habil && (
               <div className="bg-surface-container rounded-lg p-3 text-center">
-                <div className="text-[14px] font-semibold text-on-surface capitalize">{profile.mano_habil}</div>
+                <div className="text-[14px] font-black text-on-surface capitalize">{profile.mano_habil}</div>
                 <div className="text-[10px] text-on-surface-variant mt-0.5">Mano hábil</div>
               </div>
             )}
@@ -441,43 +465,19 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
         <div className="text-[10px] text-on-surface-variant tracking-[0.08em] font-medium uppercase mb-3">Estadísticas</div>
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-surface-container rounded-lg p-3 text-center">
-            <div className="text-[22px] font-semibold text-on-surface">{totalJugados}</div>
+            <div className="text-[22px] font-black text-on-surface">{totalJugados}</div>
             <div className="text-[10px] text-on-surface-variant mt-0.5">Jugados</div>
           </div>
           <div className="bg-surface-container rounded-lg p-3 text-center">
-            <div className="text-[22px] font-semibold text-status-libre">{totalGanados}</div>
+            <div className="text-[22px] font-black text-status-libre">{totalGanados}</div>
             <div className="text-[10px] text-on-surface-variant mt-0.5">Ganados</div>
           </div>
           <div className="bg-surface-container rounded-lg p-3 text-center">
-            <div className="text-[22px] font-semibold text-error">{totalPerdidos}</div>
+            <div className="text-[22px] font-black text-status-rival">{totalPerdidos}</div>
             <div className="text-[10px] text-on-surface-variant mt-0.5">Perdidos</div>
           </div>
         </div>
       </div>
-
-      {/* Invitar al equipo — visible para admins/capitanes si el jugador no tiene equipo */}
-      {viewerEquipo && !membresia && (
-        <div className="mb-4">
-          <InvitarJugadorButton
-            equipoId={viewerEquipo.id}
-            equipoNombre={viewerEquipo.nombre}
-            jugadorId={id}
-            jugadorNombre={displayName}
-            tokenExistente={inviteTokenExistente}
-          />
-        </div>
-      )}
-
-      {/* Desafiar 1v1 — visible para cualquier usuario logueado viendo otro jugador */}
-      {user && !isOwnProfile && (
-        <div className="mb-4">
-          <Desafiar1v1Button
-            retadoId={id}
-            retadoNombre={displayName}
-            desafioPendienteId={desafio1v1PendienteId}
-          />
-        </div>
-      )}
 
       {/* 1v1 stats */}
       {(stats1v1.victorias > 0 || stats1v1.derrotas > 0) && (
@@ -487,15 +487,15 @@ export default async function JugadorPage({ params }: { params: Promise<{ id: st
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-surface-container rounded-lg p-3 text-center">
-              <div className="text-[22px] font-semibold text-status-libre">{stats1v1.victorias}</div>
+              <div className="text-[22px] font-black text-status-libre">{stats1v1.victorias}</div>
               <div className="text-[10px] text-on-surface-variant mt-0.5">Victorias</div>
             </div>
             <div className="bg-surface-container rounded-lg p-3 text-center">
-              <div className="text-[22px] font-semibold text-error">{stats1v1.derrotas}</div>
+              <div className="text-[22px] font-black text-status-rival">{stats1v1.derrotas}</div>
               <div className="text-[10px] text-on-surface-variant mt-0.5">Derrotas</div>
             </div>
             <div className="bg-surface-container rounded-lg p-3 text-center">
-              <div className="text-[22px] font-semibold text-accent">{stats1v1.racha}</div>
+              <div className="text-[22px] font-black text-status-libre">{stats1v1.racha}</div>
               <div className="text-[10px] text-on-surface-variant mt-0.5">Racha</div>
             </div>
           </div>
