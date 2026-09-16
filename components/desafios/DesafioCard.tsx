@@ -15,7 +15,7 @@ interface Props {
 }
 
 const estadoBadgeStyle: Record<EstadoDesafio, { variant: 'accent' | 'green' | 'error' | 'neutral' | 'primary'; label: string }> = {
-  pendiente:           { variant: 'accent',  label: 'Pendiente'           },
+  pendiente:           { variant: 'primary', label: 'Pendiente'           },
   aceptado:            { variant: 'green',   label: 'Aceptado'            },
   rechazado:           { variant: 'error',   label: 'Rechazado'           },
   jugado:              { variant: 'neutral', label: 'Jugado'              },
@@ -200,7 +200,7 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant="neutral">{desafioLocal.deporte}</Badge>
-            <Badge variant="accent">{desafioLocal.formato}</Badge>
+            <Badge variant="primary">{desafioLocal.formato}</Badge>
             {esEnviado ? (
               <Badge variant="neutral">Enviado</Badge>
             ) : (

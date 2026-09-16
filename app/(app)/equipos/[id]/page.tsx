@@ -204,15 +204,27 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
         <XPBar xp={xp} nivel={nivel} showLabel />
       </div>
 
+      {/* Solicitar unirme — promovido junto al hero: es la acción principal de esta pantalla */}
+      {user && !viewerHasTeam && !viewerIsInThisTeam && (
+        <div className="mb-4">
+          <SolicitarEquipoButton equipoId={equipo.id} equipoNombre={equipo.nombre} />
+        </div>
+      )}
+
       {/* Canchas bajo control */}
       <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 mb-4">
         <div className="text-[10px] text-on-surface-variant tracking-[0.08em] font-medium uppercase mb-3">
           Canchas bajo control
         </div>
         {canchasBajoControl.length === 0 ? (
-          <p className="text-[13px] text-on-surface-variant text-center py-3">
-            Este equipo aún no domina ninguna cancha.
-          </p>
+          <div className="text-center py-4">
+            <p className="text-[13px] text-on-surface-variant mb-0.5">
+              Este equipo aún no domina ninguna cancha.
+            </p>
+            <p className="text-[11px] text-outline">
+              El territorio se gana desafiando y ganando en el mapa.
+            </p>
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
             {canchasBajoControl.map(c => {
@@ -236,7 +248,7 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
                       <div className="text-[12px] font-semibold text-on-surface">
                         <span className="text-status-libre">{c.victorias}W</span>
                         <span className="text-outline mx-0.5">·</span>
-                        <span className="text-error">{c.derrotas}L</span>
+                        <span className="text-status-rival">{c.derrotas}L</span>
                       </div>
                     </div>
                   </div>
@@ -252,22 +264,22 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
         <div className="text-[10px] text-on-surface-variant tracking-[0.08em] font-medium uppercase mb-3">Estadísticas</div>
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-surface-container rounded-lg p-3 text-center">
-            <div className="text-[22px] font-semibold text-on-surface">{totalJugados}</div>
+            <div className="text-[22px] font-black text-on-surface">{totalJugados}</div>
             <div className="text-[10px] text-on-surface-variant mt-0.5">Jugados</div>
           </div>
           <div className="bg-surface-container rounded-lg p-3 text-center">
-            <div className="text-[22px] font-semibold text-status-libre">{totalGanados}</div>
+            <div className="text-[22px] font-black text-status-libre">{totalGanados}</div>
             <div className="text-[10px] text-on-surface-variant mt-0.5">Ganados</div>
           </div>
           <div className="bg-surface-container rounded-lg p-3 text-center">
-            <div className="text-[22px] font-semibold text-error">{totalPerdidos}</div>
+            <div className="text-[22px] font-black text-status-rival">{totalPerdidos}</div>
             <div className="text-[10px] text-on-surface-variant mt-0.5">Perdidos</div>
           </div>
         </div>
         {totalJugados > 0 && (
           <div className="mt-3 bg-surface-container rounded-lg p-3 flex items-center justify-between">
             <span className="text-[11px] text-on-surface-variant tracking-[0.08em] font-medium uppercase">Win rate</span>
-            <span className="text-[15px] font-semibold text-accent">{winRate}%</span>
+            <span className="text-[15px] font-bold text-primary">{winRate}%</span>
           </div>
         )}
       </div>
@@ -278,9 +290,14 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
           Roster ({roster.length})
         </div>
         {roster.length === 0 ? (
-          <p className="text-[13px] text-on-surface-variant text-center py-3">
-            Este equipo aún no tiene jugadores.
-          </p>
+          <div className="text-center py-4">
+            <p className="text-[13px] text-on-surface-variant mb-0.5">
+              Este equipo aún no tiene jugadores.
+            </p>
+            <p className="text-[11px] text-outline">
+              Sin roster no se pueden aceptar desafíos.
+            </p>
+          </div>
         ) : (
           <div className="flex flex-col gap-1.5">
             {roster.map(miembro => {
@@ -325,13 +342,6 @@ export default async function EquipoPublicoPage({ params }: { params: Promise<{ 
           </div>
         )}
       </div>
-
-      {/* Solicitar unirme — shown to logged-in users who don't have a team (and aren't already in this team) */}
-      {user && !viewerHasTeam && !viewerIsInThisTeam && (
-        <div className="mt-4">
-          <SolicitarEquipoButton equipoId={equipo.id} equipoNombre={equipo.nombre} />
-        </div>
-      )}
 
     </div>
   );

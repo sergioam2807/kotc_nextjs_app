@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 const DEPORTE_LABELS: Record<string, string> = {
   basketball: 'Basketball',
@@ -11,6 +12,58 @@ const DEPORTE_LABELS: Record<string, string> = {
 
 interface Props {
   params: Promise<{ equipoId: string; token: string }>;
+}
+
+/** Shell compartido: mismo fondo con grilla + card centrada que login/onboarding. */
+function PageShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(color-mix(in oklab, var(--color-outline-variant) 55%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab, var(--color-outline-variant) 55%, transparent) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }}
+      />
+      <div className="relative z-10 bg-surface-container-low border border-outline-variant rounded-2xl p-8 max-w-[400px] w-full">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Estado sin salida real (link inválido, expirado, temporada cerrada): siempre con una acción clara. */
+function DeadEndState({
+  emoji,
+  title,
+  body,
+  loggedIn,
+}: {
+  emoji: string;
+  title: string;
+  body: string;
+  loggedIn: boolean;
+}) {
+  return (
+    <div className="text-center">
+      <div className="text-[40px] mb-4">{emoji}</div>
+      <h1 className="text-[18px] font-medium text-on-surface mb-2">{title}</h1>
+      <p className="text-[13px] text-on-surface-variant mb-6 leading-relaxed">{body}</p>
+      <Link
+        href="/equipos"
+        className="w-full min-h-11 flex items-center justify-center bg-accent text-on-accent rounded-lg text-[14px] font-medium hover:brightness-95 transition-all mb-3"
+      >
+        Buscar equipos →
+      </Link>
+      <Link
+        href={loggedIn ? '/dashboard' : '/'}
+        className="w-full min-h-11 flex items-center justify-center text-[13px] text-on-surface-variant hover:text-on-surface transition-colors"
+      >
+        Volver al inicio
+      </Link>
+    </div>
+  );
 }
 
 export default async function JoinPage({ params }: Props) {
@@ -29,19 +82,24 @@ export default async function JoinPage({ params }: Props) {
 
   if (!invitacion) {
     return (
-      <div className="min-h-screen bg-[#080809] flex items-center justify-center p-4">
-        <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[14px] p-8 max-w-[380px] w-full text-center">
-          <div className="text-[40px] mb-4">❌</div>
-          <h1 className="text-[18px] font-medium text-white mb-2">Link inválido</h1>
-          <p className="text-[13px] text-[#555]">
-            Esta invitación no existe, ya fue usada o expiró.
-          </p>
-        </div>
-      </div>
+      <PageShell>
+        <DeadEndState
+          emoji="🔗"
+          title="Invitación no encontrada"
+          body="Este enlace no existe o ya fue usado. Pídele al capitán del equipo que te envíe uno nuevo."
+          loggedIn={!!user}
+        />
+      </PageShell>
     );
   }
 
   const equipo = Array.isArray(invitacion.equipo) ? invitacion.equipo[0] : invitacion.equipo;
+
+  // El check de estado/expira_at en el server action (`aceptar`) es la validación real
+  // (TOCTOU-safe). Este chequeo aquí es solo de render: sin él, un token vencido con
+  // estado aún 'pendiente' mostraba el formulario de aceptar y, al enviarlo, el usuario
+  // simplemente rebotaba a la misma pantalla sin explicación.
+  const invitacionExpirada = !!invitacion.expira_at && new Date(invitacion.expira_at) < new Date();
 
   // Verificar si la temporada ya comenzó (bloquea nuevos ingresos)
   let temporadaActiva = false;
@@ -68,7 +126,34 @@ export default async function JoinPage({ params }: Props) {
     if (yaEsMiembro) redirect('/equipo');
   }
 
+  if (invitacionExpirada) {
+    return (
+      <PageShell>
+        <DeadEndState
+          emoji="⏰"
+          title="Esta invitación expiró"
+          body="Los links de invitación duran 48 horas. Pídele al capitán que te envíe uno nuevo."
+          loggedIn={!!user}
+        />
+      </PageShell>
+    );
+  }
+
+  if (temporadaActiva) {
+    return (
+      <PageShell>
+        <DeadEndState
+          emoji="🔒"
+          title="Inscripciones cerradas"
+          body="Este equipo ya está compitiendo en la temporada actual, así que no se pueden sumar nuevos jugadores por ahora."
+          loggedIn={!!user}
+        />
+      </PageShell>
+    );
+  }
+
   const loginUrl = `/login?next=${encodeURIComponent(`/join/${equipoId}/${token}`)}`;
+  const iniciales = equipo.nombre.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
 
   async function aceptar() {
     'use server';
@@ -141,72 +226,53 @@ export default async function JoinPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#080809] flex items-center justify-center p-4">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(#1a1a2210 1px, transparent 1px), linear-gradient(90deg, #1a1a2210 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-      <div className="relative z-10 bg-[#0f0f12] border border-[#1a1a1f] rounded-[14px] p-8 max-w-[400px] w-full">
-        <div className="text-center mb-6">
-          <div className="text-[13px] text-[#F5C344] tracking-[0.1em] font-medium uppercase mb-4">
-            Invitación de equipo
-          </div>
-          <div
-            className="w-16 h-16 rounded-[14px] flex items-center justify-center text-[24px] font-bold mx-auto mb-4 border-2"
-            style={{
-              background: `${equipo.color}20`,
-              borderColor: equipo.color,
-              color: equipo.color,
-            }}
-          >
-            {equipo.nombre.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()}
-          </div>
-          <h1 className="text-[22px] font-medium text-white mb-1">{equipo.nombre}</h1>
-          <p className="text-[13px] text-[#555]">
-            {DEPORTE_LABELS[equipo.deporte] ?? equipo.deporte} {equipo.modalidad} · {equipo.ciudad}
-          </p>
+    <PageShell>
+      <div className="text-center mb-6">
+        <p className="text-[13px] text-on-surface-variant mb-4">Te invitaron a unirte a</p>
+        <div
+          className="w-16 h-16 rounded-xl flex items-center justify-center text-[24px] font-bold mx-auto mb-4 border-2"
+          style={{
+            background: `${equipo.color}20`,
+            borderColor: equipo.color,
+            color: equipo.color,
+          }}
+        >
+          {iniciales}
         </div>
-
-        <div className="bg-[#111114] border border-[#1a1a1f] rounded-[10px] p-3 mb-6 text-center">
-          <p className="text-[12px] text-[#555]">
-            Te han invitado a unirte como <span className="text-[#888]">jugador suplente</span>.
-            El capitán podrá cambiar tu posición después.
-          </p>
-        </div>
-
-        {temporadaActiva ? (
-          <div className="bg-[#1a1510] border border-[#F5C34440] rounded-[8px] p-4 text-center">
-            <p className="text-[13px] text-[#F5C344] font-medium mb-1">Temporada en curso</p>
-            <p className="text-[12px] text-[#666]">
-              No es posible unirse a un equipo una vez que la temporada ya comenzó.
-            </p>
-          </div>
-        ) : user ? (
-          <form action={aceptar}>
-            <button
-              type="submit"
-              className="w-full bg-[#F5C344] text-[#080809] border-none rounded-[8px] py-3.5 text-[14px] font-medium cursor-pointer hover:bg-[#e8b53d] transition-colors"
-            >
-              Aceptar e ingresar al equipo
-            </button>
-          </form>
-        ) : (
-          <a
-            href={loginUrl}
-            className="w-full bg-[#F5C344] text-[#080809] rounded-[8px] py-3.5 text-[14px] font-medium text-center block hover:bg-[#e8b53d] transition-colors"
-          >
-            Iniciar sesión para aceptar
-          </a>
-        )}
-
-        <p className="text-center text-[11px] text-[#333] mt-4">
-          Esta invitación expira en 48 horas desde que fue creada.
+        <h1 className="text-[22px] font-medium text-on-surface mb-1">{equipo.nombre}</h1>
+        <p className="text-[13px] text-on-surface-variant">
+          {DEPORTE_LABELS[equipo.deporte] ?? equipo.deporte} {equipo.modalidad} · {equipo.ciudad}
         </p>
       </div>
-    </div>
+
+      <div className="bg-surface-container border border-outline-variant rounded-lg p-3 mb-6 text-center">
+        <p className="text-[12px] text-on-surface-variant">
+          Te han invitado a unirte como <span className="text-on-surface">jugador suplente</span>.
+          El capitán podrá cambiar tu posición después.
+        </p>
+      </div>
+
+      {user ? (
+        <form action={aceptar}>
+          <button
+            type="submit"
+            className="w-full min-h-11 bg-accent text-on-accent border-none rounded-lg text-[14px] font-medium cursor-pointer hover:brightness-95 transition-all"
+          >
+            Aceptar e ingresar al equipo
+          </button>
+        </form>
+      ) : (
+        <Link
+          href={loginUrl}
+          className="w-full min-h-11 flex items-center justify-center bg-accent text-on-accent rounded-lg text-[14px] font-medium hover:brightness-95 transition-all"
+        >
+          Iniciar sesión para aceptar
+        </Link>
+      )}
+
+      <p className="text-center text-[11px] text-outline mt-4">
+        Esta invitación expira 48 horas después de haber sido creada.
+      </p>
+    </PageShell>
   );
 }

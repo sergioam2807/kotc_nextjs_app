@@ -116,7 +116,7 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId, in
         {!userEquipoId && userId && (
           <Link
             href="/equipo/crear"
-            className="bg-accent text-on-accent text-[12px] font-semibold px-3.5 py-2 rounded-lg hover:brightness-95 transition-all"
+            className="inline-flex items-center min-h-[40px] bg-accent text-on-accent text-[12px] font-semibold px-3.5 py-2 rounded-lg hover:brightness-95 transition-all"
           >
             + Crear equipo
           </Link>
@@ -260,7 +260,7 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId, in
             </span>
             <button
               onClick={clearFilters}
-              className="text-[11px] text-accent hover:underline"
+              className="text-[11px] text-on-surface-variant hover:text-on-surface hover:underline"
             >
               Limpiar
             </button>
@@ -274,7 +274,7 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId, in
           <div className="text-[32px] mb-3">🏟️</div>
           <p className="text-[15px] text-on-surface font-medium mb-1">No hay equipos aún</p>
           <p className="text-[12px] text-on-surface-variant">
-            Sé el primero en crear un equipo.
+            Sé el primero en fundar un equipo y reclamar territorio en el mapa.
           </p>
           {userId && (
             <Link
@@ -294,7 +294,7 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId, in
           </p>
           <button
             onClick={clearFilters}
-            className="text-[12px] text-accent hover:underline"
+            className="text-[12px] text-on-surface-variant hover:text-on-surface hover:underline"
           >
             Limpiar filtros
           </button>
@@ -369,7 +369,7 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId, in
 
                   {/* Right: nivel + miembros */}
                   <div className="text-right flex-shrink-0">
-                    <div className="text-[11px] text-accent font-medium">Lv.{nivel}</div>
+                    <div className="text-[11px] text-primary font-medium">Lv.{nivel}</div>
                     <div className="text-[11px] text-on-surface-variant mt-0.5">
                       {memberCount} jugador{memberCount !== 1 ? 'es' : ''}
                     </div>

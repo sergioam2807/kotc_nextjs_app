@@ -80,7 +80,7 @@ export default async function EditarEquipoPage() {
           nombre:      equipo.nombre,
           deporte:     equipo.deporte,
           modalidad:   equipo.modalidad,
-          color:       equipo.color ?? '#F5C344',
+          color:       equipo.color ?? '#d5ff40',
           ciudad:      equipo.ciudad,
           region:      equipo.region,
           comuna:      equipo.comuna,

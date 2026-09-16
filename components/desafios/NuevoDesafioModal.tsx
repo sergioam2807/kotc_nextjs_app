@@ -239,7 +239,7 @@ export function NuevoDesafioModal({
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={jugadorSeleccionado.avatar_url} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" referrerPolicy="no-referrer" />
                     ) : (
-                      <div className="w-7 h-7 rounded-lg bg-accent/15 text-accent flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center text-[10px] font-bold flex-shrink-0">
                         {iniciales(jugadorSeleccionado.display_name ?? jugadorSeleccionado.username ?? '?')}
                       </div>
                     )}
@@ -267,7 +267,7 @@ export function NuevoDesafioModal({
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={j.avatar_url} alt="" className="w-6 h-6 rounded-md object-cover flex-shrink-0" referrerPolicy="no-referrer" />
                             ) : (
-                              <div className="w-6 h-6 rounded-md bg-accent/15 text-accent flex items-center justify-center text-[9px] font-bold flex-shrink-0">
+                              <div className="w-6 h-6 rounded-md bg-surface-container text-on-surface-variant flex items-center justify-center text-[9px] font-bold flex-shrink-0">
                                 {iniciales(nombre)}
                               </div>
                             )}

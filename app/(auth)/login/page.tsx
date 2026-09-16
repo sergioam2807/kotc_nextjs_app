@@ -25,17 +25,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[14px] p-10">
+    <div className="bg-surface-container-low border border-outline-variant rounded-[14px] p-10">
       <div className="text-center mb-10">
         <div className="text-[48px] mb-4">👑</div>
-        <h1 className="text-[22px] font-medium text-white mb-2">King of the Court</h1>
-        <p className="text-[13px] text-[#555]">Desafía equipos, conquista canchas,<br />conviértete en el rey de tu ciudad.</p>
+        <h1 className="text-[22px] font-medium text-on-surface mb-2">King of the Court</h1>
+        <p className="text-[13px] text-on-surface-variant">Desafía equipos, conquista canchas,<br />conviértete en el rey de tu ciudad.</p>
       </div>
 
       <button
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-3 bg-white text-[#1a1a1a] border-none rounded-[10px] py-3.5 text-[14px] font-medium cursor-pointer hover:bg-[#f0f0f0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full min-h-11 flex items-center justify-center gap-3 bg-white text-[#1a1a1a] border-none rounded-[10px] py-3.5 text-[14px] font-medium cursor-pointer hover:bg-[#f0f0f0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {loading ? (
           <span className="text-[#555]">Redirigiendo...</span>
@@ -48,12 +48,12 @@ export default function LoginPage() {
       </button>
 
       {error && (
-        <p className="mt-4 text-[12px] text-[#E24B4A] bg-[#E24B4A15] border border-[#E24B4A30] rounded-[6px] px-3 py-2 text-center">
+        <p className="mt-4 text-[12px] text-error bg-error/15 border border-error/30 rounded-[6px] px-3 py-2 text-center">
           {error}
         </p>
       )}
 
-      <p className="text-center text-[11px] text-[#333] mt-6 leading-relaxed">
+      <p className="text-center text-[11px] text-outline mt-6 leading-relaxed">
         Al continuar aceptas los términos de uso.<br />
         Tu cuenta se crea automáticamente si es la primera vez.
       </p>

@@ -84,7 +84,7 @@ export function InvitacionesRecibidas() {
 
           const invitadorNombre = inv.profiles?.display_name ?? inv.profiles?.username ?? 'Alguien';
           const emoji = DEPORTE_EMOJI[equipo.deporte] ?? '🏟️';
-          const color = equipo.color ?? '#F5C344';
+          const color = equipo.color ?? '#d5ff40';
           const words = equipo.nombre.trim().split(/\s+/);
           const iniciales = words.length >= 2
             ? (words[0][0] + words[1][0]).toUpperCase()

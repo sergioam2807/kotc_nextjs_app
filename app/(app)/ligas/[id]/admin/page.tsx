@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { AdminEstadoPanel } from '@/components/ligas/admin/AdminEstadoPanel';
 import { AdminEquiposPanel } from '@/components/ligas/admin/AdminEquiposPanel';
 import { GenerarCalendarioButton } from '@/components/ligas/admin/GenerarCalendarioButton';
+import { Badge } from '@/components/ui/Badge';
 import Link from 'next/link';
 
 // Normalise Supabase FK joins that may be returned as array or single object
@@ -154,7 +155,7 @@ export default async function LigaAdminPage({ params }: { params: Promise<{ id: 
               </div>
             </div>
             {pendientes > 0 && (
-              <span className="ml-2 bg-accent text-on-accent text-[11px] font-bold px-2 py-0.5 rounded-full">{pendientes}</span>
+              <Badge variant="primary" className="ml-2">{pendientes}</Badge>
             )}
           </Link>
         </div>

@@ -103,7 +103,7 @@ export function Player1v1RankingView({ stats, currentUserId }: Props) {
 
               {/* Racha */}
               {p.racha_actual >= 2 && (
-                <div className="flex-shrink-0 text-[10px] font-semibold text-orange-500 bg-orange-500/10 rounded-full px-2 py-0.5">
+                <div className="flex-shrink-0 text-[10px] font-semibold text-status-libre bg-status-libre/10 rounded-full px-2 py-0.5">
                   🔥{p.racha_actual}
                 </div>
               )}

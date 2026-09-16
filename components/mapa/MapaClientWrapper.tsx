@@ -90,9 +90,9 @@ function nivelTier(nivel: number): string {
 }
 
 const ESTADO_COLORS = {
-  king:  '#ffe083',
-  libre: '#4ade80',
-  rival: '#f87171',
+  king:  'var(--color-accent)',
+  libre: 'var(--color-status-libre)',
+  rival: 'var(--color-status-rival)',
 };
 
 const ESTADO_LABELS = {
@@ -207,10 +207,10 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
   const regionesConCanchas = REGIONES_CHILE;
 
   const filtroItems: { id: Filtro; label: string; color: string; count: number }[] = [
-    { id: 'todas',  label: 'Todas',   color: '#8f909d', count: conteos.todas },
-    { id: 'king',   label: 'King',    color: '#ffe083', count: conteos.king  },
-    { id: 'libre',  label: 'Libres',  color: '#4ade80', count: conteos.libre },
-    { id: 'rival',  label: 'Rivales', color: '#f87171', count: conteos.rival },
+    { id: 'todas',  label: 'Todas',   color: 'var(--color-outline)', count: conteos.todas },
+    { id: 'king',   label: 'King',    color: ESTADO_COLORS.king,  count: conteos.king  },
+    { id: 'libre',  label: 'Libres',  color: ESTADO_COLORS.libre, count: conteos.libre },
+    { id: 'rival',  label: 'Rivales', color: ESTADO_COLORS.rival, count: conteos.rival },
   ];
 
   useEffect(() => {
@@ -589,9 +589,9 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
         {/* Legend (desktop only) */}
         <div className="hidden md:block absolute bottom-3 left-3 bg-surface-container-low/80 border border-outline-variant rounded-lg px-3 py-2.5 z-10">
           {[
-            { color: '#ffe083', label: 'Mis canchas (King)' },
-            { color: '#4ade80', label: 'Libre para conquistar' },
-            { color: '#f87171', label: 'Cancha rival' },
+            { color: ESTADO_COLORS.king,  label: 'Mis canchas (King)' },
+            { color: ESTADO_COLORS.libre, label: 'Libre para conquistar' },
+            { color: ESTADO_COLORS.rival, label: 'Cancha rival' },
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5 mb-1.5 last:mb-0">
               <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: l.color }} />
@@ -629,7 +629,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
           <button
             onClick={handleAgregarCanchaClick}
             aria-label="Agregar cancha"
-            className="md:hidden absolute right-3 z-20 w-14 h-14 bg-accent text-on-accent rounded-full text-2xl font-bold flex items-center justify-center shadow-[0_4px_16px_rgba(255,224,131,0.35)]"
+            className="md:hidden absolute right-3 z-20 w-14 h-14 bg-accent text-on-accent rounded-full text-2xl font-bold flex items-center justify-center shadow-[0_4px_16px_rgba(213,255,64,0.35)]"
             style={{ bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))' }}
           >
             +
@@ -654,7 +654,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
               : canchaSeleccionada.kingsPerFormato[filtroFormato] ?? null;
 
           const displayName   = panelKing?.equipoNombre ?? panelKing?.jugadorNombre ?? null;
-          const displayColor  = panelKing?.equipoColor ?? '#ffe083';
+          const displayColor  = panelKing?.equipoColor ?? 'var(--color-accent)';
           const displayInitials = displayName
             ? displayName.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
             : null;
@@ -905,7 +905,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
                   <div className="space-y-1.5">
                     {formatSpecificKings.map(([fmt, king]) => {
                       const name = king.equipoNombre ?? king.jugadorNombre;
-                      const color = king.equipoColor ?? '#ffe083';
+                      const color = king.equipoColor ?? 'var(--color-accent)';
                       return (
                         <div key={fmt} className="flex items-center justify-between">
                           <span className="text-[10px] text-outline">{FORMAT_LABELS[fmt] ?? fmt}</span>
@@ -935,7 +935,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
                   <button
                     onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}&retado=${canchaSeleccionada.equipoId}`)}
                     className="w-full font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
-                    style={{ background: '#f87171', color: '#fff', boxShadow: '0 8px 24px rgba(248,113,113,0.35)' }}
+                    style={{ background: 'var(--color-status-rival)', color: '#fff', boxShadow: '0 8px 24px rgba(248,113,113,0.35)' }}
                   >
                     <span>⚔️</span>
                     <span>Desafiar al Rey</span>
@@ -943,7 +943,7 @@ export function MapaClientWrapper({ canchas, equipoId, userId, stats }: Props) {
                 ) : canchaSeleccionada.estado === 'libre' && equipoId ? (
                   <button
                     onClick={() => router.push(`/desafios?cancha=${canchaSeleccionada.id}`)}
-                    className="w-full bg-accent text-on-accent font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(255,224,131,0.3)] hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
+                    className="w-full bg-accent text-on-accent font-black italic uppercase py-4 rounded-xl text-[12px] tracking-widest flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(213,255,64,0.3)] hover:brightness-110 hover:-translate-y-0.5 active:scale-95 transition-all"
                   >
                     <span>⚡</span>
                     <span>Conquistar cancha</span>

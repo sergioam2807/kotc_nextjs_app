@@ -32,15 +32,22 @@ export function StarRating({ value, onChange, size = 16, className = '' }: Props
             onClick={() => onChange?.(star)}
             onMouseEnter={() => interactive && setHovered(star)}
             aria-label={`${star} estrella${star !== 1 ? 's' : ''}`}
-            className={interactive ? 'cursor-pointer' : 'cursor-default pointer-events-none'}
-            style={{ lineHeight: 0, background: 'none', border: 'none', padding: 0 }}
+            className={`flex items-center justify-center rounded-md ${interactive ? 'cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent' : 'cursor-default pointer-events-none'}`}
+            style={{
+              lineHeight: 0,
+              background: 'none',
+              border: 'none',
+              // Keep the visual star compact but expand the hit target closer to
+              // a touch-friendly size when the rating is actually interactive.
+              padding: interactive ? Math.max(2, (32 - size) / 2) : 0,
+            }}
           >
             <svg
               width={size}
               height={size}
               viewBox="0 0 24 24"
-              fill={filled ? '#ffe083' : 'none'}
-              stroke={filled ? '#ffe083' : '#555'}
+              fill={filled ? 'var(--color-accent)' : 'none'}
+              stroke={filled ? 'var(--color-accent)' : 'var(--color-outline)'}
               strokeWidth={1.5}
               strokeLinejoin="round"
             >

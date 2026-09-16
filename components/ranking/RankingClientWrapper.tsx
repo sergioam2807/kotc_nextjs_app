@@ -53,8 +53,8 @@ export default function RankingClientWrapper({ teamStats, playerStats, stats1v1,
             <div
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 flex-shrink-0"
               style={{
-                background: temporadaColor ? `${temporadaColor}15` : 'var(--color-accent)/10',
-                border: `1px solid ${temporadaColor ? `${temporadaColor}35` : 'var(--color-accent)/25'}`,
+                background: temporadaColor ? `${temporadaColor}15` : 'color-mix(in oklab, var(--color-accent) 10%, transparent)',
+                border: `1px solid ${temporadaColor ? `${temporadaColor}35` : 'color-mix(in oklab, var(--color-accent) 25%, transparent)'}`,
               }}
             >
               <span className="text-[12px]">{temporadaEmoji ?? '🏆'}</span>

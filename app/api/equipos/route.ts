@@ -77,7 +77,7 @@ export async function POST(request: Request) {
   // Color: must be a valid hex color if provided
   if (color !== undefined && color !== null) {
     if (typeof color !== 'string' || !/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(color)) {
-      return NextResponse.json({ error: 'color inválido (debe ser hex, ej: #F5C344)' }, { status: 400 });
+      return NextResponse.json({ error: 'color inválido (debe ser hex, ej: #d5ff40)' }, { status: 400 });
     }
   }
 
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       deporte,
       modalidad,
       ciudad: ciudad ?? null,
-      color: color ?? '#F5C344',
+      color: color ?? '#d5ff40',
       creador_id: user.id,
       region: region ?? null,
       comuna: comuna ?? null,

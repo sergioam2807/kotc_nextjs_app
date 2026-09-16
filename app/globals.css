@@ -271,6 +271,43 @@ body {
   min-height: 44px;
 }
 
+/* ── Motion system ─────────────────────────────────────────
+ * One focal moment (claiming/defending King status — the product's
+ * emotional core) plus a small, consistent feedback vocabulary. Not
+ * decoration: each class marks a real state change or acknowledgment.
+ * Confident deceleration, no bounce/elastic. Fully covered by the
+ * prefers-reduced-motion block below.
+ */
+
+/* Focal moment: a King/territory claim settling into place. */
+@keyframes kotc-king-claim {
+  0%   { opacity: 0; transform: scale(0.82) rotate(-8deg); }
+  60%  { opacity: 1; transform: scale(1.06) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.kotc-king-claim {
+  animation: kotc-king-claim 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Supporting state: a result/success confirmation settling in — the
+ * same material (scale + opacity), smaller and quicker, so a routine
+ * confirmation reads as the same "the app just confirmed something"
+ * feeling as the King claim, just turned down. */
+@keyframes kotc-confirm-in {
+  0%   { opacity: 0; transform: scale(0.94) translateY(4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.kotc-confirm-in {
+  animation: kotc-confirm-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Feedback: consistent press acknowledgment for primary (lime) actions. */
+.kotc-btn-press {
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), filter 150ms ease;
+}
+.kotc-btn-press:active {
+  transform: scale(0.97);
+}
 
 /* prefers-reduced-motion — stop animations for users with vestibular disorders */
 @media (prefers-reduced-motion: reduce) {

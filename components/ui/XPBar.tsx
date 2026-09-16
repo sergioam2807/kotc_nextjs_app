@@ -29,7 +29,7 @@ export function XPBar({ xp, nivel, showLabel = true, compact = false }: XPBarPro
     return (
       <div className="flex items-center gap-1.5">
         <span className="text-[11px] text-accent font-semibold">Lv.{nivel}</span>
-        <ProgressBar value={porcentaje} aria-label="Progreso de nivel" className="w-14">
+        <ProgressBar value={porcentaje} aria-label="Progreso de nivel" color="accent" className="w-14">
           <ProgressBar.Track className="h-1 rounded-full">
             <ProgressBar.Fill className="rounded-full" />
           </ProgressBar.Track>
@@ -40,7 +40,7 @@ export function XPBar({ xp, nivel, showLabel = true, compact = false }: XPBarPro
 
   return (
     <div>
-      <ProgressBar value={porcentaje} aria-label="Progreso de nivel" className="mb-1">
+      <ProgressBar value={porcentaje} aria-label="Progreso de nivel" color="accent" className="mb-1">
         <ProgressBar.Track className="h-1.5 rounded-full">
           <ProgressBar.Fill className="rounded-full" />
         </ProgressBar.Track>

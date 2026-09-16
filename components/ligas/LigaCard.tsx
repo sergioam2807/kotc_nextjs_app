@@ -65,7 +65,7 @@ export function LigaCard({ liga, esOrganizador }: LigaCardProps) {
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
               <span className="text-[15px] font-semibold text-on-surface truncate">{liga.nombre}</span>
               {esOrganizador && (
-                <span className="text-[10px] text-accent font-medium">✎ Mi liga</span>
+                <span className="text-[10px] text-on-surface-variant font-medium">✎ Mi liga</span>
               )}
             </div>
 

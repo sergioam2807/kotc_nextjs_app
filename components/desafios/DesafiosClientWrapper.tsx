@@ -125,7 +125,29 @@ export function DesafiosClientWrapper({ desafios, equipoId, equipos, canchas, ju
 
       <div className="flex-1 p-4 sm:p-6 pt-4">
         {filtrados.length === 0 ? (
-          <div className="text-outline text-[12px] text-center py-12">Sin desafíos en esta categoría</div>
+          <div className="bg-surface-container-low border border-outline-variant rounded-xl p-6 text-center max-w-sm mx-auto">
+            <div className="text-[28px] mb-2">⚔️</div>
+            <div className="text-[13px] font-semibold text-on-surface mb-1">
+              {filtro === 'todos' ? 'Sin desafíos todavía' : 'Nada por aquí'}
+            </div>
+            <p className="text-[11px] text-on-surface-variant mb-4 leading-relaxed">
+              {filtro === 'recibidos'
+                ? 'Ningún equipo te ha desafiado — se mostrarán aquí en cuanto llegue uno.'
+                : filtro === 'enviados'
+                  ? 'Aún no has retado a nadie. Elige una cancha en el mapa y lanza tu primer desafío.'
+                  : filtro === 'jugados'
+                    ? 'Todavía no hay partidos jugados o con resultado pendiente.'
+                    : 'Reta a un equipo por el control de una cancha para empezar a subir en el ranking.'}
+            </p>
+            {filtro !== 'jugados' && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="bg-accent text-on-accent rounded-lg px-4 py-2 text-[12px] font-bold hover:brightness-90 transition-all min-h-[40px]"
+              >
+                + Nuevo desafío
+              </button>
+            )}
+          </div>
         ) : (
           <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))' }}>
             {filtrados.map((d) => (

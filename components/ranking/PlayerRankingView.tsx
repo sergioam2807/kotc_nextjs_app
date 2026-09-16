@@ -172,7 +172,11 @@ export function PlayerRankingView({ stats, currentUserId }: Props) {
           );
         })}
         {stats.length === 0 && (
-          <div className="text-outline text-[12px] text-center py-12">Sin jugadores registrados</div>
+          <div className="px-4 py-16 text-center">
+            <div className="text-[32px] mb-3">🏅</div>
+            <div className="text-[13px] text-on-surface font-medium mb-1">Sin jugadores en este filtro</div>
+            <div className="text-[11px] text-outline">Prueba seleccionando otra región.</div>
+          </div>
         )}
       </div>
     </>

@@ -9,7 +9,7 @@ import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 const MODALIDADES = ['3v3', '5v5'];
 
 const COLOR_OPTIONS = [
-  { value: '#ffe083', label: 'Amarillo' },
+  { value: '#d5ff40', label: 'Lima' },
   { value: '#a78bfa', label: 'Violeta' },
   { value: '#b6c4ff', label: 'Azul' },
   { value: '#4ade80', label: 'Verde' },
@@ -25,7 +25,7 @@ export function CrearEquipoForm() {
   const [nombre, setNombre] = useState('');
   const [modalidad, setModalidad] = useState('3v3');
   const [ciudad, setCiudad] = useState('');
-  const [color, setColor] = useState('#ffe083');
+  const [color, setColor] = useState('#d5ff40');
   const [region, setRegion] = useState('');
   const [comuna, setComuna] = useState('');
   const [loading, setLoading] = useState(false);

@@ -284,7 +284,7 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `Badge` — variants: `accent / primary / green / error / purple / neutral / king / libre / rival / gold`
 - `XPBar` — Props: `xp, nivel, showLabel?, compact?`. Muestra progreso del nivel, XP total, nombre nivel siguiente.
 - `RefreshButton` — llama `router.refresh()` via `useTransition`. Spinner animado. `w-9 h-9` tap target. Usado en Dashboard y DesafiosClientWrapper.
-- `StarRating` — Props: `value (0-5), onChange?, size?`. Read-only sin `onChange`; interactivo con `onChange`. Muestra estrellas SVG color accent (#ffe083).
+- `StarRating` — Props: `value (0-5), onChange?, size?`. Read-only sin `onChange`; interactivo con `onChange`. Muestra estrellas SVG color accent (`var(--color-accent)`).
 
 ### Layout (`components/layout/`)
 - `MobileBottomNav` — nav fijo inferior, solo en mobile (`md:hidden`). Items: **Inicio** `/dashboard` · **Mapa** `/mapa` · **Desafíos** `/desafios` · **Ligas** `/ligas` · **Equipo** `/equipo`. `aria-current` en item activo. Padding safe-area.
@@ -766,9 +766,7 @@ pnpm import:canchas --ciudad=santiago   # ← idempotente
 ## Cosas pendientes / conocidas
 
 ### 🔴 Crítico (bloqueante para producción)
-- **`supabase db push` pendiente** — migraciones 039–043 existen en código pero no en DB. Los filtros de región/comuna, rivales, disputas, logos y valoraciones no funcionan sin esto.
 - **GCS bucket pendiente** — crear bucket `kotc-team-logos` en GCP y configurar 4 env vars (GCS_*). Sin esto, la subida de logos falla en runtime pero no en build.
-- **Dashboard y equipo page** usan estilos hardcodeados legacy (`bg-[#0f0f12]`, `text-[#F5C344]`) — refactoring a tokens pendiente
 
 ### 🟡 Funcional pero incompleto
 - **Rivales buscando match**: requiere que al menos un equipo active `buscando_rival = true` en su perfil (`/equipo/editar`) para que el widget del dashboard muestre resultados
