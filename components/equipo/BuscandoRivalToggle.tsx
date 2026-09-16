@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Card } from '@heroui/react';
 
 interface Props {
   equipoId: string;
@@ -47,7 +48,7 @@ export function BuscandoRivalToggle({ equipoId: _equipoId, initialBuscando, init
   }
 
   return (
-    <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+    <Card variant="secondary" className="border border-outline-variant rounded-xl p-4">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <span className="text-[14px]">{buscando ? '🔥' : '🔍'}</span>
@@ -100,6 +101,6 @@ export function BuscandoRivalToggle({ equipoId: _equipoId, initialBuscando, init
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

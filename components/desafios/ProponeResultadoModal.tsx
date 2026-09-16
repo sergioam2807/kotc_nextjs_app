@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button, Modal } from '@heroui/react';
 import type { DesafioConDatos, ResultadoDesafio } from './types';
 
 interface Props {
@@ -68,24 +69,15 @@ export function ProponeResultadoModal({ desafio, equipoId, onClose, onSuccess, r
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-surface/80 backdrop-blur-sm overflow-y-auto p-0 sm:p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div
-        className="w-full max-w-sm bg-surface-container-low border border-outline-variant sm:rounded-xl rounded-t-xl p-6 max-h-[100dvh] sm:max-h-[92dvh] overflow-y-auto"
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[15px] font-bold text-on-surface">{resultadoId ? '🔄 Re-proponer resultado' : '¿Quién ganó?'}</h2>
-          <button
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="w-10 h-10 -mr-2 flex items-center justify-center text-outline hover:text-on-surface-variant transition-colors text-2xl leading-none"
-          >
-            ×
-          </button>
-        </div>
+    <Modal isOpen onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <Modal.Backdrop variant="blur">
+        <Modal.Container placement="auto" size="sm">
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>{resultadoId ? '🔄 Re-proponer resultado' : '¿Quién ganó?'}</Modal.Heading>
+            </Modal.Header>
+            <Modal.CloseTrigger aria-label="Cerrar" className="text-2xl leading-none">×</Modal.CloseTrigger>
+            <Modal.Body>
 
         {/* Puntajes opcionales */}
         <div className="mb-4">
@@ -178,18 +170,22 @@ export function ProponeResultadoModal({ desafio, equipoId, onClose, onSuccess, r
           </div>
         )}
 
-        <button
-          onClick={handleProponer}
-          disabled={!ganadorSeleccionado || loading}
-          className="w-full rounded-lg px-3 py-3 text-[13px] font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-accent text-on-accent hover:brightness-90 min-h-[44px]"
+        <Button
+          variant="primary"
+          onPress={handleProponer}
+          isDisabled={!ganadorSeleccionado || loading}
+          fullWidth
         >
           {loading ? 'Enviando...' : resultadoId ? 'Re-proponer resultado' : 'Proponer resultado'}
-        </button>
+        </Button>
 
         <p className="text-center text-[10px] text-outline mt-2">
           {resultadoId ? 'El rival deberá confirmar el nuevo resultado' : 'El rival deberá confirmar'}
         </p>
-      </div>
-    </div>
+            </Modal.Body>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
   );
 }

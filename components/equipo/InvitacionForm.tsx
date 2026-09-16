@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button, Card } from '@heroui/react';
 
 type MetodoInvitacion = 'email' | 'whatsapp' | 'link';
 
@@ -45,7 +45,7 @@ export function InvitacionForm({ equipoId, linkToken }: InvitacionFormProps) {
   };
 
   return (
-    <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+    <Card variant="secondary" className="border border-outline-variant rounded-xl p-4">
       <div className="flex gap-1 mb-3.5">
         {(['email', 'whatsapp', 'link'] as MetodoInvitacion[]).map(m => (
           <button
@@ -71,7 +71,7 @@ export function InvitacionForm({ equipoId, linkToken }: InvitacionFormProps) {
             onChange={e => setValor(e.target.value)}
             className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[13px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors"
           />
-          <Button onClick={handleEnviar} disabled={!valor || enviando} size="md">
+          <Button onPress={handleEnviar} isDisabled={!valor || enviando} size="md">
             {enviando ? 'Enviando...' : 'Enviar'}
           </Button>
         </div>
@@ -80,7 +80,7 @@ export function InvitacionForm({ equipoId, linkToken }: InvitacionFormProps) {
           <div className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-outline truncate font-mono">
             {linkInvitacion || 'kotc.app/join/...'}
           </div>
-          <Button onClick={handleCopiarLink} size="md">
+          <Button onPress={handleCopiarLink} size="md">
             Copiar
           </Button>
         </div>
@@ -89,6 +89,6 @@ export function InvitacionForm({ equipoId, linkToken }: InvitacionFormProps) {
       {mensaje && (
         <p className="mt-2 text-[12px] text-status-libre">{mensaje}</p>
       )}
-    </div>
+    </Card>
   );
 }

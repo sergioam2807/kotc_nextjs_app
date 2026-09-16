@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { Button, Input, Modal, TextArea } from '@heroui/react';
 import type { Desafio1v1ConDatos, ProfileSimple } from './types';
 
 interface CanchaSimple {
@@ -16,9 +17,6 @@ interface Props {
   onClose: () => void;
   onSuccess: (desafio: Desafio1v1ConDatos) => void;
 }
-
-const inputClass =
-  'w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors';
 
 const labelClass =
   'block text-[11px] text-outline mb-1.5 font-semibold uppercase tracking-[0.08em]';
@@ -112,25 +110,16 @@ export function NuevoDesafio1v1Modal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-surface/80 backdrop-blur-sm overflow-y-auto p-0 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-lg bg-surface-container border border-outline-variant sm:rounded-xl rounded-t-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)] overflow-y-auto max-h-[100dvh] sm:max-h-[92dvh]"
-        onClick={e => e.stopPropagation()}
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
-      >
-        <button
-          onClick={onClose}
-          aria-label="Cerrar"
-          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-outline hover:text-on-surface transition-colors text-[20px] leading-none z-10"
-        >
-          ×
-        </button>
-
-        <div className="text-[15px] font-bold text-on-surface mb-1 pr-10">⚔️ Nuevo desafío 1v1</div>
-        <div className="text-[11px] text-outline mb-5">🏀 Basketball · Duelo individual</div>
+    <Modal isOpen onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <Modal.Backdrop variant="blur">
+        <Modal.Container placement="auto" size="lg">
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>⚔️ Nuevo desafío 1v1</Modal.Heading>
+              <p className="text-[11px] text-outline">🏀 Basketball · Duelo individual</p>
+            </Modal.Header>
+            <Modal.CloseTrigger aria-label="Cerrar" className="text-[20px] leading-none">×</Modal.CloseTrigger>
+            <Modal.Body>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
@@ -167,13 +156,14 @@ export function NuevoDesafio1v1Modal({
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                <input
+                <Input
                   type="text"
+                  aria-label="Buscar jugador rival"
                   value={busqJugador}
                   onChange={e => setBusqJugador(e.target.value)}
                   placeholder="Buscar jugador por nombre..."
                   autoFocus
-                  className={inputClass}
+                  fullWidth
                 />
                 {jugadoresFiltrados.length > 0 && (
                   <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-y-auto max-h-[160px]">
@@ -235,12 +225,13 @@ export function NuevoDesafio1v1Modal({
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                <input
+                <Input
                   type="text"
+                  aria-label="Buscar cancha"
                   value={busqCancha}
                   onChange={e => setBusqCancha(e.target.value)}
                   placeholder="Buscar cancha (opcional)..."
-                  className={inputClass}
+                  fullWidth
                 />
                 {busqCancha.trim() && canchasFiltradas.length > 0 && (
                   <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-y-auto max-h-[140px]">
@@ -266,11 +257,13 @@ export function NuevoDesafio1v1Modal({
             <label className={labelClass}>
               Fecha y hora <span className="normal-case text-outline/50">(opcional)</span>
             </label>
-            <input
+            <Input
               type="datetime-local"
+              aria-label="Fecha y hora"
               value={fecha}
               onChange={e => setFecha(e.target.value)}
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface outline-none focus:border-accent/40 transition-colors [color-scheme:light_dark]"
+              className="[color-scheme:light_dark]"
+              fullWidth
             />
             {fecha && (
               <button
@@ -288,13 +281,15 @@ export function NuevoDesafio1v1Modal({
             <label className={labelClass}>
               Mensaje <span className="normal-case text-outline/50">(opcional)</span>
             </label>
-            <textarea
+            <TextArea
+              aria-label="Mensaje"
               value={mensaje}
               onChange={e => setMensaje(e.target.value)}
               rows={2}
               maxLength={300}
               placeholder="Dale contexto a tu rival, ej: &quot;Cancha del barrio, mañana a las 7 pm&quot;"
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors resize-none"
+              className="resize-none"
+              fullWidth
             />
           </div>
 
@@ -305,15 +300,14 @@ export function NuevoDesafio1v1Modal({
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading || !retadoId}
-            className="w-full bg-accent text-on-accent rounded-lg py-2.5 text-[13px] font-bold hover:brightness-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-1 min-h-[44px]"
-          >
+          <Button type="submit" variant="primary" isDisabled={loading || !retadoId} fullWidth className="mt-1">
             {loading ? 'Enviando...' : '⚔️ Enviar desafío 1v1'}
-          </button>
+          </Button>
         </form>
-      </div>
-    </div>
+            </Modal.Body>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
   );
 }

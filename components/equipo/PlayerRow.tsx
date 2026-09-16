@@ -1,5 +1,6 @@
 'use client';
 
+import { Card } from '@heroui/react';
 import { Badge } from '@/components/ui/Badge';
 
 interface PlayerRowProps {
@@ -34,7 +35,7 @@ export function PlayerRow({
   onRemove,
 }: PlayerRowProps) {
   return (
-    <div className="bg-surface-container-low border border-outline-variant rounded-lg p-2.5 px-3.5 flex items-center gap-3 hover:border-outline transition-colors">
+    <Card variant="secondary" className="border border-outline-variant rounded-lg p-2.5 px-3.5 flex-row items-center gap-3 hover:border-outline transition-colors">
       {avatarUrl ? (
         <img
           src={avatarUrl}
@@ -99,6 +100,6 @@ export function PlayerRow({
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

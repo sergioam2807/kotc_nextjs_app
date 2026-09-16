@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button, Card } from '@heroui/react';
+import { SoftButton } from '@/components/ui/SoftButton';
 import type { Desafio1v1ConDatos, ProfileSimple } from './types';
 import { NuevoDesafio1v1Modal } from './NuevoDesafio1v1Modal';
 
@@ -146,7 +148,7 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
     const isProponiendoThis = proponiendo === d.id;
 
     return (
-      <div key={d.id} className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+      <Card key={d.id} variant="secondary" className="border border-outline-variant rounded-xl p-4">
         {/* Header */}
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-lg bg-accent/15 text-accent flex items-center justify-center text-[13px] font-bold flex-shrink-0">
@@ -196,31 +198,27 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
         {/* Recibido pendiente: accept / reject */}
         {d.retado_id === userId && d.estado === 'pendiente' && (
           <div className="flex gap-2">
-            <button onClick={() => accionDesafio(d.id, 'aceptar')} disabled={isBusy}
-              className="flex-1 bg-accent text-on-accent font-semibold text-[12px] py-2 rounded-lg hover:opacity-90 disabled:opacity-50 cursor-pointer min-h-[40px]">
+            <Button variant="primary" onPress={() => accionDesafio(d.id, 'aceptar')} isDisabled={isBusy} className="flex-1">
               {isBusy ? '…' : 'Aceptar'}
-            </button>
-            <button onClick={() => accionDesafio(d.id, 'rechazar')} disabled={isBusy}
-              className="px-3 bg-error/10 border border-error/25 text-error text-[12px] py-2 rounded-lg hover:bg-error/20 disabled:opacity-50 cursor-pointer min-h-[40px]">
+            </Button>
+            <SoftButton color="red" onPress={() => accionDesafio(d.id, 'rechazar')} isDisabled={isBusy} className="px-3">
               {isBusy ? '…' : 'Rechazar'}
-            </button>
+            </SoftButton>
           </div>
         )}
 
         {/* Enviado pendiente: cancel */}
         {d.retador_id === userId && d.estado === 'pendiente' && (
-          <button onClick={() => accionDesafio(d.id, 'cancelar')} disabled={isBusy}
-            className="w-full text-[12px] text-on-surface-variant border border-outline-variant rounded-lg py-2 hover:border-outline disabled:opacity-50 cursor-pointer min-h-[40px]">
+          <Button variant="outline" onPress={() => accionDesafio(d.id, 'cancelar')} isDisabled={isBusy} fullWidth>
             {isBusy ? '…' : 'Cancelar desafío'}
-          </button>
+          </Button>
         )}
 
         {/* Aceptado: marcar como jugado */}
         {d.estado === 'aceptado' && (
-          <button onClick={() => accionDesafio(d.id, 'marcar_jugado')} disabled={isBusy}
-            className="w-full bg-primary/15 text-primary border border-primary/25 font-semibold text-[12px] py-2 rounded-lg hover:bg-primary/25 disabled:opacity-50 cursor-pointer min-h-[40px]">
+          <SoftButton color="primary" onPress={() => accionDesafio(d.id, 'marcar_jugado')} isDisabled={isBusy} fullWidth>
             {isBusy ? '…' : '📋 Registrar resultado'}
-          </button>
+          </SoftButton>
         )}
 
         {/* resultado_pendiente */}
@@ -250,17 +248,17 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
             {!isProponiendoThis && (
               <div className="flex gap-2">
                 {(!d.resultado || d.resultado.propuesto_por !== userId) && (
-                  <button
-                    onClick={() => { setProponiendo(d.id); setPropGanador(''); setPropPtsR(''); setPropPtsD(''); setPropError(null); }}
-                    className="flex-1 bg-accent text-on-accent font-semibold text-[12px] py-2 rounded-lg hover:opacity-90 cursor-pointer min-h-[40px]">
+                  <Button
+                    variant="primary"
+                    onPress={() => { setProponiendo(d.id); setPropGanador(''); setPropPtsR(''); setPropPtsD(''); setPropError(null); }}
+                    className="flex-1">
                     Proponer resultado
-                  </button>
+                  </Button>
                 )}
                 {d.resultado && d.resultado.propuesto_por !== userId && (
-                  <button onClick={() => handleConfirmar(d.id)} disabled={isBusy}
-                    className="flex-1 bg-status-libre/15 text-status-libre border border-status-libre/25 font-semibold text-[12px] py-2 rounded-lg hover:bg-status-libre/25 disabled:opacity-50 cursor-pointer min-h-[40px]">
+                  <SoftButton color="green" onPress={() => handleConfirmar(d.id)} isDisabled={isBusy} className="flex-1">
                     {isBusy ? '…' : '✓ Confirmar'}
-                  </button>
+                  </SoftButton>
                 )}
               </div>
             )}
@@ -288,20 +286,18 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
                 </div>
                 {propError && <p className="text-[11px] text-error">{propError}</p>}
                 <div className="flex gap-2">
-                  <button onClick={() => handleProponer(d.id)} disabled={isBusy}
-                    className="flex-1 bg-accent text-on-accent font-semibold text-[12px] py-2.5 rounded-lg hover:opacity-90 disabled:opacity-50 cursor-pointer min-h-[40px]">
+                  <Button variant="primary" onPress={() => handleProponer(d.id)} isDisabled={isBusy} className="flex-1">
                     {isBusy ? '…' : 'Enviar resultado'}
-                  </button>
-                  <button onClick={() => setProponiendo(null)}
-                    className="px-4 text-[12px] text-on-surface-variant border border-outline-variant rounded-lg hover:border-outline cursor-pointer">
+                  </Button>
+                  <Button variant="outline" onPress={() => setProponiendo(null)} className="px-4">
                     Cancelar
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
           </>
         )}
-      </div>
+      </Card>
     );
   }
 
@@ -320,13 +316,14 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
             </div>
           </div>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-accent text-on-accent rounded-lg px-3 py-2 text-[12px] font-bold hover:brightness-90 transition-all min-h-[40px] whitespace-nowrap flex-shrink-0"
+        <Button
+          variant="primary"
+          onPress={() => setShowModal(true)}
+          className="whitespace-nowrap flex-shrink-0"
         >
           <span className="sm:hidden">+ 1v1</span>
           <span className="hidden sm:inline">+ Nuevo 1v1</span>
-        </button>
+        </Button>
       </div>
 
       {/* Lista de desafíos */}
@@ -337,12 +334,9 @@ export function Desafios1v1Section({ desafios: initial, userId, jugadores, canch
           <p className="text-[12px] text-on-surface-variant max-w-xs mx-auto">
             Desafía a cualquier jugador a un duelo individual. No necesitas equipo.
           </p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="mt-4 bg-accent text-on-accent rounded-lg px-5 py-2.5 text-[13px] font-bold hover:brightness-90 transition-all"
-          >
+          <Button variant="primary" onPress={() => setShowModal(true)} className="mt-4">
             Desafiar jugador →
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">

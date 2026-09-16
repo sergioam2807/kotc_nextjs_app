@@ -1,5 +1,6 @@
 'use client';
 
+import { Label, ListBox, Select } from '@heroui/react';
 import { REGIONES_CHILE } from '@/lib/chile-geo';
 
 interface Props {
@@ -10,9 +11,6 @@ interface Props {
   required?: boolean;
   className?: string;
 }
-
-const selectClass =
-  'bg-surface-container border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface w-full appearance-none cursor-pointer outline-none focus:border-outline transition-colors';
 
 const labelClass = 'text-[11px] text-outline mb-1 block uppercase tracking-wider';
 
@@ -27,49 +25,64 @@ export function RegionComunaSelect({
   const regionObj = REGIONES_CHILE.find((r) => r.nombreCorto === region) ?? null;
   const comunas = regionObj?.comunas ?? [];
 
-  function handleRegionChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    onRegionChange(e.target.value);
-    onComunaChange('');
-  }
-
   return (
     <div className={className}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Región */}
         <div>
-          <label className={labelClass}>Región</label>
-          <select
-            value={region}
-            onChange={handleRegionChange}
-            required={required}
-            className={selectClass}
+          <Label className={labelClass}>Región</Label>
+          <Select
+            aria-label="Región"
+            value={region || null}
+            onChange={(key) => { onRegionChange((key as string) ?? ''); onComunaChange(''); }}
+            isRequired={required}
+            placeholder="Selecciona región"
+            className="w-full"
           >
-            <option value="">Selecciona región</option>
-            {REGIONES_CHILE.map((r) => (
-              <option key={r.codigo} value={r.nombreCorto}>
-                {r.codigo} · {r.nombreCorto}
-              </option>
-            ))}
-          </select>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {REGIONES_CHILE.map((r) => (
+                  <ListBox.Item key={r.codigo} id={r.nombreCorto} textValue={`${r.codigo} · ${r.nombreCorto}`}>
+                    {r.codigo} · {r.nombreCorto}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
         </div>
 
         {/* Comuna */}
         <div>
-          <label className={labelClass}>Comuna</label>
-          <select
-            value={comuna}
-            onChange={(e) => onComunaChange(e.target.value)}
-            disabled={!region}
-            required={required}
-            className={`${selectClass} disabled:opacity-40 disabled:cursor-not-allowed`}
+          <Label className={labelClass}>Comuna</Label>
+          <Select
+            aria-label="Comuna"
+            value={comuna || null}
+            onChange={(key) => onComunaChange((key as string) ?? '')}
+            isDisabled={!region}
+            isRequired={required}
+            placeholder="Selecciona comuna"
+            className="w-full"
           >
-            <option value="">Selecciona comuna</option>
-            {comunas.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {comunas.map((c) => (
+                  <ListBox.Item key={c} id={c} textValue={c}>
+                    {c}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
         </div>
       </div>
     </div>

@@ -1,36 +1,36 @@
 @import "tailwindcss";
+@import "@heroui/styles";
 
 /*
  * ============================================================
- * KOTC Design System – Pro League Asphalt
+ * KOTC Design System – Neon Court
  * ============================================================
  *
- * Para cambiar la paleta edita lib/design-tokens.ts y
- * luego actualiza los valores de :root y [data-theme="light"].
- *
- * Tema en runtime: añade data-theme="light" en <html>.
+ * Solo modo oscuro — no hay theme claro (ver lib/design-tokens.ts
+ * para la paleta completa). Para cambiar la paleta edita los
+ * valores de :root abajo.
  * ============================================================
  */
 
-/* ── Dark Theme (default) ─────────────────────────────────── */
+/* ── Dark Theme (único) ───────────────────────────────────── */
 :root {
-  /* Surfaces */
-  --surface:                    #051424;
-  --surface-dim:                #051424;
-  --surface-bright:             #2c3a4c;
-  --surface-container-lowest:   #010f1f;
-  --surface-container-low:      #0d1c2d;
-  --surface-container:          #122131;
-  --surface-container-high:     #1c2b3c;
-  --surface-container-highest:  #273647;
-  --surface-variant:            #273647;
+  /* Surfaces — negro puro, profundidad por brillo */
+  --surface:                    #0a0a0a;
+  --surface-dim:                #0a0a0a;
+  --surface-bright:             #242424;
+  --surface-container-lowest:   #000000;
+  --surface-container-low:      #141414;
+  --surface-container:          #1c1c1c;
+  --surface-container-high:     #242424;
+  --surface-container-highest:  #2c2c2c;
+  --surface-variant:            #242424;
   --surface-tint:               #b6c4ff;
 
   /* Text */
-  --on-surface:                 #d4e4fa;
-  --on-surface-variant:         #c5c5d3;
-  --inverse-surface:            #d4e4fa;
-  --inverse-on-surface:         #233143;
+  --on-surface:                 #ffffff;
+  --on-surface-variant:         #c0c2b8;
+  --inverse-surface:            #ffffff;
+  --inverse-on-surface:         #1c1c1c;
 
   /* Primary — Azul Eléctrico */
   --primary:                    #b6c4ff;
@@ -39,16 +39,16 @@
   --on-primary-container:       #90a8ff;
   --inverse-primary:            #4059aa;
 
-  /* Secondary — MD3 Yellow tokens */
-  --secondary:                  #ffe083;
-  --on-secondary:               #3c2f00;
-  --secondary-container:        #eec200;
-  --on-secondary-container:     #645000;
+  /* Secondary — Verde lima (= accent) */
+  --secondary:                  #d5ff40;
+  --on-secondary:               #0a0a0a;
+  --secondary-container:        #9acd32;
+  --on-secondary-container:     #0a0a0a;
 
-  /* Accent — Amarillo CTA de la marca (= secondary en dark) */
-  --accent:                     #ffe083;
-  --on-accent:                  #3c2f00;
-  --accent-dim:                 #ffe08326;
+  /* Accent — Verde lima CTA de la marca */
+  --accent:                     #d5ff40;
+  --on-accent:                  #0a0a0a;
+  --accent-dim:                 #d5ff4026;
 
   /* Tertiary — Cool Gray */
   --tertiary:                   #c6c6c7;
@@ -63,19 +63,19 @@
   --on-error-container:         #ffdad6;
 
   /* Outline */
-  --outline:                    #8f909d;
-  --outline-variant:            #444651;
+  --outline:                    #9c9c94;
+  --outline-variant:            #2a2a2a;
 
   /* Game status */
   --status-libre:               #4ade80;
   --status-rival:               #f87171;
-  --status-king:                #ffe083;
+  --status-king:                #d5ff40;
   --status-purple:              #a78bfa;
 
-  /* Medal colors — sport convention, themed for contrast */
-  --medal-gold:                 #ffe083;
-  --medal-gold-bg:              #ffe08320;
-  --medal-gold-border:          #ffe08340;
+  /* Medal colors — sport convention */
+  --medal-gold:                 #d5ff40;
+  --medal-gold-bg:              #d5ff4020;
+  --medal-gold-border:          #d5ff4040;
   --medal-silver:               #9aa8b8;
   --medal-silver-bg:            #9aa8b820;
   --medal-silver-border:        #9aa8b840;
@@ -83,87 +83,54 @@
   --medal-bronze-bg:            #cd7f3220;
   --medal-bronze-border:        #cd7f3240;
 
-  /* Semantic brand text — amarillo en dark, azul en light */
-  --text-brand:                 #ffe083;
+  /* Semantic brand text — verde lima */
+  --text-brand:                 #d5ff40;
 }
 
-/* ── Light Theme ──────────────────────────────────────────── */
-[data-theme="light"] {
-  /* Surfaces */
-  --surface:                    #faf8ff;
-  --surface-dim:                #d2d9f4;
-  --surface-bright:             #faf8ff;
-  --surface-container-lowest:   #ffffff;
-  --surface-container-low:      #f2f3ff;
-  --surface-container:          #eaedff;
-  --surface-container-high:     #e2e7ff;
-  --surface-container-highest:  #dae2fd;
-  --surface-variant:            #dae2fd;
-  --surface-tint:               #4059aa;
+/* ── HeroUI theme bridge ──────────────────────────────────── */
+/*
+ * @heroui/styles define sus propios tokens semánticos (--accent, --danger,
+ * --success, etc.) dentro de un layer, así que cualquier variable que KOTC
+ * ya defina arriba (como --accent) le gana automáticamente por reglas de
+ * cascade layers — pero las que KOTC NO define caen al default genérico de
+ * HeroUI. Este bloque alía los tokens de HeroUI que SÍ tienen un equivalente
+ * de marca directo (acento, error, éxito, superficies) a los tokens KOTC ya
+ * existentes, para que Button/Chip/Card/etc. de HeroUI se vean con la
+ * paleta de KOTC.
+ * No se tocan --default/--border/--warning: son tokens neutros usados por
+ * muchos componentes HeroUI a la vez y redefinirlos es una decisión de
+ * diseño más amplia, fuera de esta migración incremental.
+ */
+:root {
+  /* Solo se pisan los tokens base (color sólido + su texto). Las variantes
+     "-soft" y "-hover" las deriva @heroui/styles con su propia fórmula
+     color-mix() a partir de estos, así que ya salen tintadas con la marca
+     de KOTC sin necesidad de redefinirlas a mano. */
+  --accent-foreground: var(--on-accent);
 
-  /* Text */
-  --on-surface:                 #131b2e;
-  --on-surface-variant:         #444651;
-  --inverse-surface:            #283044;
-  --inverse-on-surface:         #eef0ff;
+  --danger:            var(--error);
+  --danger-foreground: var(--on-error);
 
-  /* Primary — Deep Pro Blue */
-  --primary:                    #00236f;
-  --on-primary:                 #ffffff;
-  --primary-container:          #1e3a8a;
-  --on-primary-container:       #90a8ff;
-  --inverse-primary:            #b6c4ff;
+  --success:            var(--status-libre);
+  --success-foreground: var(--surface);
 
-  /* Secondary — MD3 Yellow tokens */
-  --secondary:                  #735c00;
-  --on-secondary:               #ffffff;
-  --secondary-container:        #fed01b;
-  --on-secondary-container:     #6f5900;
+  /* Superficies "elevadas" (Card, y a futuro Popover/Modal): KOTC ya
+     distingue el fondo de página (--surface) de un tono más claro para
+     tarjetas (--surface-container-low/--surface-container). */
+  --surface-secondary: var(--surface-container-low);
+  --surface-tertiary:  var(--surface-container);
 
-  /* Accent — Amarillo brillante CTA */
-  --accent:                     #fed01b;
-  --on-accent:                  #00236f;
-  --accent-dim:                 #fed01b26;
-
-  /* Tertiary */
-  --tertiary:                   #1b2b3f;
-  --on-tertiary:                #ffffff;
-  --tertiary-container:         #314156;
-  --on-tertiary-container:      #9dadc6;
-
-  /* Error */
-  --error:                      #ba1a1a;
-  --on-error:                   #ffffff;
-  --error-container:            #ffdad6;
-  --on-error-container:         #93000a;
-
-  /* Outline — corregido a #696a76 para alcanzar 5.08:1 sobre surface */
-  --outline:                    #696a76;
-  --outline-variant:            #c5c5d3;
-
-  /* Game status */
-  --status-libre:               #00852c;  /* #16a34a era 3.13:1 → #00852c = 4.54:1 */
-  --status-rival:               #dc2626;
-  --status-king:                #a06000;  /* amarillo invisible en claro → pardo 5.47:1 */
-  --status-purple:              #5b21b6;  /* 5.68:1 sobre #faf8ff */
-
-  /* Medal colors — corregidas para contraste WCAG AA en claro */
-  --medal-gold:                 #ffe083;  /* sobre fondos navy → pasa AAA */
-  --medal-gold-bg:              #fed01b20;
-  --medal-gold-border:          #fed01b40;
-  --medal-silver:               #667484;  /* #9aa8b8 era 2.30:1 → #667484 = 4.53:1 */
-  --medal-silver-bg:            #66748420;
-  --medal-silver-border:        #66748440;
-  --medal-bronze:               #ad5f12;  /* #cd7f32 era 2.99:1 → #ad5f12 = 4.51:1 */
-  --medal-bronze-bg:            #ad5f1220;
-  --medal-bronze-border:        #ad5f1240;
-
-  /* Semantic brand text — azul profundo en light (high contrast) */
-  --text-brand:                 #00236f;
-
-  /* Container tokens corregidos */
-  --on-primary-container:       #dce6ff;  /* 7.2:1 sobre #1e3a8a → AAA */
-  --on-tertiary-container:      #c8d8f0;  /* 6.1:1 sobre #314156 → AA */
+  /* Campos de formulario (Input/TextField/TextArea): mismo look que ya
+     tenían los <input> a mano (bg-surface-container-lowest, borde
+     outline-variant, foco en acento). */
+  --field-background:     var(--surface-container-lowest);
+  --field-foreground:     var(--on-surface);
+  --field-placeholder:    var(--outline);
+  --field-border:         var(--outline-variant);
+  --field-border-hover:   var(--outline);
+  --field-border-focus:   var(--accent);
+  --field-hover:          var(--surface-container);
+  --field-focus:          var(--surface-container-lowest);
 }
 
 /* ── Tailwind Theme Integration ───────────────────────────── */
@@ -248,8 +215,8 @@
   /* Border radius — coincide con los valores del diseño */
   --radius-sm:   0.125rem;   /* 2px  — badges */
   --radius-md:   0.375rem;   /* 6px  — elementos medianos */
-  --radius-lg:   0.5rem;     /* 8px  — cards */
-  --radius-xl:   0.75rem;    /* 12px — modals, contenedores grandes */
+  --radius-lg:   0.625rem;   /* 10px — botones */
+  --radius-xl:   1rem;       /* 16px — cards, modals, contenedores grandes */
   --radius-full: 9999px;
 }
 
@@ -265,7 +232,7 @@ html {
 body {
   background-color: var(--surface);
   color: var(--on-surface);
-  font-family: var(--font-lexend, 'Lexend'), system-ui, sans-serif;
+  font-family: var(--font-poppins, 'Poppins'), system-ui, sans-serif;
   min-height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

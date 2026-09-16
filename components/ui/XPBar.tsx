@@ -1,5 +1,6 @@
 'use client';
 
+import { ProgressBar } from '@heroui/react';
 import {
   nombreNivel,
   porcentajeEnNivel,
@@ -28,24 +29,22 @@ export function XPBar({ xp, nivel, showLabel = true, compact = false }: XPBarPro
     return (
       <div className="flex items-center gap-1.5">
         <span className="text-[11px] text-accent font-semibold">Lv.{nivel}</span>
-        <div className="w-14 h-1 bg-surface-container rounded-full overflow-hidden">
-          <div
-            className="h-full bg-accent rounded-full transition-all"
-            style={{ width: `${porcentaje}%` }}
-          />
-        </div>
+        <ProgressBar value={porcentaje} aria-label="Progreso de nivel" className="w-14">
+          <ProgressBar.Track className="h-1 rounded-full">
+            <ProgressBar.Fill className="rounded-full" />
+          </ProgressBar.Track>
+        </ProgressBar>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="h-1.5 bg-surface-container rounded-full overflow-hidden mb-1">
-        <div
-          className="h-full bg-accent rounded-full transition-all"
-          style={{ width: `${porcentaje}%` }}
-        />
-      </div>
+      <ProgressBar value={porcentaje} aria-label="Progreso de nivel" className="mb-1">
+        <ProgressBar.Track className="h-1.5 rounded-full">
+          <ProgressBar.Fill className="rounded-full" />
+        </ProgressBar.Track>
+      </ProgressBar>
       {showLabel && (
         isMax ? (
           <p className="text-[10px] text-accent font-semibold">👑 Nivel máximo alcanzado</p>

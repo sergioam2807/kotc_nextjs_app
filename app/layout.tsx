@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Lexend } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 
-const lexend = Lexend({
+const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-lexend',
+  variable: '--font-poppins',
   display: 'swap',
 });
 
@@ -15,8 +15,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Para activar el tema claro añade data-theme="light" al elemento <html>.
- * El tema oscuro (Pro League Asphalt) es el predeterminado.
+ * Solo modo oscuro (Neon Court) — no hay theme claro ni toggle.
  * Ver lib/design-tokens.ts para la paleta completa.
  */
 export default function RootLayout({
@@ -25,11 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`h-full ${lexend.variable}`} suppressHydrationWarning>
-      {/* Anti-flash: apply stored theme before first paint */}
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('kotc-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();` }} />
-      </head>
+    <html lang="es" className={`h-full ${poppins.variable}`} data-theme="dark">
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

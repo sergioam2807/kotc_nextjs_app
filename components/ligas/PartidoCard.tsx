@@ -1,3 +1,6 @@
+import { Card } from '@heroui/react';
+import { Badge } from '@/components/ui/Badge';
+
 interface Equipo {
   id: string;
   nombre: string;
@@ -70,19 +73,16 @@ export function PartidoCard({ partido, compact = false }: PartidoCardProps) {
   const label = faseLabel[partido.fase] ?? partido.fase;
 
   return (
-    <div className={`bg-surface-container-low border border-outline-variant rounded-xl ${compact ? 'p-3' : 'p-3.5'}`}>
+    <Card variant="secondary" className={`border border-outline-variant ${compact ? 'p-3' : 'p-3.5'}`}>
+      <Card.Content>
       {/* Header */}
       <div className="flex items-center justify-between mb-2.5">
         <span className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium">
           {label}
         </span>
-        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
-          completado
-            ? 'bg-status-libre/15 text-status-libre'
-            : 'bg-surface-container text-on-surface-variant'
-        }`}>
+        <Badge variant={completado ? 'green' : 'neutral'}>
           {completado ? 'Completado' : 'Pendiente'}
-        </span>
+        </Badge>
       </div>
 
       {/* Match */}
@@ -127,6 +127,7 @@ export function PartidoCard({ partido, compact = false }: PartidoCardProps) {
           })}
         </div>
       )}
-    </div>
+      </Card.Content>
+    </Card>
   );
 }

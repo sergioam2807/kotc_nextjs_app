@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Card } from '@heroui/react';
 
 interface Props {
   equipoId: string;
@@ -37,19 +38,19 @@ export function SolicitarEquipoButton({ equipoId, equipoNombre }: Props) {
 
   if (sent) {
     return (
-      <div className="bg-status-libre/10 border border-status-libre/30 rounded-xl p-4 text-center">
+      <Card className="bg-status-libre/10 border border-status-libre/30 rounded-xl p-4 text-center">
         <div className="text-[15px] mb-1">✅</div>
         <p className="text-[13px] font-medium text-status-libre">Solicitud enviada</p>
         <p className="text-[11px] text-on-surface-variant mt-0.5">
           El equipo revisará tu solicitud y te notificará su decisión.
         </p>
-      </div>
+      </Card>
     );
   }
 
   if (open) {
     return (
-      <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+      <Card variant="secondary" className="border border-outline-variant rounded-xl p-4">
         <div className="text-[13px] font-semibold text-on-surface mb-1">
           Solicitar unirse a {equipoNombre}
         </div>
@@ -83,7 +84,7 @@ export function SolicitarEquipoButton({ equipoId, equipoNombre }: Props) {
             Cancelar
           </button>
         </div>
-      </div>
+      </Card>
     );
   }
 

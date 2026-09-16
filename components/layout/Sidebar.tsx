@@ -60,7 +60,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
         { href: '/mapa', label: 'Mapa de canchas', icon: <MapPinIcon /> },
         { href: '/desafios', label: 'Desafíos', icon: <SwordIcon /> },
-        // { href: '/ligas', label: 'Ligas', icon: <TrophyIcon /> }, // TODO: habilitar cuando se lance ligas
         { href: '/ranking', label: 'Ranking', icon: <CrownIcon /> },
       ],
     },

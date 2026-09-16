@@ -13,7 +13,7 @@ App de desafíos territoriales de canchas deportivas (basketball, fútbol, vóle
 | Framework | Next.js 16 App Router (server components por defecto) |
 | DB / Auth | Supabase (PostgreSQL + Auth con Google OAuth) |
 | Estilos | Tailwind CSS 4 + `@theme inline` con CSS variables |
-| Fuente | Lexend via `next/font/google` |
+| Fuente | Poppins via `next/font/google` |
 | Maps | Google Maps JS API |
 | Package manager | **pnpm** |
 
@@ -284,7 +284,6 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `Badge` — variants: `accent / primary / green / error / purple / neutral / king / libre / rival / gold`
 - `XPBar` — Props: `xp, nivel, showLabel?, compact?`. Muestra progreso del nivel, XP total, nombre nivel siguiente.
 - `RefreshButton` — llama `router.refresh()` via `useTransition`. Spinner animado. `w-9 h-9` tap target. Usado en Dashboard y DesafiosClientWrapper.
-- `ThemeToggle` — alterna entre `data-theme="dark"` y `"light"` en `<html>`.
 - `StarRating` — Props: `value (0-5), onChange?, size?`. Read-only sin `onChange`; interactivo con `onChange`. Muestra estrellas SVG color accent (#ffe083).
 
 ### Layout (`components/layout/`)

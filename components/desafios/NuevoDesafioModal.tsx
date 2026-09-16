@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { Button, Input, Modal, TextArea } from '@heroui/react';
 import type { DesafioConDatos, EquipoSimple, CanchaSimple } from './types';
 import type { ProfileSimple } from '@/components/desafios1v1/types';
 import type { Desafio1v1ConDatos } from '@/components/desafios1v1/types';
@@ -27,9 +28,6 @@ const FORMATOS_EQUIPO = [
   { value: '5v5',            label: '5v5' },
   { value: 'equipo_completo', label: 'Equipo completo' },
 ];
-
-const inputClass =
-  'w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors';
 
 const labelClass =
   'block text-[11px] text-outline mb-1.5 font-semibold uppercase tracking-[0.08em]';
@@ -178,25 +176,16 @@ export function NuevoDesafioModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-surface/80 backdrop-blur-sm overflow-y-auto p-0 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-lg bg-surface-container border border-outline-variant sm:rounded-xl rounded-t-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)] overflow-y-auto max-h-[100dvh] sm:max-h-[92dvh]"
-        onClick={e => e.stopPropagation()}
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
-      >
-        <button
-          onClick={onClose}
-          aria-label="Cerrar"
-          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-outline hover:text-on-surface transition-colors text-[20px] leading-none z-10"
-        >
-          ×
-        </button>
-
-        <div className="text-[15px] font-bold text-on-surface mb-1 pr-10">Nuevo desafío</div>
-        <div className="text-[11px] text-outline mb-5">🏀 Basketball · Reta a otro jugador o equipo</div>
+    <Modal isOpen onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <Modal.Backdrop variant="blur">
+        <Modal.Container placement="auto" size="lg">
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>Nuevo desafío</Modal.Heading>
+              <p className="text-[11px] text-outline">🏀 Basketball · Reta a otro jugador o equipo</p>
+            </Modal.Header>
+            <Modal.CloseTrigger aria-label="Cerrar" className="text-[20px] leading-none">×</Modal.CloseTrigger>
+            <Modal.Body>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
@@ -265,8 +254,8 @@ export function NuevoDesafioModal({
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
-                  <input type="text" value={busquedaJugador} onChange={e => setBusquedaJugador(e.target.value)}
-                    placeholder="Buscar jugador por nombre..." autoFocus className={inputClass} />
+                  <Input type="text" aria-label="Buscar jugador rival" value={busquedaJugador} onChange={e => setBusquedaJugador(e.target.value)}
+                    placeholder="Buscar jugador por nombre..." autoFocus fullWidth />
                   {jugadoresFiltrados.length > 0 && (
                     <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-y-auto max-h-[160px]">
                       {jugadoresFiltrados.map(j => {
@@ -310,8 +299,8 @@ export function NuevoDesafioModal({
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
-                  <input type="text" value={busquedaEquipo} onChange={e => setBusquedaEquipo(e.target.value)}
-                    placeholder="Buscar equipo..." className={inputClass} />
+                  <Input type="text" aria-label="Buscar equipo rival" value={busquedaEquipo} onChange={e => setBusquedaEquipo(e.target.value)}
+                    placeholder="Buscar equipo..." fullWidth />
                   {equiposFiltrados.length > 0 && (
                     <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-y-auto max-h-[140px]">
                       {equiposFiltrados.map(eq => (
@@ -346,8 +335,8 @@ export function NuevoDesafioModal({
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                <input type="text" value={busquedaCancha} onChange={e => setBusquedaCancha(e.target.value)}
-                  placeholder="Buscar cancha..." className={inputClass} />
+                <Input type="text" aria-label="Buscar cancha" value={busquedaCancha} onChange={e => setBusquedaCancha(e.target.value)}
+                  placeholder="Buscar cancha..." fullWidth />
                 {canchasFiltradas.length > 0 && (busquedaCancha.trim() || modo !== '1v1_individual') && (
                   <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-y-auto max-h-[140px]">
                     {canchasFiltradas.map(c => (
@@ -369,8 +358,8 @@ export function NuevoDesafioModal({
               Fecha y hora{modo === '1v1_individual' && <span className="normal-case text-outline/50 ml-1">(opcional)</span>}
               {modo === 'equipo' && <span className="text-error ml-1">*</span>}
             </label>
-            <input type="datetime-local" value={fecha} onChange={e => setFecha(e.target.value)}
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface outline-none focus:border-accent/40 transition-colors [color-scheme:light_dark]" />
+            <Input type="datetime-local" aria-label="Fecha y hora" value={fecha} onChange={e => setFecha(e.target.value)}
+              className="[color-scheme:light_dark]" fullWidth />
             {fecha && modo === '1v1_individual' && (
               <button type="button" onClick={() => setFecha('')}
                 className="text-[10px] text-outline hover:text-on-surface-variant mt-1 transition-colors">
@@ -382,9 +371,9 @@ export function NuevoDesafioModal({
           {/* ── Mensaje ───────────────────────────────────────────────── */}
           <div>
             <label className={labelClass}>Mensaje <span className="normal-case text-outline/50">(opcional)</span></label>
-            <textarea value={mensaje} onChange={e => setMensaje(e.target.value)} rows={2} maxLength={300}
+            <TextArea aria-label="Mensaje" value={mensaje} onChange={e => setMensaje(e.target.value)} rows={2} maxLength={300}
               placeholder="Mensaje opcional para tu rival..."
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors resize-none" />
+              className="resize-none" fullWidth />
           </div>
 
           {/* ── Error ─────────────────────────────────────────────────── */}
@@ -394,16 +383,18 @@ export function NuevoDesafioModal({
             </div>
           )}
 
-          <button type="submit" disabled={loading}
-            className="w-full bg-accent text-on-accent rounded-lg py-2.5 text-[13px] font-bold hover:brightness-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-1 min-h-[44px]">
+          <Button type="submit" variant="primary" isDisabled={loading} fullWidth className="mt-1">
             {loading
               ? 'Enviando...'
               : modo === '1v1_individual'
                 ? '⚔️ Enviar desafío 1v1'
                 : '🏀 Enviar desafío'}
-          </button>
+          </Button>
         </form>
-      </div>
-    </div>
+            </Modal.Body>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
   );
 }

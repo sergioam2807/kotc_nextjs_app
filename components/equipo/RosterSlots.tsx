@@ -1,5 +1,7 @@
 'use client';
 
+import { Card } from '@heroui/react';
+
 interface RosterSlotsProps {
   modalidad: string;
   titulares: number;
@@ -20,7 +22,7 @@ export function RosterSlots({ modalidad, titulares, maxTitulares, suplentes, max
   });
 
   return (
-    <div className="bg-surface-container-low border border-outline-variant rounded-lg p-2.5 px-3.5 mb-2.5 flex items-center gap-2.5">
+    <Card variant="secondary" className="border border-outline-variant rounded-lg p-2.5 px-3.5 mb-2.5 flex-row items-center gap-2.5">
       <div className="flex-1">
         <div className="text-[12px] font-semibold text-on-surface">{modalidad}</div>
         <div className="text-[11px] text-outline mt-0.5">
@@ -41,6 +43,6 @@ export function RosterSlots({ modalidad, titulares, maxTitulares, suplentes, max
           />
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

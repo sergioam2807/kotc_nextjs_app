@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
+import { Button, Input, Label, ListBox, Select } from '@heroui/react';
 import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 
 // MVP: Basketball únicamente
@@ -16,9 +16,6 @@ const COLOR_OPTIONS = [
   { value: '#fb923c', label: 'Naranja' },
   { value: '#f87171', label: 'Rojo' },
 ];
-
-const inputClass =
-  'bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors';
 
 const labelClass =
   'text-[11px] text-outline uppercase tracking-[0.08em] font-semibold';
@@ -72,14 +69,14 @@ export function CrearEquipoForm() {
       {/* Nombre */}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Nombre del equipo</label>
-        <input
+        <Input
           type="text"
+          aria-label="Nombre del equipo"
           placeholder="Ej: Los Cóndores"
           value={nombre}
           onChange={e => setNombre(e.target.value)}
           maxLength={40}
           required
-          className={inputClass}
         />
       </div>
 
@@ -87,36 +84,43 @@ export function CrearEquipoForm() {
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label className={labelClass}>Deporte</label>
-          <div className={`${inputClass} flex items-center gap-2 cursor-default select-none opacity-80`}>
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface flex items-center gap-2 cursor-default select-none opacity-80">
             <span>🏀</span>
             <span>Basketball</span>
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={labelClass}>Modalidad</label>
-          <select
-            value={modalidad}
-            onChange={e => setModalidad(e.target.value)}
-            className={`${inputClass} cursor-pointer appearance-none`}
-          >
-            {MODALIDADES.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
+          <Label className={labelClass}>Modalidad</Label>
+          <Select aria-label="Modalidad" value={modalidad} onChange={(key) => setModalidad((key as string) ?? '3v3')} className="w-full">
+            <Select.Trigger>
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                {MODALIDADES.map(m => (
+                  <ListBox.Item key={m} id={m} textValue={m}>
+                    {m}
+                    <ListBox.ItemIndicator />
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
         </div>
       </div>
 
       {/* Ciudad */}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Ciudad</label>
-        <input
+        <Input
           type="text"
+          aria-label="Ciudad"
           placeholder="Ej: Santiago"
           value={ciudad}
           onChange={e => setCiudad(e.target.value)}
           maxLength={60}
           required
-          className={inputClass}
         />
       </div>
 
@@ -161,7 +165,7 @@ export function CrearEquipoForm() {
       {/* Submit */}
       <Button
         type="submit"
-        disabled={loading || !nombre.trim() || !ciudad.trim()}
+        isDisabled={loading || !nombre.trim() || !ciudad.trim()}
         size="md"
         className="w-full justify-center mt-1"
       >

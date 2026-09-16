@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
+import { Button } from '@heroui/react';
 
 interface RefreshButtonProps {
   className?: string;
@@ -12,11 +13,13 @@ export function RefreshButton({ className = '' }: RefreshButtonProps) {
   const [isPending, startTransition] = useTransition();
 
   return (
-    <button
-      onClick={() => startTransition(() => router.refresh())}
-      disabled={isPending}
+    <Button
+      variant="ghost"
+      isIconOnly
+      isPending={isPending}
+      onPress={() => startTransition(() => router.refresh())}
       aria-label="Refrescar"
-      className={`w-9 h-9 flex items-center justify-center rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors disabled:opacity-40 ${className}`}
+      className={className}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -33,6 +36,6 @@ export function RefreshButton({ className = '' }: RefreshButtonProps) {
         <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
         <path d="M21 3v5h-5" />
       </svg>
-    </button>
+    </Button>
   );
 }

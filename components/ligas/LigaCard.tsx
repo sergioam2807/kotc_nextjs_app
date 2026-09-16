@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Card } from '@heroui/react';
 import { Badge } from '@/components/ui/Badge';
 
 interface LigaCardProps {
@@ -54,8 +55,8 @@ export function LigaCard({ liga, esOrganizador }: LigaCardProps) {
 
   return (
     <Link href={`/ligas/${liga.id}`} className="block group">
-      <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 hover:border-outline transition-colors">
-        <div className="flex items-start gap-3">
+      <Card variant="secondary" className="border border-outline-variant hover:border-outline transition-colors">
+        <Card.Content className="flex items-start gap-3">
           {/* Sport emoji */}
           <div className="text-[28px] flex-shrink-0 mt-0.5">{emoji}</div>
 
@@ -92,8 +93,8 @@ export function LigaCard({ liga, esOrganizador }: LigaCardProps) {
               )}
             </div>
           </div>
-        </div>
-      </div>
+        </Card.Content>
+      </Card>
     </Link>
   );
 }

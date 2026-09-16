@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Card } from '@heroui/react';
 import { Badge } from '@/components/ui/Badge';
 
 interface AdminEstadoPanelProps {
@@ -71,7 +72,7 @@ export function AdminEstadoPanel({ ligaId, estadoActual, nombre }: AdminEstadoPa
   };
 
   return (
-    <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+    <Card variant="secondary" className="border border-outline-variant rounded-xl p-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <div className="text-[10px] text-on-surface-variant uppercase tracking-[0.08em] font-medium mb-1.5">
@@ -128,6 +129,6 @@ export function AdminEstadoPanel({ ligaId, estadoActual, nombre }: AdminEstadoPa
           Acepta los equipos, asígna grupos si corresponde, y luego genera el calendario.
         </p>
       )}
-    </div>
+    </Card>
   );
 }

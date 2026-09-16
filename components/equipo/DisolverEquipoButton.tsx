@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Card } from '@heroui/react';
 
 interface DisolverEquipoButtonProps {
   equipoNombre: string;
@@ -57,7 +58,7 @@ export function DisolverEquipoButton({ equipoNombre }: DisolverEquipoButtonProps
   // Confirmar — panel de advertencia con input de nombre
   // -------------------------------------------------------------------------
   return (
-    <div className="mt-6 bg-error/5 border border-error/20 rounded-xl p-4">
+    <Card className="mt-6 bg-error/5 border border-error/20 rounded-xl p-4">
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
         <span className="text-[18px]">⚠️</span>
@@ -110,6 +111,6 @@ export function DisolverEquipoButton({ equipoNombre }: DisolverEquipoButtonProps
           Cancelar
         </button>
       </div>
-    </div>
+    </Card>
   );
 }
