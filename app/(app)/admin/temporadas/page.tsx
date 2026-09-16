@@ -26,12 +26,15 @@ export default async function AdminTemporadasPage() {
     <div>
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-[16px] font-semibold text-on-surface">Temporadas</h2>
+        {/* Sin temporada activa la CTA vive en el estado vacío de abajo. */}
+        {activa && (
         <Link
           href="/admin/temporadas/nueva"
-          className="px-3 py-1.5 rounded-lg bg-accent text-on-accent text-[12px] font-medium hover:brightness-90 transition-all"
+          className="kotc-btn-press px-3 py-1.5 rounded-lg bg-accent text-on-accent text-[12px] font-medium hover:brightness-90"
         >
           + Nueva temporada
         </Link>
+        )}
       </div>
 
       {/* Temporada activa */}
@@ -49,9 +52,11 @@ export default async function AdminTemporadasPage() {
           </p>
           <Link
             href="/admin/temporadas/nueva"
-            className="inline-flex px-4 py-2 rounded-lg bg-accent text-on-accent text-[12px] font-medium hover:brightness-90 transition-all"
+            className="kotc-btn-press inline-flex px-4 py-2 rounded-lg bg-accent text-on-accent text-[12px] font-medium hover:brightness-90"
           >
-            Crear primera temporada
+            {/* "Primera" solo si de verdad no hay ninguna: puede no haber
+                activa y tener historial. */}
+            {lista.length === 0 ? 'Crear primera temporada' : 'Crear nueva temporada'}
           </Link>
         </div>
       )}

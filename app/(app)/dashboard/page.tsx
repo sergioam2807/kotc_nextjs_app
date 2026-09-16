@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { XPBar } from '@/components/ui/XPBar';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { nombreNivel } from '@/lib/levels';
+import { tipoEvento } from '@/lib/eventos';
 import Link from 'next/link';
 import { InvitacionesRecibidas } from '@/components/equipo/InvitacionesRecibidas';
 
@@ -309,15 +310,6 @@ export default async function DashboardPage() {
   const nivelNombre = nombreNivel(nivel);
   const userIniciales = iniciales(displayName);
 
-  // ── Constantes para eventos ───────────────────────────────────────────────
-  const TIPO_COLORS: Record<string, string> = {
-    torneo_express: '#eab308', bonus_xp: '#a855f7', cancha_especial: '#3b82f6',
-    nightball: '#6366f1', king_challenge: '#ef4444', reto_semanal: '#22c55e', otro: '#f97316',
-  };
-  const TIPO_EMOJI: Record<string, string> = {
-    torneo_express: '🏆', bonus_xp: '⚡', cancha_especial: '📍',
-    nightball: '🌙', king_challenge: '👑', reto_semanal: '🎯', otro: '🎉',
-  };
 
   return (
     <div className="p-4 sm:p-5 max-w-5xl mx-auto">
@@ -327,8 +319,8 @@ export default async function DashboardPage() {
         <div
           className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 mb-4"
           style={{
-            background: temporada.color ? `${temporada.color}12` : 'rgba(var(--color-accent-rgb),0.06)',
-            border: `1px solid ${temporada.color ? `${temporada.color}35` : 'rgba(var(--color-accent-rgb),0.2)'}`,
+            background: `color-mix(in oklab, ${temporada.color ?? 'var(--color-accent)'} 10%, transparent)`,
+            border: `1px solid color-mix(in oklab, ${temporada.color ?? 'var(--color-accent)'} 30%, transparent)`,
           }}
         >
           <span className="text-[18px] flex-shrink-0">{temporada.emoji ?? '🏆'}</span>
@@ -361,8 +353,9 @@ export default async function DashboardPage() {
           <div className="text-[10px] text-outline uppercase tracking-wider font-medium mb-2">🎉 Eventos en curso</div>
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {eventosActivos.map(ev => {
-              const c = ev.color ?? TIPO_COLORS[ev.tipo] ?? '#f97316';
-              const e = ev.emoji ?? TIPO_EMOJI[ev.tipo] ?? '🎉';
+              const tipo = tipoEvento(ev.tipo);
+              const c = ev.color ?? tipo.color;
+              const e = ev.emoji ?? tipo.emoji;
               const diasFin = Math.max(0, Math.ceil((new Date(ev.fecha_fin).getTime() - Date.now()) / 86400000));
               return (
                 <div
@@ -605,7 +598,7 @@ export default async function DashboardPage() {
                 {misDesafios.map(d => {
                   const esRetador = d.equipo_retador_id === equipoId;
                   const rivalEq = unwrapEq(esRetador ? d.equipo_retado : d.equipo_retador);
-                  const rivalColor = rivalEq?.color ?? '#888888';
+                  const rivalColor = rivalEq?.color ?? 'var(--color-on-surface-variant)';
                   const esRecibido = d.tipo === 'pendiente' && !esRetador;
 
                   const resultado = Array.isArray(d.resultados) ? d.resultados[0] : d.resultados;
@@ -636,7 +629,11 @@ export default async function DashboardPage() {
                       {/* Rival */}
                       <div
                         className="w-10 h-10 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0"
-                        style={{ background: `${rivalColor}18`, color: rivalColor, border: `1px solid ${rivalColor}35` }}
+                        style={{
+                          background: `color-mix(in oklab, ${rivalColor} 12%, transparent)`,
+                          color: rivalColor,
+                          border: `1px solid color-mix(in oklab, ${rivalColor} 25%, transparent)`,
+                        }}
                       >
                         {iniciales(rivalEq?.nombre)}
                       </div>

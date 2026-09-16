@@ -303,7 +303,7 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId, in
         /* ─── Team cards ──────────────────────────────────────────────── */
         <div className="flex flex-col gap-2">
           {equiposFiltrados.map(equipo => {
-            const color = equipo.color ?? '#F5C344';
+            const color = equipo.color ?? 'var(--color-on-surface-variant)';
             const nivel = equipo.nivel ?? 1;
             const xp = equipo.xp ?? 0;
             const nivelNombre = nombreNivel(nivel);
@@ -327,7 +327,14 @@ export default function EquiposClientWrapper({ equipos, userEquipoId, userId, in
                   {/* Avatar equipo */}
                   <div
                     className="w-12 h-12 rounded-xl flex items-center justify-center text-[15px] font-bold flex-shrink-0 border"
-                    style={{ background: `${color}15`, color, borderColor: `${color}40` }}
+                    // color-mix y no `${color}15`: el color puede venir de la DB
+                    // como hex o ser el token neutro de fallback, y concatenar
+                    // alfa solo funciona con lo primero.
+                    style={{
+                      background: `color-mix(in oklab, ${color} 15%, transparent)`,
+                      color,
+                      borderColor: `color-mix(in oklab, ${color} 30%, transparent)`,
+                    }}
                   >
                     {iniciales}
                   </div>

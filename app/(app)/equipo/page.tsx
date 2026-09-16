@@ -14,12 +14,6 @@ import { BuscandoRivalToggle } from '@/components/equipo/BuscandoRivalToggle';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function avatarColor(id: string): string {
-  const palette = ['#F5C344', '#7F77DD', '#378ADD', '#1D9E75', '#D85A30'];
-  const n = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return palette[n % palette.length];
-}
-
 function getIniciales(displayName: string | null, username: string): string {
   if (displayName) {
     const words = displayName.trim().split(/\s+/);
@@ -402,8 +396,10 @@ export default async function EquipoPage() {
                         key={i}
                         className="w-4 h-4 rounded-sm flex items-center justify-center text-[8px] font-black"
                         style={{
-                          background: r === 'W' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                          color: r === 'W' ? '#22c55e' : '#ef4444',
+                          background: r === 'W'
+                            ? 'color-mix(in oklab, var(--color-status-libre) 15%, transparent)'
+                            : 'color-mix(in oklab, var(--color-status-rival) 15%, transparent)',
+                          color: r === 'W' ? 'var(--color-status-libre)' : 'var(--color-status-rival)',
                         }}
                       >
                         {r}
@@ -415,10 +411,10 @@ export default async function EquipoPage() {
 
               <div className="space-y-3">
                 {[
-                  { label: 'Ataque',       value: ataqueBar,       color: '#22c55e', desc: ppg != null ? `${ppg.toFixed(1)} PPG` : `${winRate.toFixed(0)}% WR` },
-                  { label: 'Defensa',      value: defensaBar,      color: '#3b82f6', desc: papg != null ? `${papg.toFixed(1)} en contra` : 'Pts concedidos' },
+                  { label: 'Ataque',       value: ataqueBar,       color: 'var(--color-status-libre)', desc: ppg != null ? `${ppg.toFixed(1)} PPG` : `${winRate.toFixed(0)}% WR` },
+                  { label: 'Defensa',      value: defensaBar,      color: 'var(--color-primary)', desc: papg != null ? `${papg.toFixed(1)} en contra` : 'Pts concedidos' },
                   { label: 'Territorio',   value: territorioBar,   color: equipo.color, desc: `${totalKing} cancha${totalKing !== 1 ? 's' : ''} King` },
-                  { label: 'Consistencia', value: consistenciaBar, color: '#a855f7', desc: `${totalVictorias}V · ${totalDerrotas}D` },
+                  { label: 'Consistencia', value: consistenciaBar, color: 'var(--color-status-purple)', desc: `${totalVictorias}V · ${totalDerrotas}D` },
                 ].map(({ label, value, color, desc }) => (
                   <div key={label}>
                     <div className="flex items-center justify-between mb-1.5">
@@ -505,7 +501,6 @@ export default async function EquipoPage() {
 
           const nombre = jugador.display_name ?? jugador.username;
           const iniciales = getIniciales(jugador.display_name, jugador.username);
-          const color = avatarColor(jugador.id);
           const isCurrentUser = jugador.id === user.id;
 
           return (
@@ -515,7 +510,6 @@ export default async function EquipoPage() {
               jugadorId={jugador.id}
               nombre={nombre}
               iniciales={iniciales}
-              avatarColor={color}
               avatarUrl={jugador.avatar_url}
               roles={[miembro.rol as 'admin' | 'capitan' | 'jugador']}
               posicion={miembro.posicion as 'titular' | 'suplente'}

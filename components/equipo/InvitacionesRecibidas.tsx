@@ -84,7 +84,7 @@ export function InvitacionesRecibidas() {
 
           const invitadorNombre = inv.profiles?.display_name ?? inv.profiles?.username ?? 'Alguien';
           const emoji = DEPORTE_EMOJI[equipo.deporte] ?? '🏟️';
-          const color = equipo.color ?? '#d5ff40';
+          const color = equipo.color ?? 'var(--color-on-surface-variant)';
           const words = equipo.nombre.trim().split(/\s+/);
           const iniciales = words.length >= 2
             ? (words[0][0] + words[1][0]).toUpperCase()
@@ -102,7 +102,11 @@ export function InvitacionesRecibidas() {
                 {/* Avatar equipo */}
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center text-[13px] font-bold flex-shrink-0 border"
-                  style={{ background: `${color}15`, color, borderColor: `${color}40` }}
+                  style={{
+                    background: `color-mix(in oklab, ${color} 15%, transparent)`,
+                    color,
+                    borderColor: `color-mix(in oklab, ${color} 30%, transparent)`,
+                  }}
                 >
                   {iniciales}
                 </div>

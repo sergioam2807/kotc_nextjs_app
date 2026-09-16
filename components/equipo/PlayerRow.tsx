@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/Badge';
 interface PlayerRowProps {
   nombre: string;
   iniciales: string;
-  avatarColor: string;
   avatarUrl?: string | null;
   roles: ('admin' | 'capitan' | 'jugador')[];
   posicion: 'titular' | 'suplente';
@@ -22,7 +21,6 @@ interface PlayerRowProps {
 export function PlayerRow({
   nombre,
   iniciales,
-  avatarColor,
   avatarUrl,
   roles,
   posicion,
@@ -44,10 +42,7 @@ export function PlayerRow({
           referrerPolicy="no-referrer"
         />
       ) : (
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center text-[13px] font-semibold flex-shrink-0"
-          style={{ background: `${avatarColor}20`, color: avatarColor }}
-        >
+        <div className="w-10 h-10 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center text-[13px] font-semibold flex-shrink-0">
           {iniciales}
         </div>
       )}

@@ -163,9 +163,11 @@ export default function LandingPage() {
 
           <div className="max-w-2xl mx-auto mb-6 md:mb-8 space-y-2.5 md:space-y-3">
             {[
-              { pos: 1, posColor: 'var(--medal-gold)',   teamColor: '#b6c4ff', name: 'Street Kings',  courts: 8, wl: '24W-3L', pts: 824 },
-              { pos: 2, posColor: 'var(--medal-silver)', teamColor: '#ffe083', name: 'Los Cóndores', courts: 5, wl: '18W-7L', pts: 545 },
-              { pos: 3, posColor: 'var(--medal-bronze)', teamColor: '#4ade80', name: 'Norte Básket',  courts: 3, wl: '15W-9L', pts: 315 },
+              // Colores de equipo de muestra: del sistema, no de la paleta vieja
+              // (el amarillo #ffe083 quedó retirado en la migración a lima).
+              { pos: 1, posColor: 'var(--medal-gold)',   teamColor: 'var(--surface-tint)',  name: 'Street Kings', courts: 8, wl: '24W-3L', pts: 824 },
+              { pos: 2, posColor: 'var(--medal-silver)', teamColor: 'var(--status-purple)', name: 'Los Cóndores', courts: 5, wl: '18W-7L', pts: 545 },
+              { pos: 3, posColor: 'var(--medal-bronze)', teamColor: 'var(--status-libre)',  name: 'Norte Básket', courts: 3, wl: '15W-9L', pts: 315 },
             ].map((row) => (
               <div key={row.pos} className="flex items-center gap-3 p-3.5 md:p-4 rounded-xl bg-surface border border-outline-variant">
                 <span className="font-black text-lg md:text-xl w-6 text-center shrink-0" style={{ color: row.posColor }}>
