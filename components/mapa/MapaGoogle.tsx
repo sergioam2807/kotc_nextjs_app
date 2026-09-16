@@ -3,13 +3,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 import type { CanchaConEstado } from './MapaClientWrapper';
+import { crearCanchasOverlay, type CanchasOverlayInstance, type OrigenPin } from './canchasOverlay';
 
 interface Props {
   canchas: CanchaConEstado[];
-  onSelectCancha: (c: CanchaConEstado) => void;
+  onSelectCancha: (c: CanchaConEstado, origen?: OrigenPin | null) => void;
   modoAgregar?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   panToCoords?: { lat: number; lng: number } | null;
+  /** Cancha abierta en el panel: se resalta en el mapa mientras esté abierta. */
+  selectedId?: string | null;
 }
 
 const DEFAULT_CENTER = { lat: -33.46, lng: -70.645 };
@@ -46,42 +49,10 @@ const MAP_OPTIONS = {
   keyboardShortcuts: false,
 };
 
-function getInitials(name: string | undefined): string {
-  if (!name) return '?';
-  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-}
-
-function buildMarkerSvg(cancha: CanchaConEstado): string {
-  if (cancha.estado === 'libre') {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
-  <circle cx="20" cy="20" r="19" fill="#4ade80" />
-  <circle cx="20" cy="20" r="14" fill="#141414" />
-  <text x="20" y="26" text-anchor="middle" fill="#4ade80" font-size="16" font-family="Arial, sans-serif">🏀</text>
-  <polygon points="14,37 20,50 26,37" fill="#4ade80" />
-</svg>`;
-  }
-  const ringColor = cancha.estado === 'king' ? '#d5ff40' : '#f87171';
-  const initials = getInitials(cancha.equipoNombre);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">
-  <circle cx="20" cy="20" r="19" fill="${ringColor}" />
-  <circle cx="20" cy="20" r="14" fill="#141414" />
-  <text x="20" y="25" text-anchor="middle" fill="${ringColor}" font-size="12" font-weight="bold" font-family="Arial, sans-serif">${initials}</text>
-  <polygon points="14,37 20,50 26,37" fill="${ringColor}" />
-</svg>`;
-}
-
-function buildIcon(cancha: CanchaConEstado): google.maps.Icon {
-  const svg = buildMarkerSvg(cancha);
-  return {
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new google.maps.Size(40, 50),
-    anchor: new google.maps.Point(20, 50),
-  };
-}
-
-export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = false, onMapClick, panToCoords }: Props) {
+export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = false, onMapClick, panToCoords, selectedId = null }: Props) {
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
+  const [hovering, setHovering] = useState(false);
+  const overlayRef = useRef<CanchasOverlayInstance | null>(null);
   const tempMarkerRef = useRef<google.maps.Marker | null>(null);
   const onSelectCanchaRef = useRef(onSelectCancha);
   const onMapClickRef = useRef(onMapClick);
@@ -104,8 +75,8 @@ export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = fals
   }, []);
 
   const onUnmount = useCallback(() => {
-    markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current.clear();
+    overlayRef.current?.setMap(null);
+    overlayRef.current = null;
     if (tempMarkerRef.current) {
       tempMarkerRef.current.setMap(null);
       tempMarkerRef.current = null;
@@ -120,43 +91,38 @@ export default function MapaGoogle({ canchas, onSelectCancha, modoAgregar = fals
     map.setZoom(17);
   }, [map, panToCoords]);
 
-  // Sync markers imperatively — handles add/remove on filter/search changes
+  // Una sola capa Canvas para todas las canchas (ver canchasOverlay.ts)
   useEffect(() => {
     if (!map) return;
-
-    const currentIds = new Set(canchas.map((c) => c.id));
-
-    // Remove markers no longer in filtered list
-    markersRef.current.forEach((marker, id) => {
-      if (!currentIds.has(id)) {
-        marker.setMap(null);
-        markersRef.current.delete(id);
-      }
+    const overlay = crearCanchasOverlay({
+      onSelectCancha: (c, origen) => onSelectCanchaRef.current(c, origen),
+      onHoverChange: setHovering,
     });
+    overlay.setMap(map);
+    overlayRef.current = overlay;
+    return () => {
+      overlay.setMap(null);
+      overlayRef.current = null;
+    };
+  }, [map]);
 
-    // Add new markers
-    canchas.forEach((cancha) => {
-      if (markersRef.current.has(cancha.id)) return;
-      const marker = new google.maps.Marker({
-        position: { lat: cancha.lat, lng: cancha.lng },
-        map,
-        icon: buildIcon(cancha),
-        title: cancha.nombre,
-      });
-      marker.addListener('click', () => onSelectCanchaRef.current(cancha));
-      markersRef.current.set(cancha.id, marker);
-    });
-  }, [map, canchas]);
+  // Datos y selección de la capa — sin recrear nada, solo redibujo.
+  // `map` va en las deps: la capa recién existe cuando el mapa cargó, y sin
+  // esto la primera tanda de canchas nunca llegaría a dibujarse.
+  useEffect(() => { overlayRef.current?.setCanchas(canchas); }, [map, canchas]);
+  useEffect(() => { overlayRef.current?.setSelected(selectedId); }, [map, selectedId]);
 
   // Cursor + temp marker for modoAgregar
   useEffect(() => {
     if (!map) return;
-    map.setOptions({ draggableCursor: modoAgregar ? 'crosshair' : '' });
+    // En modo agregar el mapa es un lienzo para ubicar: los pines no responden.
+    overlayRef.current?.setInteractive(!modoAgregar);
+    map.setOptions({ draggableCursor: modoAgregar ? 'crosshair' : hovering ? 'pointer' : '' });
     if (!modoAgregar && tempMarkerRef.current) {
       tempMarkerRef.current.setMap(null);
       tempMarkerRef.current = null;
     }
-  }, [map, modoAgregar]);
+  }, [map, modoAgregar, hovering]);
 
   // Map click handler
   useEffect(() => {

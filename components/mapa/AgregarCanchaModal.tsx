@@ -151,7 +151,7 @@ export function AgregarCanchaModal({ coordsIniciales, deportesIniciales, onClose
             <Modal.Body>
 
         {xpMsg ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-3">
+          <div className="kotc-confirm-in flex flex-col items-center justify-center py-8 gap-3">
             <div className="text-[32px]">🎉</div>
             <div className="text-[15px] font-medium text-accent">+80 XP ganados 🎉</div>
             <div className="text-[11px] text-outline">Cancha agregada exitosamente</div>

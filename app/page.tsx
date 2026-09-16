@@ -95,7 +95,7 @@ export default function LandingPage() {
               Únete a la temporada
             </Link>
             <Link
-              href="/ranking"
+              href="/login?next=/ranking"
               className="w-full sm:w-auto text-center bg-primary/10 border border-primary/30 text-primary px-8 py-3.5 md:px-10 md:py-4 rounded-md font-bold text-base md:text-lg uppercase hover:bg-primary/20 transition-all no-underline"
             >
               Ver el ranking
@@ -182,7 +182,7 @@ export default function LandingPage() {
 
           <div className="text-center">
             <Link
-              href="/ranking"
+              href="/login?next=/ranking"
               className="inline-block border rounded-md px-5 py-2.5 font-bold text-sm hover:bg-accent hover:text-on-accent transition-all no-underline"
               style={{ borderColor: 'var(--text-brand)', color: 'var(--text-brand)' }}
             >

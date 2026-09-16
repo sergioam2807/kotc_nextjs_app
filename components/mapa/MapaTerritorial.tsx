@@ -3,10 +3,11 @@ import type { CanchaConEstado } from './MapaClientWrapper';
 
 interface Props {
   canchas: CanchaConEstado[];
-  onSelectCancha: (c: CanchaConEstado) => void;
+  onSelectCancha: (c: CanchaConEstado, origen?: { x: number; y: number } | null) => void;
   modoAgregar?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
   panToCoords?: { lat: number; lng: number } | null;
+  selectedId?: string | null;
 }
 
 const MapaGoogle = dynamic(() => import('./MapaGoogle'), {
