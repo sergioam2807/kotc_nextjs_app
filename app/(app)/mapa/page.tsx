@@ -28,6 +28,8 @@ export default async function MapaPage() {
         'valoracion_promedio, valoracion_count, ' +
         'cancha_dominio(id, equipo_id, jugador_id, victorias, derrotas, es_king, formato, equipos(id, nombre, color, nivel, xp))'
       )
+      // Igual que en /api/canchas: lo 'pending' o 'rejected' no se publica.
+      .eq('status', 'verified')
       .order('created_at', { ascending: false }),
 
     supabase

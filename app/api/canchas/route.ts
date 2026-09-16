@@ -16,6 +16,9 @@ export async function GET(request: NextRequest) {
     .select(
       'id, nombre, direccion, lat, lng, deporte, validada, es_publica, precio_hora, telefono_contacto, nombre_recinto, cancha_dominio(id, equipo_id, victorias, derrotas, es_king, equipos(id, nombre, color))'
     )
+    // Solo canchas aprobadas: las descubiertas por Google entran como
+    // 'pending' y no se publican hasta que un admin las revisa (migración 046).
+    .eq('status', 'verified')
     .order('created_at', { ascending: false })
     .limit(500); // Guard against unbounded table scans on the mapa endpoint
 

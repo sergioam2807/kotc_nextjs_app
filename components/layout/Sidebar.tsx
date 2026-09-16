@@ -79,6 +79,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       { href: '/admin', label: 'Panel Admin', icon: <SettingsIcon /> },
       { href: '/admin/temporadas', label: 'Temporadas', icon: <CalendarIcon /> },
       { href: '/admin/eventos', label: 'Eventos', icon: <StarIcon /> },
+      { href: '/admin/canchas', label: 'Canchas', icon: <MapPinIcon /> },
     ],
   };
 
