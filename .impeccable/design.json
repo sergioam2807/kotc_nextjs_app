@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-15T23:00:00.000Z",
+  "title": "Design System: King of the Court",
+  "extensions": {
+    "colorMeta": {
+      "neon-lime": { "role": "primary", "displayName": "Neon Lime", "canonical": "#d5ff40", "tonalRamp": ["#1f2503", "#3a4308", "#576410", "#75871a", "#94aa24", "#b3cd2f", "#d5ff40", "#eaffa0"] },
+      "periwinkle-blue": { "role": "secondary", "displayName": "Periwinkle Blue", "canonical": "#b6c4ff", "tonalRamp": ["#0a1233", "#161f52", "#243173", "#354796", "#5164ba", "#7f92de", "#b6c4ff", "#dfe5ff"] },
+      "violet-accent": { "role": "tertiary", "displayName": "Violet Accent", "canonical": "#a78bfa", "tonalRamp": ["#1c1030", "#301c52", "#452b74", "#5c3c97", "#7657ba", "#8f70d8", "#a78bfa", "#d3c4fc"] },
+      "ink-black": { "role": "neutral", "displayName": "Ink Black", "canonical": "#0a0a0a" },
+      "deepest-black": { "role": "neutral", "displayName": "Deepest Black", "canonical": "#000000" },
+      "card-black": { "role": "neutral", "displayName": "Card Black", "canonical": "#141414" },
+      "panel-black": { "role": "neutral", "displayName": "Panel Black", "canonical": "#1c1c1c" },
+      "elevated-black": { "role": "neutral", "displayName": "Elevated Black", "canonical": "#242424" },
+      "paper-white": { "role": "neutral", "displayName": "Paper White", "canonical": "#ffffff" },
+      "moss-gray": { "role": "neutral", "displayName": "Moss Gray", "canonical": "#c0c2b8" },
+      "outline-gray": { "role": "neutral", "displayName": "Outline Gray", "canonical": "#9c9c94" },
+      "hairline-gray": { "role": "neutral", "displayName": "Hairline Gray", "canonical": "#2a2a2a" },
+      "win-green": { "role": "status", "displayName": "Win Green", "canonical": "#4ade80" },
+      "loss-red": { "role": "status", "displayName": "Loss Red", "canonical": "#f87171" }
+    },
+    "typographyMeta": {
+      "display":     { "displayName": "Display", "purpose": "Landing-page hero headlines only." },
+      "headline":    { "displayName": "Headline", "purpose": "Section and card-group titles." },
+      "statsNumber": { "displayName": "Stats Number", "purpose": "The large number in a stat tile — Win Rate, King count, XP, record." },
+      "body":        { "displayName": "Body", "purpose": "Default running text across dense operate surfaces (11-13px, smaller than typical web body text)." },
+      "label":       { "displayName": "Label", "purpose": "Tiny uppercase tracked captions under stat numbers and section eyebrows." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for hover/focus color and border transitions." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one solid-fill button in the system — reserved for the single primary action on a view.",
+      "html": "<button class=\"ds-btn-primary\">Desafiar cancha</button>",
+      "css": ".ds-btn-primary { background: #d5ff40; color: #0a0a0a; font-family: Poppins, system-ui, sans-serif; font-weight: 700; font-size: 14px; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; transition: filter 0.15s ease; } .ds-btn-primary:hover { filter: brightness(0.95); } .ds-btn-primary:focus-visible { outline: 2px solid #d5ff40; outline-offset: 2px; }"
+    },
+    {
+      "name": "Soft Button (Confirm)",
+      "kind": "button",
+      "refersTo": "button-soft",
+      "description": "Tinted secondary action button — 15% background tint, 25% border tint, solid text, in a semantic color (shown here in win-green).",
+      "html": "<button class=\"ds-btn-soft\">Confirmar</button>",
+      "css": ".ds-btn-soft { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.25); font-family: Poppins, system-ui, sans-serif; font-weight: 600; font-size: 13px; padding: 9px 18px; border-radius: 10px; cursor: pointer; transition: background 0.15s ease; } .ds-btn-soft:hover { background: rgba(74, 222, 128, 0.25); } .ds-btn-soft:focus-visible { outline: 2px solid #4ade80; outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Read-only pill status indicator, shown here in the King/accent variant.",
+      "html": "<span class=\"ds-badge\">👑 King</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(213, 255, 64, 0.15); color: #d5ff40; font-family: Poppins, system-ui, sans-serif; font-weight: 700; font-size: 10px; padding: 2px 8px; border-radius: 9999px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Default bordered container — one tonal step above the page background, hairline border that brightens on hover when interactive.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-title\">Estadio Municipal</p><p class=\"ds-card-body\">3V · 1D</p></div>",
+      "css": ".ds-card { background: #141414; border: 1px solid #2a2a2a; border-radius: 16px; padding: 16px; transition: border-color 0.15s ease; } .ds-card:hover { border-color: #9c9c94; } .ds-card-title { font-family: Poppins, system-ui, sans-serif; font-weight: 600; font-size: 13px; color: #ffffff; margin: 0 0 4px; } .ds-card-body { font-family: Poppins, system-ui, sans-serif; font-weight: 400; font-size: 11px; color: #c0c2b8; margin: 0; }"
+    },
+    {
+      "name": "Stat Tile",
+      "kind": "custom",
+      "refersTo": "stat-tile",
+      "description": "The system's signature component: a large font-black stat number over a tiny uppercase tracked label. Used for every at-a-glance metric.",
+      "html": "<div class=\"ds-stat-tile\"><div class=\"ds-stat-number\">72%</div><div class=\"ds-stat-label\">Win Rate</div></div>",
+      "css": ".ds-stat-tile { background: #141414; border: 1px solid #2a2a2a; border-radius: 16px; padding: 14px; text-align: center; } .ds-stat-number { font-family: Poppins, system-ui, sans-serif; font-weight: 800; font-size: 26px; line-height: 1; color: #4ade80; margin-bottom: 4px; } .ds-stat-label { font-family: Poppins, system-ui, sans-serif; font-weight: 600; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #9c9c94; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Text field — recessed to the deepest black tone, lime border on focus.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Nombre del equipo\" />",
+      "css": ".ds-input { background: #000000; color: #ffffff; border: 1px solid #2a2a2a; border-radius: 10px; padding: 10px 14px; font-family: Poppins, system-ui, sans-serif; font-size: 13px; width: 100%; box-sizing: border-box; transition: border-color 0.15s ease; } .ds-input::placeholder { color: #9c9c94; } .ds-input:focus { outline: none; border-color: #d5ff40; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-sidebar-item",
+      "description": "Desktop left-rail navigation item — lime left-border and tinted background when active.",
+      "html": "<a class=\"ds-nav-item ds-nav-item--active\" href=\"#\">Dashboard</a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-family: Poppins, system-ui, sans-serif; font-size: 13px; color: #9c9c94; border-left: 2px solid transparent; text-decoration: none; transition: color 0.15s ease, background 0.15s ease; } .ds-nav-item:hover { color: #c0c2b8; background: #1c1c1c; } .ds-nav-item--active { color: #d5ff40; border-left-color: #d5ff40; background: rgba(213, 255, 64, 0.1); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Blacktop Neon",
+    "overview": "Blacktop Neon is the outdoor court after dark: asphalt gone black, one lime floodlight cutting through it. The system is built for a phone in someone's hand at the edge of a real court, not a desktop marketing site — dense, legible, fast to scan, confident rather than decorative. The lime accent is the single loud voice in an otherwise near-silent black-and-gray room; everything else recedes so that voice reads as a signal rather than noise. The system rejects a soft glassy 'gamer neon' look (glows, gradients, drop shadows) and a cold enterprise-dashboard look (navy, muted blues, timid accents). Depth comes from tonal steps of near-black, never from shadows or glow; confidence comes from hard-edged cards and unambiguous status color, never from decoration.",
+    "keyCharacteristics": [
+      "Pure near-black surfaces with tonal (not shadow-based) depth",
+      "One accent color, spent deliberately: lime for the primary action and King status",
+      "Poppins throughout — geometric, confident, from a 9px label to a 48px number",
+      "Dense, mobile-first Operate layout: stat tiles, bordered cards, tight uppercase labels",
+      "Soft corners (10-16px), never sharp, never fully rounded except pills/avatars"
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Lime never appears twice for two different meanings on one screen — if a court is King, lime means King there; if a button is a CTA, lime means \"go\" there.", "section": "colors" },
+      { "name": "The Density Rule", "body": "Body copy on operate surfaces runs 11-13px, not 16px — this app is read in short glances on a phone at a court.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "If something needs to look elevated, give it the next tone step and a hairline border — never a shadow, never a glow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do spend lime deliberately — one primary action or one King status per view, never ambient decoration.",
+      "Do use the stat-tile pattern (big number + tiny uppercase label) for any new at-a-glance metric.",
+      "Do convey elevation with a tonal step + hairline border, never a shadow.",
+      "Do default to 11-13px body text on operate surfaces.",
+      "Do use ink-black (not white) as the text color on a lime background."
+    ],
+    "donts": [
+      "Don't add a light theme or a theme toggle — dark-only is a committed product decision.",
+      "Don't hardcode hex colors in new components — always use the CSS variable tokens.",
+      "Don't add box-shadow, glow, or blur effects anywhere — depth is tonal only.",
+      "Don't reuse lime for a second, unrelated meaning on the same screen."
+    ]
+  }
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Button, Input, Modal } from '@heroui/react';
 import type { CanchaConEstado } from './MapaClientWrapper';
 import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 
@@ -125,47 +126,43 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-surface/80 backdrop-blur-sm overflow-y-auto p-0 sm:p-4">
-      <div
-        className="relative w-full max-w-md bg-surface-container-low border border-outline-variant sm:rounded-xl rounded-t-xl p-6 shadow-[0_8px_48px_rgba(0,0,0,0.6)] max-h-[100dvh] sm:max-h-[92dvh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
-      >
-        <button
-          onClick={onClose}
-          aria-label="Cerrar"
-          className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-surface-container text-outline hover:text-on-surface transition-colors text-[20px] leading-none z-10"
-        >
-          ×
-        </button>
-
-        <div className="text-[15px] font-semibold text-on-surface mb-1">Editar cancha</div>
-        <div className="text-[11px] text-outline mb-5">
-          Modifica los datos de <span className="text-on-surface-variant">{cancha.nombre}</span>
-        </div>
+    <Modal isOpen onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <Modal.Backdrop variant="blur">
+        <Modal.Container placement="auto" size="md">
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>Editar cancha</Modal.Heading>
+              <p className="text-[11px] text-outline">
+                Modifica los datos de <span className="text-on-surface-variant">{cancha.nombre}</span>
+              </p>
+            </Modal.Header>
+            <Modal.CloseTrigger aria-label="Cerrar" className="text-[20px] leading-none">×</Modal.CloseTrigger>
+            <Modal.Body>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Nombre */}
           <div>
             <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">Nombre</label>
-            <input
+            <Input
               type="text"
+              aria-label="Nombre"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
               required
+              fullWidth
             />
           </div>
 
           {/* Dirección */}
           <div>
             <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">Dirección</label>
-            <input
+            <Input
               type="text"
+              aria-label="Dirección"
               value={direccion}
               onChange={(e) => setDireccion(e.target.value)}
-              className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
               required
+              fullWidth
             />
           </div>
 
@@ -237,12 +234,13 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
               <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">
                 Nombre del recinto <span className="normal-case text-[10px]">(opcional)</span>
               </label>
-              <input
+              <Input
                 type="text"
+                aria-label="Nombre del recinto"
                 value={nombreRecinto}
                 onChange={(e) => setNombreRecinto(e.target.value)}
                 placeholder="Ej: Complejo Deportivo Norte"
-                className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
+                fullWidth
               />
             </div>
 
@@ -283,13 +281,15 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-outline">$</span>
-                  <input
+                  <Input
                     type="text"
+                    aria-label="Precio promedio por hora"
                     inputMode="numeric"
                     value={precioHora}
                     onChange={(e) => setPrecioHora(e.target.value)}
                     placeholder="8.000"
-                    className="w-full bg-surface border border-outline-variant rounded-lg pl-6 pr-10 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
+                    className="pl-6 pr-10"
+                    fullWidth
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-outline">/hr</span>
                 </div>
@@ -301,12 +301,13 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
               <label className="block text-[11px] text-outline mb-1.5 font-medium uppercase tracking-[0.08em]">
                 Teléfono de contacto <span className="normal-case text-[10px]">(opcional)</span>
               </label>
-              <input
+              <Input
                 type="tel"
+                aria-label="Teléfono de contacto"
                 value={telefonoContacto}
                 onChange={(e) => setTelefonoContacto(e.target.value)}
                 placeholder="+56 9 1234 5678"
-                className="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 text-[12px] text-on-surface placeholder:text-outline outline-none focus:border-accent/40 transition-colors"
+                fullWidth
               />
             </div>
           </div>
@@ -317,15 +318,14 @@ export function EditarCanchaModal({ cancha, coordsNuevas, onClose, onSuccess, on
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-accent text-on-accent rounded-lg py-2.5 text-[13px] font-semibold cursor-pointer hover:brightness-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-1"
-          >
+          <Button type="submit" variant="primary" isDisabled={loading} fullWidth className="mt-1">
             {loading ? 'Guardando...' : 'Guardar cambios'}
-          </button>
+          </Button>
         </form>
-      </div>
-    </div>
+            </Modal.Body>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
   );
 }

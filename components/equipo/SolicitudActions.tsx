@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@heroui/react';
+import { SoftButton } from '@/components/ui/SoftButton';
 
 interface Props {
   solicitudId: string;
@@ -47,20 +49,12 @@ export function SolicitudActions({ solicitudId, jugadorNombre }: Props) {
           ¿Aceptar a <span className="font-semibold text-on-surface">{jugadorNombre}</span> en el equipo?
         </p>
         <div className="flex gap-2">
-          <button
-            onClick={() => handleAction('aceptada')}
-            disabled={loading || isPending}
-            className="flex-1 bg-status-libre/15 border border-status-libre/40 text-status-libre text-[12px] font-semibold py-2 rounded-lg hover:bg-status-libre/25 transition-colors disabled:opacity-50 cursor-pointer"
-          >
+          <SoftButton color="green" onPress={() => handleAction('aceptada')} isDisabled={loading || isPending} className="flex-1">
             {loading ? 'Procesando...' : 'Sí, aceptar'}
-          </button>
-          <button
-            onClick={() => setConfirmando(null)}
-            disabled={loading || isPending}
-            className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant text-[12px] py-2 rounded-lg hover:border-outline transition-colors disabled:opacity-50 cursor-pointer"
-          >
+          </SoftButton>
+          <Button variant="outline" onPress={() => setConfirmando(null)} isDisabled={loading || isPending} className="flex-1">
             Cancelar
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -73,20 +67,12 @@ export function SolicitudActions({ solicitudId, jugadorNombre }: Props) {
           ¿Rechazar la solicitud de <span className="font-semibold text-on-surface">{jugadorNombre}</span>?
         </p>
         <div className="flex gap-2">
-          <button
-            onClick={() => handleAction('rechazada')}
-            disabled={loading || isPending}
-            className="flex-1 bg-error/15 border border-error/40 text-error text-[12px] font-semibold py-2 rounded-lg hover:bg-error/25 transition-colors disabled:opacity-50 cursor-pointer"
-          >
+          <SoftButton color="red" onPress={() => handleAction('rechazada')} isDisabled={loading || isPending} className="flex-1">
             {loading ? 'Procesando...' : 'Sí, rechazar'}
-          </button>
-          <button
-            onClick={() => setConfirmando(null)}
-            disabled={loading || isPending}
-            className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant text-[12px] py-2 rounded-lg hover:border-outline transition-colors disabled:opacity-50 cursor-pointer"
-          >
+          </SoftButton>
+          <Button variant="outline" onPress={() => setConfirmando(null)} isDisabled={loading || isPending} className="flex-1">
             Cancelar
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -98,18 +84,12 @@ export function SolicitudActions({ solicitudId, jugadorNombre }: Props) {
         <p className="text-[11px] text-error">{error}</p>
       )}
       <div className="flex gap-2">
-        <button
-          onClick={() => setConfirmando('aceptar')}
-          className="flex-1 bg-status-libre/15 border border-status-libre/40 text-status-libre text-[12px] font-semibold py-2 rounded-lg hover:bg-status-libre/25 transition-colors cursor-pointer"
-        >
+        <SoftButton color="green" onPress={() => setConfirmando('aceptar')} className="flex-1">
           Aceptar
-        </button>
-        <button
-          onClick={() => setConfirmando('rechazar')}
-          className="flex-1 bg-surface-container border border-outline-variant text-on-surface-variant text-[12px] py-2 rounded-lg hover:border-outline transition-colors cursor-pointer"
-        >
+        </SoftButton>
+        <Button variant="outline" onPress={() => setConfirmando('rechazar')} className="flex-1">
           Rechazar
-        </button>
+        </Button>
       </div>
     </div>
   );

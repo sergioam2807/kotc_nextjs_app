@@ -82,15 +82,12 @@ export default async function EquipoPage() {
         {/* Invitaciones recibidas — client component, carga async */}
         <InvitacionesRecibidas />
 
-        <div className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[14px] p-6 text-center mb-4">
-          <div
-            className="w-14 h-14 rounded-[12px] mx-auto mb-4 flex items-center justify-center text-[24px]"
-            style={{ background: '#F5C34420', color: '#F5C344' }}
-          >
+        <div className="bg-surface-container-low border border-outline-variant rounded-xl p-6 text-center mb-4">
+          <div className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center text-[24px] bg-accent-dim text-accent">
             🏆
           </div>
-          <h1 className="text-[20px] font-medium text-white mb-2">Crea tu equipo</h1>
-          <p className="text-[13px] text-[#555] leading-relaxed">
+          <h1 className="text-[20px] font-medium text-on-surface mb-2">Crea tu equipo</h1>
+          <p className="text-[13px] text-on-surface-variant leading-relaxed">
             Aún no perteneces a ningún equipo. Crea el tuyo para desafiar canchas,
             competir por territorio y subir en el ranking.
           </p>
@@ -141,6 +138,79 @@ export default async function EquipoPage() {
   const totalDerrotas  = dominio?.reduce((sum, d) => sum + (d.derrotas  ?? 0), 0) ?? 0;
   const totalKing      = dominio?.filter(d => d.es_king).length ?? 0;
 
+  // Step 4b: ranking global (cuántos equipos tienen más XP) + últimos resultados con marcador (PPG)
+  const [{ count: equiposDelanteCount }, { data: ultimosResultadosRaw }] = await Promise.all([
+    supabase
+      .from('equipos')
+      .select('id', { count: 'exact', head: true })
+      .gt('xp', equipo.xp ?? 0),
+    supabase
+      .from('desafios')
+      .select('id, equipo_retador_id, equipo_retado_id, resultados(ganador_id, puntos_retador, puntos_retado)')
+      .or(`equipo_retador_id.eq.${equipo.id},equipo_retado_id.eq.${equipo.id}`)
+      .eq('estado', 'completado')
+      .order('fecha', { ascending: false })
+      .limit(10),
+  ]);
+
+  type UltimoResultadoRow = {
+    equipo_retador_id: string;
+    resultados:
+      | { ganador_id: string | null; puntos_retador: number | null; puntos_retado: number | null }[]
+      | { ganador_id: string | null; puntos_retador: number | null; puntos_retado: number | null }
+      | null;
+  };
+  const ultimosResultados = (ultimosResultadosRaw as UltimoResultadoRow[] | null) ?? [];
+
+  const partidos = totalVictorias + totalDerrotas;
+  const winRate = partidos > 0 ? (totalVictorias / partidos) * 100 : 0;
+  const rankingGlobal = equiposDelanteCount != null ? equiposDelanteCount + 1 : null;
+
+  let ppg: number | null = null;
+  let papg: number | null = null;
+  let formaReciente: ('W' | 'L')[] = [];
+
+  if (ultimosResultados.length > 0) {
+    let sumaM = 0; let sumaR = 0; let conMarcador = 0;
+    for (const d of ultimosResultados) {
+      const res = Array.isArray(d.resultados) ? d.resultados[0] : d.resultados;
+      if (!res) continue;
+      const esRetador = d.equipo_retador_id === equipo.id;
+      formaReciente.push(res.ganador_id === equipo.id ? 'W' : 'L');
+      if (res.puntos_retador != null && res.puntos_retado != null) {
+        sumaM += esRetador ? res.puntos_retador : res.puntos_retado;
+        sumaR += esRetador ? res.puntos_retado : res.puntos_retador;
+        conMarcador++;
+      }
+    }
+    if (conMarcador > 0) {
+      ppg = sumaM / conMarcador;
+      papg = sumaR / conMarcador;
+    }
+    formaReciente = formaReciente.slice(0, 5);
+  }
+
+  function eficienciaLetra(pct: number): string {
+    if (pct >= 90) return 'A+';
+    if (pct >= 80) return 'A';
+    if (pct >= 70) return 'A−';
+    if (pct >= 60) return 'B+';
+    if (pct >= 50) return 'B';
+    if (pct >= 40) return 'B−';
+    if (pct >= 30) return 'C+';
+    return 'C';
+  }
+  const eficiencia = partidos > 0 ? eficienciaLetra(winRate) : '—';
+
+  const ataqueBar = ppg != null
+    ? Math.min(100, (ppg / 25) * 100)
+    : Math.min(100, winRate * 1.1);
+  const defensaBar = papg != null && ppg != null
+    ? Math.max(0, 100 - (papg / Math.max(ppg, 1)) * 80)
+    : Math.min(100, winRate * 0.9);
+  const territorioBar = Math.min(100, totalKing * 25);
+  const consistenciaBar = winRate;
+
   // Step 5: roster (miembros sin join)
   const { data: rosterMiembros } = await supabase
     .from('equipo_miembros')
@@ -171,7 +241,7 @@ export default async function EquipoPage() {
   return (
     <div className="p-4 sm:p-5">
       {/* Team hero */}
-      <div className="bg-[#0f0f12] border border-[#1e1e24] rounded-[14px] p-4 flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
+      <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <div
             className="w-14 h-14 sm:w-16 sm:h-16 rounded-[12px] border-2 overflow-hidden flex items-center justify-center text-[20px] sm:text-[22px] font-medium flex-shrink-0"
@@ -196,8 +266,8 @@ export default async function EquipoPage() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[18px] sm:text-[20px] font-medium text-white mb-0.5 truncate">{equipo.nombre}</div>
-            <div className="text-[12px] text-[#555] mb-2 truncate">
+            <div className="text-[18px] sm:text-[20px] font-medium text-on-surface mb-0.5 truncate">{equipo.nombre}</div>
+            <div className="text-[12px] text-on-surface-variant mb-2 truncate">
               {equipo.ciudad
                 ? `${equipo.ciudad} · `
                 : equipo.region
@@ -213,7 +283,7 @@ export default async function EquipoPage() {
             </div>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {(equipo as any).descripcion && (
-              <p className="text-[11px] text-[#666] mt-2 leading-relaxed line-clamp-2">
+              <p className="text-[11px] text-on-surface-variant mt-2 leading-relaxed line-clamp-2">
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {(equipo as any).descripcion}
               </p>
@@ -272,19 +342,124 @@ export default async function EquipoPage() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
-        {[
-          { val: String(totalVictorias), label: 'Victorias' },
-          { val: String(totalDerrotas),  label: 'Derrotas' },
-          { val: String(totalKing),      label: 'Canchas king' },
-          { val: 'Sin temporada', label: 'Temporada activa', sm: true },
-        ].map(s => (
-          <div key={s.label} className="bg-[#0f0f12] border border-[#1a1a1f] rounded-[10px] p-3 text-center">
-            <div className={`font-medium text-[#F5C344] ${s.sm ? 'text-[13px]' : 'text-[22px]'}`}>{s.val}</div>
-            <div className="text-[10px] text-[#444] mt-0.5">{s.label}</div>
+      {/* Analíticas del equipo */}
+      <div className="mb-5">
+        <div className="text-[10px] text-outline tracking-[0.08em] font-medium uppercase mb-3">
+          📊 Analíticas del equipo
+        </div>
+
+        {partidos > 0 ? (
+          <div className="flex flex-col gap-3">
+            {/* 4 stat cards — 2×2 */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-surface-container-low border border-outline-variant rounded-xl p-3.5 text-center hover:border-outline transition-colors">
+                <div
+                  className="text-[26px] font-black leading-none mb-1"
+                  style={{ color: winRate >= 50 ? 'var(--color-status-libre)' : 'var(--color-status-rival)' }}
+                >
+                  {winRate.toFixed(0)}%
+                </div>
+                <div className="text-[9px] text-outline uppercase tracking-widest font-medium">Win Rate</div>
+                <div className="text-[8px] text-on-surface-variant mt-0.5">{partidos} partidos</div>
+              </div>
+
+              <div className="bg-surface-container-low border border-outline-variant rounded-xl p-3.5 text-center hover:border-outline transition-colors">
+                <div className="text-[26px] font-black leading-none mb-1 text-on-surface">
+                  {rankingGlobal != null ? `#${rankingGlobal}` : '—'}
+                </div>
+                <div className="text-[9px] text-outline uppercase tracking-widest font-medium">Ranking</div>
+                <div className="text-[8px] text-on-surface-variant mt-0.5">Global XP</div>
+              </div>
+
+              <div className="bg-surface-container-low border border-outline-variant rounded-xl p-3.5 text-center hover:border-outline transition-colors">
+                <div className="text-[26px] font-black leading-none mb-1 text-on-surface">
+                  {ppg != null ? ppg.toFixed(1) : '—'}
+                </div>
+                <div className="text-[9px] text-outline uppercase tracking-widest font-medium">PPG</div>
+                <div className="text-[8px] text-on-surface-variant mt-0.5">
+                  {papg != null ? `${papg.toFixed(1)} en contra` : 'Pts por partido'}
+                </div>
+              </div>
+
+              <div className="bg-surface-container-low border border-outline-variant rounded-xl p-3.5 text-center hover:border-outline transition-colors">
+                <div className="text-[26px] font-black leading-none mb-1" style={{ color: equipo.color }}>
+                  {eficiencia}
+                </div>
+                <div className="text-[9px] text-outline uppercase tracking-widest font-medium">Eficiencia</div>
+                <div className="text-[8px] text-on-surface-variant mt-0.5">Rendimiento</div>
+              </div>
+            </div>
+
+            {/* Radar: ataque / defensa / territorio / consistencia */}
+            <div className="bg-surface-container-low border border-outline-variant rounded-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-[10px] text-outline uppercase tracking-widest font-medium">Team Analytics</div>
+                {formaReciente.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-[9px] text-outline mr-1">Forma</span>
+                    {formaReciente.map((r, i) => (
+                      <span
+                        key={i}
+                        className="w-4 h-4 rounded-sm flex items-center justify-center text-[8px] font-black"
+                        style={{
+                          background: r === 'W' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                          color: r === 'W' ? '#22c55e' : '#ef4444',
+                        }}
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { label: 'Ataque',       value: ataqueBar,       color: '#22c55e', desc: ppg != null ? `${ppg.toFixed(1)} PPG` : `${winRate.toFixed(0)}% WR` },
+                  { label: 'Defensa',      value: defensaBar,      color: '#3b82f6', desc: papg != null ? `${papg.toFixed(1)} en contra` : 'Pts concedidos' },
+                  { label: 'Territorio',   value: territorioBar,   color: equipo.color, desc: `${totalKing} cancha${totalKing !== 1 ? 's' : ''} King` },
+                  { label: 'Consistencia', value: consistenciaBar, color: '#a855f7', desc: `${totalVictorias}V · ${totalDerrotas}D` },
+                ].map(({ label, value, color, desc }) => (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-medium text-on-surface-variant">{label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-outline">{desc}</span>
+                        <span className="text-[10px] font-bold text-on-surface w-8 text-right">
+                          {Math.round(value)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-surface-container rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${Math.min(100, Math.max(2, value))}%`, background: color, opacity: 0.85 }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
+        ) : (
+          <div
+            className="rounded-xl p-5 text-center"
+            style={{ background: `${equipo.color}09`, border: `1px solid ${equipo.color}25` }}
+          >
+            <div className="text-[30px] mb-2">📊</div>
+            <div className="text-[13px] font-semibold text-on-surface mb-1">Sin estadísticas todavía</div>
+            <div className="text-[11px] text-on-surface-variant mb-3 leading-relaxed">
+              Juega tu primer desafío para ver Win Rate, PPG, ranking global y analíticas de equipo.
+            </div>
+            <Link
+              href="/mapa"
+              className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-lg hover:brightness-95 transition-all"
+              style={{ background: equipo.color, color: 'var(--color-on-accent)' }}
+            >
+              🗺️ Ir a desafiar
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Buscando rival — solo admin */}
@@ -302,7 +477,7 @@ export default async function EquipoPage() {
 
       {/* Roster header */}
       <div className="flex items-center justify-between gap-2 mb-3">
-        <span className="text-[10px] text-[#444] tracking-[0.1em] font-medium uppercase truncate">
+        <span className="text-[10px] text-outline tracking-[0.1em] font-medium uppercase truncate">
           Roster — {deporteLabel} {equipo.modalidad}
         </span>
         {isAdmin && (

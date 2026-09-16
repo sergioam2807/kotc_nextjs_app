@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { Card } from '@heroui/react';
 
 interface Props {
   equipoId: string;
@@ -79,7 +80,7 @@ export function InvitarJugadorButton({
   // ── Invitación pendiente (hidratada desde el servidor) ──────────────────────
   if (step === 'pendiente') {
     return (
-      <div className="bg-surface-container border border-outline-variant rounded-xl p-3">
+      <Card variant="secondary" className="border border-outline-variant rounded-xl p-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-[14px]">⏳</span>
@@ -121,14 +122,14 @@ export function InvitarJugadorButton({
             </div>
           </>
         )}
-      </div>
+      </Card>
     );
   }
 
   // ── Recién enviada (flujo dentro de la misma sesión) ───────────────────────
   if (step === 'enviada') {
     return (
-      <div className="bg-status-libre/8 border border-status-libre/25 rounded-xl p-4">
+      <Card className="bg-status-libre/8 border border-status-libre/25 rounded-xl p-4">
         <div className="flex items-start gap-2 mb-3">
           <span className="text-[16px] flex-shrink-0">✅</span>
           <div>
@@ -169,7 +170,7 @@ export function InvitarJugadorButton({
             </div>
           </>
         )}
-      </div>
+      </Card>
     );
   }
 

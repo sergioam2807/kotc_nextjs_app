@@ -1,10 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { porcentajeEnNivel } from '@/lib/levels';
 
 interface TopbarProps {
@@ -15,16 +14,7 @@ interface TopbarProps {
   username?: string;
 }
 
-const tabs = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Mapa', href: '/mapa' },
-  { label: 'Desafíos', href: '/desafios' },
-  { label: 'Ligas', href: '/ligas' },
-  { label: 'Mi Equipo', href: '/equipo' },
-];
-
 export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, username }: TopbarProps) {
-  const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -41,25 +31,8 @@ export function Topbar({ nivel = 1, xp = 0, iniciales = 'TU', avatarUrl, usernam
       <Link href="/dashboard" className="text-[13px] font-bold text-on-surface tracking-[0.06em] flex-shrink-0 mr-2">
         KING <span className="text-accent">OF THE</span> COURT
       </Link>
-      <nav className="hidden md:flex gap-0.5 flex-1">
-        {tabs.map(tab => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={`px-3 py-1.5 rounded-md text-[12px] transition-colors no-underline
-              focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none ${
-              pathname.startsWith(tab.href)
-                ? 'bg-accent-dim text-accent'
-                : 'text-outline hover:text-on-surface-variant'
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
 
       <div className="ml-auto flex items-center gap-2.5">
-        <ThemeToggle />
         <div className="hidden md:flex items-center gap-1.5">
           <span className="text-[11px] text-accent font-semibold">Lv.{nivel}</span>
           <div className="w-14 h-1 bg-surface-container rounded-full overflow-hidden">

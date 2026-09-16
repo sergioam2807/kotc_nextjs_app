@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Card } from '@heroui/react';
 
 interface Props {
   retadoId: string;
@@ -68,7 +69,7 @@ export function Desafiar1v1Button({ retadoId, retadoNombre, desafioPendienteId }
 
   if (step === 'pendiente') {
     return (
-      <div className="bg-surface-container border border-outline-variant rounded-xl p-3">
+      <Card variant="secondary" className="border border-outline-variant rounded-xl p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-[15px]">⏳</span>
@@ -85,13 +86,13 @@ export function Desafiar1v1Button({ retadoId, retadoNombre, desafioPendienteId }
             {cancelando ? '…' : 'Cancelar'}
           </button>
         </div>
-      </div>
+      </Card>
     );
   }
 
   if (step === 'enviado') {
     return (
-      <div className="bg-status-libre/8 border border-status-libre/25 rounded-xl p-3">
+      <Card className="bg-status-libre/8 border border-status-libre/25 rounded-xl p-3">
         <div className="flex items-center gap-2">
           <span className="text-[15px] flex-shrink-0">✅</span>
           <div>
@@ -103,13 +104,13 @@ export function Desafiar1v1Button({ retadoId, retadoNombre, desafioPendienteId }
             </p>
           </div>
         </div>
-      </div>
+      </Card>
     );
   }
 
   if (step === 'form') {
     return (
-      <div className="bg-surface-container border border-outline-variant rounded-xl p-4">
+      <Card variant="secondary" className="border border-outline-variant rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="text-[13px] font-semibold text-on-surface">
             ⚔️ Desafiar 1v1 a {retadoNombre}
@@ -145,7 +146,7 @@ export function Desafiar1v1Button({ retadoId, retadoNombre, desafioPendienteId }
         >
           Enviar desafío
         </button>
-      </div>
+      </Card>
     );
   }
 

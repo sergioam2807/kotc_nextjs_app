@@ -1,6 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/Button';
+import { Button, Card } from '@heroui/react';
+import { Badge } from '@/components/ui/Badge';
 
 interface ChallengeCardProps {
   deporte: string;
@@ -28,16 +29,12 @@ export function ChallengeCard({
   onRechazar,
 }: ChallengeCardProps) {
   return (
-    <div className="bg-surface-container-low border border-outline-variant rounded-lg p-3 mb-2">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-sm font-semibold uppercase tracking-wide">
-          {deporte}
-        </span>
-        <span className="text-[10px] text-accent bg-accent/15 px-2 py-0.5 rounded-sm font-semibold uppercase tracking-wide">
-          {modalidad}
-        </span>
-      </div>
-      <div className="flex items-center justify-between mb-2">
+    <Card variant="secondary" className="border border-outline-variant rounded-lg p-3 mb-2 gap-2">
+      <Card.Header className="flex-row items-center justify-between">
+        <Badge variant="neutral">{deporte}</Badge>
+        <Badge variant="accent">{modalidad}</Badge>
+      </Card.Header>
+      <Card.Content className="flex-row items-center justify-between">
         <div className="flex items-center gap-1.5 text-[13px] font-semibold text-on-surface">
           <div className="w-2.5 h-2.5 rounded-sm" style={{ background: equipoRetadorColor }} />
           {equipoRetadorNombre}
@@ -49,16 +46,16 @@ export function ChallengeCard({
             <div className="w-2.5 h-2.5 rounded-sm" style={{ background: equipoRetadoColor }} />
           )}
         </div>
-      </div>
-      <div className="flex items-center justify-between">
+      </Card.Content>
+      <Card.Footer className="justify-between">
         <div className="text-[11px] text-on-surface-variant flex items-center gap-2.5">
           <span>📍 {cancha}</span>
           <span>🕐 {fechaHora}</span>
         </div>
         {onAceptar && (
-          <Button size="sm" onClick={onAceptar}>Aceptar</Button>
+          <Button size="sm" onPress={onAceptar}>Aceptar</Button>
         )}
-      </div>
-    </div>
+      </Card.Footer>
+    </Card>
   );
 }

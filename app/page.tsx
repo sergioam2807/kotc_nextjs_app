@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 const NAV_ITEMS = [
   { label: 'Cómo funciona', href: '#como-funciona' },
@@ -59,7 +58,6 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
-            <ThemeToggle />
             <Link
               href="/login"
               className="bg-accent text-on-accent rounded-md px-4 py-1.5 md:px-5 md:py-2 font-bold text-xs md:text-sm hover:brightness-90 transition-all no-underline"

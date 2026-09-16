@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button, Input, TextArea } from '@heroui/react';
 import { RegionComunaSelect } from '@/components/ui/RegionComunaSelect';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -31,9 +32,6 @@ const DEPORTE_LABELS: Record<string, string> = {
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2 MB
-
-const inputClass =
-  'bg-surface border border-outline-variant rounded-lg px-3 py-2.5 text-[13px] text-on-surface placeholder:text-outline/50 outline-none focus:border-accent/40 transition-colors w-full';
 
 const labelClass = 'text-[11px] text-outline uppercase tracking-[0.08em] font-semibold';
 
@@ -238,14 +236,15 @@ export function EditarEquipoForm({ equipoId, initialData }: Props) {
       {/* ── NOMBRE ── */}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Nombre del equipo *</label>
-        <input
+        <Input
           type="text"
+          aria-label="Nombre del equipo"
           value={nombre}
           onChange={e => setNombre(e.target.value)}
           maxLength={50}
           required
           placeholder="Ej: Los Cóndores"
-          className={inputClass}
+          fullWidth
         />
         <div className="text-[10px] text-outline text-right">{nombre.length}/50</div>
       </div>
@@ -272,13 +271,15 @@ export function EditarEquipoForm({ equipoId, initialData }: Props) {
       {/* ── DESCRIPCIÓN ── */}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Descripción <span className="normal-case font-normal">(opcional)</span></label>
-        <textarea
+        <TextArea
+          aria-label="Descripción"
           value={descripcion}
           onChange={e => setDescripcion(e.target.value)}
           maxLength={500}
           rows={3}
           placeholder="Cuéntanos sobre tu equipo — estilo de juego, objetivos, historia…"
-          className={`${inputClass} resize-none`}
+          className="resize-none"
+          fullWidth
         />
         <div className={`text-[10px] text-right ${charLeft < 50 ? 'text-error' : 'text-outline'}`}>
           {charLeft} caracteres restantes
@@ -288,13 +289,14 @@ export function EditarEquipoForm({ equipoId, initialData }: Props) {
       {/* ── CIUDAD ── */}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Ciudad <span className="normal-case font-normal">(opcional)</span></label>
-        <input
+        <Input
           type="text"
+          aria-label="Ciudad"
           value={ciudad}
           onChange={e => setCiudad(e.target.value)}
           maxLength={60}
           placeholder="Ej: Santiago"
-          className={inputClass}
+          fullWidth
         />
       </div>
 
@@ -348,13 +350,14 @@ export function EditarEquipoForm({ equipoId, initialData }: Props) {
         {/* Custom hex input */}
         <div className="flex items-center gap-2 mt-1">
           <span className="text-[11px] text-outline">Personalizar:</span>
-          <input
+          <Input
             type="text"
+            aria-label="Color personalizado (hex)"
             value={colorHex}
             onChange={e => setColorHex(e.target.value)}
             placeholder="#FF5733"
             maxLength={7}
-            className="bg-surface border border-outline-variant rounded-lg px-3 py-1.5 text-[12px] font-mono text-on-surface outline-none focus:border-accent/40 w-28"
+            className="font-mono w-28"
           />
         </div>
       </div>
@@ -373,21 +376,12 @@ export function EditarEquipoForm({ equipoId, initialData }: Props) {
 
       {/* ── ACTIONS ── */}
       <div className="flex gap-3 pt-1">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          disabled={loading}
-          className="flex-1 rounded-lg px-4 py-3 text-[13px] font-semibold border border-outline-variant text-on-surface-variant hover:border-outline transition-colors min-h-[44px] disabled:opacity-50"
-        >
+        <Button variant="outline" onPress={() => router.back()} isDisabled={loading} className="flex-1">
           Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={loading || !nombre.trim()}
-          className="flex-1 rounded-lg px-4 py-3 text-[13px] font-bold bg-accent text-on-accent hover:brightness-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px]"
-        >
+        </Button>
+        <Button type="submit" variant="primary" isDisabled={loading || !nombre.trim()} className="flex-1">
           {loading ? 'Guardando…' : 'Guardar cambios'}
-        </button>
+        </Button>
       </div>
     </form>
   );

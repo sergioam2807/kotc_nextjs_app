@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Card } from '@heroui/react';
 import { Badge } from '@/components/ui/Badge';
 
 interface RosterRowProps {
@@ -101,7 +102,7 @@ export function RosterRow(props: RosterRowProps) {
   // -------------------------------------------------------------------------
   if (confirmando) {
     return (
-      <div className="bg-error/5 border border-error/25 rounded-lg p-3 px-3.5 flex items-center gap-3">
+      <Card className="bg-error/5 border border-error/25 rounded-lg p-3 px-3.5 flex-row items-center gap-3">
         <div className="flex-1 text-[13px] text-on-surface">
           {esPropio
             ? '¿Confirmas que quieres salir del equipo?'
@@ -122,7 +123,7 @@ export function RosterRow(props: RosterRowProps) {
             Cancelar
           </button>
         </div>
-      </div>
+      </Card>
     );
   }
 

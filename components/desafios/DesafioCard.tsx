@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Card } from '@heroui/react';
+import { Badge } from '@/components/ui/Badge';
+import { SoftButton } from '@/components/ui/SoftButton';
 import type { DesafioConDatos, EstadoDesafio, ResultadoDesafio } from './types';
 import { ProponeResultadoModal } from './ProponeResultadoModal';
 
@@ -11,15 +14,15 @@ interface Props {
   onEstadoCambiado: (id: string, estado: EstadoDesafio, resultado?: ResultadoDesafio) => void;
 }
 
-const estadoBadgeStyle: Record<EstadoDesafio, { bg: string; color: string; label: string }> = {
-  pendiente:          { bg: 'bg-accent/15',              color: 'text-accent',               label: 'Pendiente'          },
-  aceptado:           { bg: 'bg-status-libre/15',        color: 'text-status-libre',          label: 'Aceptado'           },
-  rechazado:          { bg: 'bg-error/15',               color: 'text-error',                 label: 'Rechazado'          },
-  jugado:             { bg: 'bg-surface-container',      color: 'text-on-surface-variant',    label: 'Jugado'             },
-  resultado_pendiente:{ bg: 'bg-primary/15',             color: 'text-primary',               label: 'Resultado pendiente'},
-  disputado:          { bg: 'bg-error/15',               color: 'text-error',                 label: 'Disputado'          },
-  completado:         { bg: 'bg-status-libre/15',        color: 'text-status-libre',          label: 'Completado'         },
-  cancelado:          { bg: 'bg-surface-container',      color: 'text-on-surface-variant',    label: 'Cancelado'          },
+const estadoBadgeStyle: Record<EstadoDesafio, { variant: 'accent' | 'green' | 'error' | 'neutral' | 'primary'; label: string }> = {
+  pendiente:           { variant: 'accent',  label: 'Pendiente'           },
+  aceptado:            { variant: 'green',   label: 'Aceptado'            },
+  rechazado:           { variant: 'error',   label: 'Rechazado'           },
+  jugado:              { variant: 'neutral', label: 'Jugado'              },
+  resultado_pendiente: { variant: 'primary', label: 'Resultado pendiente' },
+  disputado:           { variant: 'error',   label: 'Disputado'           },
+  completado:          { variant: 'green',   label: 'Completado'          },
+  cancelado:           { variant: 'neutral', label: 'Cancelado'           },
 };
 
 function formatFecha(fechaStr: string): string {
@@ -188,31 +191,23 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
 
   return (
     <>
-      <div
-        className={`bg-surface-container-low border border-outline-variant rounded-xl p-4 hover:border-outline transition-colors${desafioLocal.estado === 'rechazado' ? ' opacity-60' : ''}`}
+      <Card
+        variant="secondary"
+        className={`border border-outline-variant rounded-xl p-4 hover:border-outline transition-colors${desafioLocal.estado === 'rechazado' ? ' opacity-60' : ''}`}
       >
+        <Card.Content>
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] px-2 py-0.5 rounded-sm font-semibold uppercase tracking-wide bg-surface-container text-on-surface-variant">
-              {desafioLocal.deporte}
-            </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-sm font-semibold uppercase tracking-wide bg-accent/15 text-accent">
-              {desafioLocal.formato}
-            </span>
+            <Badge variant="neutral">{desafioLocal.deporte}</Badge>
+            <Badge variant="accent">{desafioLocal.formato}</Badge>
             {esEnviado ? (
-              <span className="text-[10px] px-2 py-0.5 rounded-sm font-semibold uppercase tracking-wide bg-surface-container text-outline">
-                Enviado
-              </span>
+              <Badge variant="neutral">Enviado</Badge>
             ) : (
-              <span className="text-[10px] px-2 py-0.5 rounded-sm font-semibold uppercase tracking-wide bg-primary/15 text-primary">
-                Recibido
-              </span>
+              <Badge variant="primary">Recibido</Badge>
             )}
           </div>
-          <span className={`text-[10px] px-2 py-0.5 rounded-sm font-semibold uppercase tracking-wide ${badge.bg} ${badge.color}`}>
-            {badge.label}
-          </span>
+          <Badge variant={badge.variant}>{badge.label}</Badge>
         </div>
 
         {/* Teams */}
@@ -255,33 +250,21 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
         {/* Actions: aceptar/rechazar */}
         {puedeAceptarRechazar && (
           <div className="flex gap-2 mt-1">
-            <button
-              onClick={() => handleAccion('aceptado')}
-              disabled={loading}
-              className="flex-1 sm:flex-initial rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-status-libre/15 text-status-libre border border-status-libre/25 hover:bg-status-libre/25 min-h-[40px]"
-            >
+            <SoftButton color="green" onPress={() => handleAccion('aceptado')} isDisabled={loading} className="flex-1 sm:flex-initial">
               {loading ? '...' : 'Aceptar'}
-            </button>
-            <button
-              onClick={() => handleAccion('rechazado')}
-              disabled={loading}
-              className="flex-1 sm:flex-initial rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-error/15 text-error border border-error/25 hover:bg-error/25 min-h-[40px]"
-            >
+            </SoftButton>
+            <SoftButton color="red" onPress={() => handleAccion('rechazado')} isDisabled={loading} className="flex-1 sm:flex-initial">
               {loading ? '...' : 'Rechazar'}
-            </button>
+            </SoftButton>
           </div>
         )}
 
         {/* Actions: proponer resultado (estado aceptado, cualquier participante) */}
         {desafioLocal.estado === 'aceptado' && (esEnviado || esRecibido) && (
           <div className="mt-1">
-            <button
-              onClick={() => setShowProponer(true)}
-              disabled={loading}
-              className="w-full sm:w-auto rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-accent/15 text-accent border border-accent/25 hover:bg-accent/25 min-h-[40px]"
-            >
+            <SoftButton color="accent" onPress={() => setShowProponer(true)} isDisabled={loading} className="w-full sm:w-auto">
               🏆 Proponer resultado
-            </button>
+            </SoftButton>
           </div>
         )}
 
@@ -305,20 +288,12 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
                   <strong style={{ color: ganador?.color }}>{ganador?.nombre}</strong> ganó
                 </div>
                 <div className="flex gap-1.5">
-                  <button
-                    onClick={handleConfirmar}
-                    disabled={loading}
-                    className="flex-1 sm:flex-initial rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-status-libre/15 text-status-libre border border-status-libre/25 hover:bg-status-libre/25 min-h-[40px]"
-                  >
+                  <SoftButton color="green" onPress={handleConfirmar} isDisabled={loading} className="flex-1 sm:flex-initial">
                     {loading ? '...' : '✓ Confirmar'}
-                  </button>
-                  <button
-                    onClick={handleDisputar}
-                    disabled={loading}
-                    className="flex-1 sm:flex-initial rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-error/15 text-error border border-error/25 hover:bg-error/25 min-h-[40px]"
-                  >
+                  </SoftButton>
+                  <SoftButton color="red" onPress={handleDisputar} isDisabled={loading} className="flex-1 sm:flex-initial">
                     {loading ? '...' : '✗ Disputar'}
-                  </button>
+                  </SoftButton>
                 </div>
               </>
             )}
@@ -364,22 +339,14 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
               <div className="flex flex-col gap-1.5">
                 {/* Only the non-proposer can accept the original result */}
                 {!propusoYo && (
-                  <button
-                    onClick={handleAceptarOriginal}
-                    disabled={loading}
-                    className="w-full rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-status-libre/15 text-status-libre border border-status-libre/25 hover:bg-status-libre/25 min-h-[40px]"
-                  >
+                  <SoftButton color="green" onPress={handleAceptarOriginal} isDisabled={loading} fullWidth>
                     {loading ? '...' : '✅ Aceptar resultado original'}
-                  </button>
+                  </SoftButton>
                 )}
                 {/* Both teams can re-propose */}
-                <button
-                  onClick={() => setShowReproponer(true)}
-                  disabled={loading}
-                  className="w-full rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-accent/15 text-accent border border-accent/25 hover:bg-accent/25 min-h-[40px]"
-                >
+                <SoftButton color="accent" onPress={() => setShowReproponer(true)} isDisabled={loading} fullWidth>
                   🔄 Re-proponer resultado
-                </button>
+                </SoftButton>
               </div>
             </div>
           );
@@ -398,7 +365,8 @@ export function DesafioCard({ desafio, equipoId, onEstadoCambiado }: Props) {
             )}
           </div>
         )}
-      </div>
+        </Card.Content>
+      </Card>
 
       {showProponer && (
         <ProponeResultadoModal

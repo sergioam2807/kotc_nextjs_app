@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Card } from '@heroui/react';
 
 interface EquipoInvite {
   id: string;
@@ -92,9 +93,10 @@ export function InvitacionesRecibidas() {
           const isRechazando = rechazandoId === inv.id;
 
           return (
-            <div
+            <Card
               key={inv.id}
-              className="bg-surface-container-low border border-outline-variant rounded-xl p-4"
+              variant="secondary"
+              className="border border-outline-variant rounded-xl p-4"
             >
               <div className="flex items-center gap-3 mb-3">
                 {/* Avatar equipo */}
@@ -141,7 +143,7 @@ export function InvitacionesRecibidas() {
                   {isRechazando ? '…' : '✕'}
                 </button>
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
