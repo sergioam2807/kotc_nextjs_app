@@ -3,6 +3,9 @@ import { DesafiosClientWrapper } from '@/components/desafios/DesafiosClientWrapp
 import type { DesafioConDatos, EstadoDesafio, EquipoSimple, CanchaSimple } from '@/components/desafios/types';
 import { Desafios1v1Section } from '@/components/desafios1v1/Desafios1v1Section';
 import type { Desafio1v1ConDatos, ProfileSimple } from '@/components/desafios1v1/types';
+import { PartidosRapidosSection } from '@/components/desafios/PartidosRapidosSection';
+import { fetchPartidoRapido } from '@/lib/partidos-rapidos';
+import type { PartidoRapidoConDatos } from '@/components/partido-rapido/types';
 
 export default async function DesafiosPage() {
   const supabase = await createClient();
@@ -105,6 +108,35 @@ export default async function DesafiosPage() {
     direccion: c.direccion,
   }));
 
+  // ── Partidos rápidos (always fetched, no team required) ─────────────────────
+  const { data: partidosRapidosIds } = await supabase
+    .from('partidos_rapidos')
+    .select('id')
+    .or(`capitan_a_id.eq.${user.id},capitan_b_id.eq.${user.id}`)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  let partidosRapidos: PartidoRapidoConDatos[] = (
+    await Promise.all((partidosRapidosIds ?? []).map(r => fetchPartidoRapido(supabase, r.id)))
+  ).filter((p): p is PartidoRapidoConDatos => p !== null);
+
+  // Auto-cancela lobbies "buscando" con más de 4h (mismo patrón que el
+  // auto-cancel de disputas a 5 días de los desafíos de equipo, más abajo).
+  const CUATRO_HORAS_MS = 4 * 60 * 60 * 1000;
+  const ahoraRapidos = Date.now();
+  const buscandoVencidos = partidosRapidos.filter(
+    p => p.estado === 'buscando' && (ahoraRapidos - new Date(p.created_at).getTime()) > CUATRO_HORAS_MS,
+  );
+  if (buscandoVencidos.length > 0) {
+    await Promise.all(
+      buscandoVencidos.map(p =>
+        supabase.from('partidos_rapidos').update({ estado: 'cancelado' }).eq('id', p.id).eq('estado', 'buscando'),
+      ),
+    );
+    const vencidosIds = new Set(buscandoVencidos.map(p => p.id));
+    partidosRapidos = partidosRapidos.map(p => (vencidosIds.has(p.id) ? { ...p, estado: 'cancelado' as const } : p));
+  }
+
   // ── Team challenges (only if user has a team) ───────────────────────────────
   let desafios: DesafioConDatos[] = [];
   let todosEquipos: EquipoSimple[] = [];
@@ -204,6 +236,12 @@ export default async function DesafiosPage() {
             canchas={todasCanchas}
             jugadores1v1={jugadoresPicker}
           />
+          {/* Partidos rápidos section */}
+          <div className="border-t border-outline-variant">
+            <div className="px-4 py-4 sm:px-6">
+              <PartidosRapidosSection partidos={partidosRapidos} userId={user.id} />
+            </div>
+          </div>
           {/* 1v1 section */}
           <div className="border-t border-outline-variant">
             <div className="px-4 py-4 sm:px-6">
@@ -230,6 +268,10 @@ export default async function DesafiosPage() {
             <a href="/equipo" className="ml-auto text-[12px] text-accent hover:underline flex-shrink-0">
               Ver equipos →
             </a>
+          </div>
+
+          <div className="mb-6">
+            <PartidosRapidosSection partidos={partidosRapidos} userId={user.id} />
           </div>
 
           <Desafios1v1Section

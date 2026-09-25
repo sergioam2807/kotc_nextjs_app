@@ -44,7 +44,9 @@ git merge feature/ligas           # migraciones 022, 024–041
 supabase db push                  # aplica todas (en orden numérico)
 ```
 
-> ⚠️ **Pendiente crítico:** `supabase db push` aún no se ha ejecutado. Las migraciones 039–041 existen en código pero NO en la DB de producción. Aplicar antes de desplegar.
+> ✅ **Migraciones 001–046 aplicadas en producción** (verificado 2026-09-16 con `supabase migration list`).
+> El CLI de Supabase no está instalado globalmente: usar `npx --yes supabase@2.100.1 <comando>`
+> (esa es la versión que fija el CI). Antes de cualquier `db push`, correr `migration list`.
 
 ---
 
@@ -65,6 +67,7 @@ app/
     perfil/page.tsx                 ← Editar perfil de jugador (bio, posición, especialidades, datos físicos, reclutamiento)
     jugadores/page.tsx              ← Lista de jugadores disponibles para reclutamiento; admins ven botón "Invitar" por jugador
     jugadores/[id]/page.tsx         ← Perfil público de jugador; admins ven "Invitar al equipo" si jugador sin equipo
+    partido-rapido/page.tsx         ← Partido Rápido 3v3: wizard cancha→equipo→buscando→encontrado→confirmado→resultado
     equipos/page.tsx                ← Lista pública de equipos (jugadores sin equipo pueden buscar y solicitar unirse)
     equipos/[id]/page.tsx           ← Perfil público de equipo (canchas, stats, roster, botón "Solicitar unirme")
     admin/page.tsx                  ← Panel admin: stats globales + temporada activa (solo ADMIN_EMAIL) [feature/ligas]
@@ -111,6 +114,10 @@ app/
     desafios-1v1/route.ts           ← GET lista 1v1 del usuario / POST crear desafío 1v1 [feature/ligas]
     desafios-1v1/[id]/route.ts      ← PATCH aceptar|rechazar|marcar_jugado|cancelar [feature/ligas]
     resultados-1v1/route.ts         ← POST proponer resultado / PATCH confirmar|disputar → XP + ranking_1v1 [feature/ligas]
+    jugadores/buscar/route.ts       ← GET ?q= búsqueda liviana de jugadores (cualquier perfil, no solo disponibles) para armar trío
+    partidos-rapidos/route.ts       ← GET lista del usuario, o ?cancha_id=&mode=lobby (tríos ajenos buscando) / POST crea partido 3v3: rival_jugador_id (reto, → pendiente) | join_partido_id (unirse) | ninguno (buscar automático)
+    partidos-rapidos/[id]/route.ts  ← GET detalle (polling) / PATCH accion:'cancelar'|'aceptar'|'rechazar'
+    partidos-rapidos/[id]/resultado/route.ts ← POST proponer / PATCH confirmar|disputar → XP + cancha_dominio (formato '3v3', jugador_id=capitán)
 ```
 
 ---
@@ -214,6 +221,26 @@ ranking_1v1          (id, jugador_id→auth.users, temporada_id nullable→tempo
                       puntos int, victorias int, derrotas int, racha_actual int, racha_max int,
                       UNIQUE(jugador_id) WHERE temporada_id IS NULL,
                       UNIQUE(jugador_id, temporada_id) WHERE temporada_id IS NOT NULL)
+
+-- Partido Rápido 3v3 (migración 047)
+-- No crea equipos reales: trío ad-hoc (capitán + hasta 2 compañeros, invitados
+-- sin cuenta o jugadores KOTC). El "Rey" 3v3 se atribuye al capitán
+-- (cancha_dominio.jugador_id, formato '3v3' — ya válido desde la 038, sin
+-- cambios de schema ahí).
+partidos_rapidos (id, cancha_id→canchas, deporte DEFAULT 'basketball', formato DEFAULT '3v3',
+                  temporada_id nullable, capitan_a_id→auth.users, capitan_b_id nullable→auth.users,
+                  es_vs_king bool DEFAULT false,
+                  estado CHECK('buscando','emparejado','resultado_pendiente','disputado','completado','cancelado'),
+                  created_at, matched_at nullable)
+partido_rapido_jugadores (id, partido_id→partidos_rapidos, lado CHECK('a','b'),
+                          jugador_id nullable→auth.users, nombre_invitado nullable text,
+                          es_capitan bool — CHECK jugador_id IS NOT NULL OR nombre_invitado IS NOT NULL)
+resultados_partido_rapido (id, partido_id→partidos_rapidos UNIQUE, ganador_lado CHECK('a','b'),
+                           puntos_a nullable, puntos_b nullable, propuesto_por→auth.users,
+                           confirmado_por_perdedor bool, disputado bool, confirmado_at nullable)
+-- emparejar_partido_rapido(p_partido_id) SECURITY DEFINER: matching atómico
+-- (FOR UPDATE SKIP LOCKED) contra otro partido "buscando" en la misma
+-- cancha+formato creado en las últimas 4h; fusiona en la fila más antigua.
 ```
 
 **Triggers automáticos en `equipo_miembros`:**
@@ -234,6 +261,24 @@ pendiente → rechazado
 `pendiente → aceptado → resultado_pendiente → completado`
 También: `pendiente → rechazado` (retado rechaza) / `pendiente → rechazado` (retador cancela via `accion: 'cancelar'`)
 `aceptado → resultado_pendiente` (vía PATCH `marcar_jugado`) → proponer resultado → confirmar → completado
+
+**Estado de partido rápido 3v3 (FSM, migración 048):**
+```
+pendiente → emparejado   (accion 'aceptar', solo capitan_b; squad opcional al aceptar)
+pendiente → rechazado    (accion 'rechazar', solo capitan_b)
+pendiente → cancelado    (accion 'cancelar', solo capitan_a)
+
+buscando  → emparejado   (join_partido_id explícito, o emparejar_partido_rapido() — mutuo opt-in, sin paso de aceptar)
+buscando  → cancelado    (accion 'cancelar' por capitan_a, o auto-cancel a las 4h — ver desafios/page.tsx)
+
+emparejado → resultado_pendiente → completado
+```
+`disputar` NO transiciona `partidos_rapidos.estado` (queda en `resultado_pendiente`) — solo flaguea `resultado.disputado=true`; cualquiera de los dos capitanes puede volver a proponer (mismo POST, rama "actualizar propuesta existente"), patrón calcado de `resultados_individual`. El estado `'disputado'` sigue en el CHECK por compatibilidad pero ya no se usa.
+
+**Cómo se elige rival (paso "Elegir rival" del wizard) — tres caminos, mutuamente excluyentes en el `POST`:**
+1. **Reto directo** (`rival_jugador_id`) — a un jugador específico buscado por nombre, o al Rey 3v3 vigente de la cancha (`es_vs_king` se marca automáticamente si `rival_jugador_id` coincide con el Rey al momento de crear). Requiere que el retado **acepte explícitamente** — mismo patrón que desafíos de equipo/1v1. Corrige el diseño anterior (matchmaking ciego), donde retar al Rey lo comprometía a un partido sin que hubiera aceptado nada.
+2. **Unirse a un trío que ya está buscando** (`join_partido_id`) — lista de partidos `buscando` en esa cancha (`GET /api/partidos-rapidos?cancha_id=&mode=lobby`), mutuo opt-in, empareja al toque.
+3. **Buscar automáticamente** (sin `rival_jugador_id` ni `join_partido_id`) — el trío queda `buscando`, visible para que otros lo encuentren vía 1 o 2; `emparejar_partido_rapido()` (SQL, atómica — `FOR UPDATE` en la fila propia + `SKIP LOCKED` en la búsqueda de rival) intenta emparejarlo contra otro `buscando` de la misma cancha+formato en el momento de crear.
 
 **XP functions (SECURITY DEFINER, bypasan RLS):**
 - `add_xp(target_user_id uuid, amount int)` → incrementa `profiles.xp` y auto-nivela
@@ -349,6 +394,12 @@ Todos los colores son CSS variables — el tema se cambia con `data-theme="light
 - `Desafiar1v1Button` ('use client') — botón expandible para desafiar a otro jugador en 1v1. Props: `retadoId, retadoNombre, desafioPendienteId?`. Estados: idle → form → loading → pendiente | enviado. POST `/api/desafios-1v1`. Si viene `desafioPendienteId` del servidor → inicia en `'pendiente'` con botón Cancelar.
 - `Desafios1v1Section` ('use client') — sección completa de desafíos 1v1 para la página `/desafios`. Props: `desafios: Desafio1v1ConDatos[], userId: string`. Agrupa por: recibidos (pendiente), enviados (pendiente), activos (aceptado/resultado_pendiente), historial. Inline form para proponer resultado con selector ganador + puntos opcionales.
 
+### Partido Rápido (`components/partido-rapido/`, `components/dashboard/`, `components/desafios/`)
+- `QuickMatchHero` — card CTA del dashboard hacia `/partido-rapido`. Se muestra siempre (no requiere equipo formal).
+- `SquadSlotPicker` ('use client') — par de slots "compañero" (✍️ invitado por nombre / 🔍 buscar jugador KOTC, debounce 300ms). Reusado por `PartidoRapidoWizard` (armar trío propio) y por `PartidosRapidosSection` (sumar compañeros opcionales al aceptar un reto). Exporta también `slotsToSquad()` (slots → body `squad` de la API) y `SLOT_VACIO`.
+- `PartidoRapidoWizard` ('use client') — wizard de 8 pasos (`cancha→equipo→elegir-rival→buscando|pendiente→encontrado→confirmado→resultado`). Geolocalización client-side + `distanciaMetros` (`lib/geo.ts`) para ordenar canchas; el paso "elegir-rival" ofrece retar al Rey / buscar jugador / unirse a un trío listado / buscar automático; polling 4s/~2min contra `GET /api/partidos-rapidos/[id]` en `buscando` y en `pendiente` (reto enviado, esperando aceptación). Props: `userId, userNombre, canchas: CanchaSimple[]` (con `king?` resuelto server-side), `partidoActivoId`.
+- `PartidosRapidosSection` ('use client') — sección en `/desafios`: grupos Recibidos (aceptar con `SquadSlotPicker` opcional/rechazar) / Enviados (cancelar) / En curso / Resultado pendiente (confirmar/disputar, o re-proponer si `resultado.disputado`) / Historial. Mismo patrón visual que `Desafios1v1Section`. Props: `partidos: PartidoRapidoConDatos[], userId`.
+
 ### Ligas (`components/ligas/`) — feature/ligas
 - `TablaLiga` — tabla de posiciones. Columnas: #, Equipo, PJ, PG, PE, PP, DP, Pts. Filas sobre `equiposClasifican` resaltadas con `↑`. Props: `rows: StandingRow[], titulo?, equiposClasifican?`.
 - `PartidoCard` — card de partido: equipos con iniciales/color, marcador, ganador resaltado, badge estado. Props: `partido, compact?`.
@@ -453,8 +504,10 @@ const eqObj = Array.isArray(eqRaw) ? eqRaw[0] : eqRaw;
 | 043 | **Court ratings:** tabla `cancha_valoraciones` (1–5 ⭐); `valoracion_promedio/count` en `canchas`; trigger `_update_cancha_valoracion` | feature/ligas |
 | 044 | **OSM import:** `osm_id bigint NULL`, `osm_type text NULL` en `canchas`; unique index `canchas_osm_unique` (permite re-runs idempotentes) | feature/ligas |
 | 046 | **Google Places discovery:** `google_place_id text UNIQUE`, `status text` en `canchas`; tabla `cancha_discovery_runs` con RLS | — |
+| 047 | **Partido Rápido 3v3:** tablas `partidos_rapidos`, `partido_rapido_jugadores`, `resultados_partido_rapido` con RLS; función `emparejar_partido_rapido()` SECURITY DEFINER (matching atómico) | — |
+| 048 | **Partido Rápido — reto directo:** `estado` de `partidos_rapidos` suma `'pendiente'`/`'rechazado'`; fix de concurrencia en `emparejar_partido_rapido()` (`FOR UPDATE` en la fila propia + guard de estado al cancelarla — evita double-booking bajo 3+ búsquedas concurrentes) | — |
 
-> ⚠️ **Migraciones 039–044 pendientes de aplicar en DB** (`supabase db push`)
+> ✅ Todas aplicadas en producción, incluida la 048 (verificado 2026-09-24 con `supabase migration list`).
 
 ---
 
@@ -517,6 +570,15 @@ Sub-nivel en romano desde el 2: `Rookie III`, `Contender II`, etc.
 | Derrota 1v1  | +15 |
 
 **Ranking 1v1:** puntos = 3 por victoria. Racha: +1 por victoria, reset a 0 en derrota. Se almacena en `ranking_1v1` (by temporada_id IS NULL para acumulado global).
+
+### XP por Partido Rápido 3v3
+
+| Evento | XP por jugador registrado |
+|--------|---------------------------:|
+| Victoria | +100 |
+| Derrota  | +35 |
+
+Mismos montos por-jugador que un desafío de equipo (no hay XP de equipo, porque no hay `equipos` real). Los invitados sin cuenta (`nombre_invitado`, sin `jugador_id`) no reciben XP.
 
 ---
 
@@ -710,6 +772,30 @@ Sin generated types, Supabase infiere FK joins como arrays. Usar el helper `unwr
 
 ---
 
+## Partido Rápido 3v3 (`feature/heroui-migration`)
+
+> Migraciones 047+048 (ambas aplicadas en producción). Basketball 3v3 es el único formato — flagship del modo pickup.
+
+Flujo desde el dashboard (`QuickMatchHero` → `/partido-rapido`): capitán elige cancha (ordenada por cercanía, geolocalización client-side), arma trío (él + hasta 2 compañeros — invitado sin cuenta por nombre, o jugador KOTC real vía búsqueda `SquadSlotPicker`), y en el paso **"Elegir rival"** decide cómo buscar oponente — ver los 3 caminos en la sección FSM más arriba (reto directo con aceptación / unirse a un trío buscando / buscar automáticamente). El reto directo (a un jugador o al Rey) es el camino recomendado — no depende de que alguien más esté buscando exactamente en ese momento, a diferencia del matching ciego puro (que casi nunca tiene con quién emparejar en una app con poca densidad de usuarios concurrentes — motivo original del rediseño en la migración 048).
+
+**No crea un `equipos` real** — el trío es ad-hoc. El "Rey" 3v3 de una cancha se atribuye al **capitán** (`cancha_dominio.jugador_id`, reusa el esquema por-jugador de la migración 038, sin cambios de schema). XP solo a jugadores registrados (+100 ganador / +35 perdedor, igual que el per-jugador de equipo); invitados sin cuenta no acumulan XP — aplica igual con tríos desparejos (ej. 3 vs 1, si el retado acepta solo).
+
+Resultado: cualquiera de los dos capitanes propone (`ganador_lado: 'a'|'b'`), el otro confirma (no puede confirmar el proponente) — mismo guard `confirmado_por_perdedor=false` que `/api/resultados`. Cargar el resultado más tarde: sección "Partidos rápidos" en `/desafios` (`PartidosRapidosSection`, grupos: Retos recibidos / Retos enviados / En curso / Resultado pendiente / Historial).
+
+**Tests de integración** (`tests/integration/partidos-rapidos-{reto,matching,resultado}.test.ts`) — siguen el patrón de `aceptar-original.test.ts`/`ranking-1v1-atomic.test.ts`: reto directo (pendiente→aceptar/rechazar/cancelar, con y sin compañeros, `es_vs_king` al retar al Rey), matching ciego + join explícito + concurrencia real de `emparejar_partido_rapido()` (RPC directa, no vía ruta — el harness comparte un único cliente Supabase "activo" y no puede simular dos requests concurrentes de usuarios distintos), y resultado (XP con trío desparejo, Rey 3v3 por capitán, regresión de la disputa que dejaba el partido sin forma de volver a proponer). Requieren Supabase local (`supabase start` + `.env.test`, ver `.env.test.example`) — **no se pudieron correr en este entorno** (el runtime Bun del CLI de Supabase crashea en esta VM sandboxeada); quedan escritos siguiendo la convención existente pero sin ejecutar.
+
+---
+
+## PWA (Fase 1 — instalable)
+
+`app/manifest.ts` + `app/icon.png` / `app/apple-icon.png` + `public/icons/icon-{192,512,512-maskable}.png` + `viewport` export en `app/layout.tsx` (`themeColor`, `colorScheme: 'dark'`, `viewportFit: 'cover'`). Sin service worker todavía (Fase 2/3 del plan en `docs/PWA_PLAN.md` no implementadas — push notifications y offline shell quedan pendientes).
+
+`proxy.ts` (el middleware de esta versión de Next, no `middleware.ts`) tiene `/manifest.webmanifest` en `PUBLICAS_EXACTAS` — sin eso, el manifest quedaba detrás del redirect a `/login` y rompía la instalabilidad para visitantes sin sesión.
+
+Ícono actual: emblema K+corona generado directo (no pasó por el flujo completo de comparación de 4 conceptos del skill `logo-generator`) — placeholder de marca válido, pero conviene revisarlo con `/logo-generator` si se quiere iterar antes de shippear a producción.
+
+---
+
 ## Seguridad implementada
 
 > Revisiones exhaustivas aplicadas en 2026-05-23. Ver commits `ca3e55e` y `7423057`.
@@ -785,6 +871,8 @@ ni reseñas de Google.
 - **GCS bucket pendiente** — crear bucket `kotc-team-logos` en GCP y configurar 4 env vars (GCS_*). Sin esto, la subida de logos falla en runtime pero no en build.
 
 ### 🟡 Funcional pero incompleto
+- **Partido Rápido 3v3**: migraciones 047+048 aplicadas en producción; probado con `tsc`/build + smoke test de rutas; tests de integración escritos (`tests/integration/partidos-rapidos-*.test.ts`) pero no ejecutados en este entorno (Supabase CLI local no arranca en esta VM sandboxeada — correrlos con `supabase start` + `pnpm test:integration` en un entorno normal antes de confiar en ellos). No probado end-to-end con dos usuarios reales en la app corriendo. Ver sección "Partido Rápido 3v3" para el diseño.
+- **Ícono PWA** — emblema K+corona generado directo, no pasó por el flujo de comparación de 4 conceptos de `/logo-generator`; revisar antes de producción si se quiere pulir la marca.
 - **Rivales buscando match**: requiere que al menos un equipo active `buscando_rival = true` en su perfil (`/equipo/editar`) para que el widget del dashboard muestre resultados
 - **Filtros region/comuna**: solo funcionan para equipos/jugadores que tengan seteada la columna `region` (nueva en migr. 039). Datos existentes tienen NULL → filtro muestra todo correctamente, pero "rivales cercanos" requiere que el equipo configure su región
 - **Sin temporadas activas** — `temporada_id` nullable en todas las tablas relevantes

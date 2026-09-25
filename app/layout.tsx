@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 
@@ -12,6 +12,12 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "King of the Court",
   description: "Desafía equipos, conquista canchas y conviértete en el rey de tu ciudad.",
+};
+
+export const viewport: Viewport = {
+  themeColor: '#0a0a0a',
+  colorScheme: 'dark',
+  viewportFit: 'cover',
 };
 
 /**
