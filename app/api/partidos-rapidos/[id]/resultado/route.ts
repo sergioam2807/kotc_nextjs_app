@@ -205,7 +205,10 @@ export async function PATCH(
   const esCapitanA = partido.capitan_a_id === user.id;
   const esCapitanB = partido.capitan_b_id === user.id;
   if (!esCapitanA && !esCapitanB) return NextResponse.json({ error: 'Sin permisos' }, { status: 403 });
-  if (partido.estado !== 'resultado_pendiente') {
+  // 'completado' se acepta acá solo para la rama idempotente de 'confirmar'
+  // (ver más abajo) — un segundo PATCH confirmar tras el primero que ya
+  // completó el partido no debe ser un error, sino devolver yaConfirmado.
+  if (!['resultado_pendiente', 'completado'].includes(partido.estado)) {
     return NextResponse.json({ error: 'El partido no está en estado resultado_pendiente' }, { status: 409 });
   }
 
@@ -216,17 +219,11 @@ export async function PATCH(
     .maybeSingle();
   if (resErr) return NextResponse.json({ error: resErr.message }, { status: 500 });
   if (!resultado) return NextResponse.json({ error: 'No hay resultado propuesto aún' }, { status: 404 });
-  if (resultado.confirmado_por_perdedor) {
-    return NextResponse.json({ error: 'El resultado ya fue confirmado' }, { status: 409 });
-  }
-  if (resultado.propuesto_por === user.id && accion === 'confirmar') {
-    return NextResponse.json(
-      { error: 'El proponente no puede confirmar su propio resultado — espera que el rival lo confirme' },
-      { status: 400 },
-    );
-  }
 
   if (accion === 'disputar') {
+    if (resultado.confirmado_por_perdedor) {
+      return NextResponse.json({ error: 'El resultado ya fue confirmado' }, { status: 409 });
+    }
     // No se toca partidos_rapidos.estado (queda en 'resultado_pendiente') —
     // a diferencia del flujo de equipo, acá no hay re_proponer/aceptar_original
     // como sub-FSM separada: disputar solo flaguea el resultado, y cualquiera
@@ -240,7 +237,18 @@ export async function PATCH(
     return NextResponse.json({ ok: true, disputado: true });
   }
 
+  if (resultado.propuesto_por === user.id) {
+    return NextResponse.json(
+      { error: 'El proponente no puede confirmar su propio resultado — espera que el rival lo confirme' },
+      { status: 400 },
+    );
+  }
+
   // ── confirmar: idempotency guard ────────────────────────────────────────────
+  if (resultado.confirmado_por_perdedor) {
+    return NextResponse.json({ ok: true, yaConfirmado: true });
+  }
+
   const { data: confirmed, error: confirmErr } = await supabase
     .from('resultados_partido_rapido')
     .update({ confirmado_por_perdedor: true, confirmado_at: new Date().toISOString() })
