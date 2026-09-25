@@ -174,6 +174,40 @@ export async function getRanking1v1(jugadorId: string, temporadaId: string | nul
   return data;
 }
 
+/** Creates an 'emparejado' partido rápido (capitán vs capitán, sin compañeros) ready for propose/confirm. */
+export async function createPartidoRapidoEmparejado(opts: {
+  canchaId: string;
+  capitanAId: string;
+  capitanBId: string;
+  esVsKing?: boolean;
+}) {
+  const admin = serviceClient();
+  const { data, error } = await admin
+    .from('partidos_rapidos')
+    .insert({
+      cancha_id: opts.canchaId,
+      deporte: 'basketball',
+      formato: '3v3',
+      capitan_a_id: opts.capitanAId,
+      capitan_b_id: opts.capitanBId,
+      es_vs_king: opts.esVsKing ?? false,
+      estado: 'emparejado',
+      matched_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single();
+  if (error || !data) throw new Error(`create partido_rapido failed: ${error?.message}`);
+  const partidoId = data.id as string;
+
+  const { error: jugadoresErr } = await admin.from('partido_rapido_jugadores').insert([
+    { partido_id: partidoId, lado: 'a', jugador_id: opts.capitanAId, es_capitan: true },
+    { partido_id: partidoId, lado: 'b', jugador_id: opts.capitanBId, es_capitan: true },
+  ]);
+  if (jugadoresErr) throw new Error(`create partido_rapido_jugadores failed: ${jugadoresErr.message}`);
+
+  return partidoId;
+}
+
 export async function createLiga(opts: {
   organizadorId: string;
   formato?: string;

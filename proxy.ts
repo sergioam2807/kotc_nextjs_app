@@ -15,6 +15,7 @@ const PUBLICAS_EXACTAS = new Set([
   '/login',
   '/register',
   '/onboarding',
+  '/manifest.webmanifest', // PWA manifest — el browser/SO lo pide sin sesión para evaluar instalabilidad
 ]);
 
 /** Rutas públicas con parámetros. Acá sí hace falta comparar por prefijo. */

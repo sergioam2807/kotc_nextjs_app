@@ -6,6 +6,7 @@ import { nombreNivel } from '@/lib/levels';
 import { tipoEvento } from '@/lib/eventos';
 import Link from 'next/link';
 import { InvitacionesRecibidas } from '@/components/equipo/InvitacionesRecibidas';
+import { QuickMatchHero } from '@/components/dashboard/QuickMatchHero';
 
 // MVP: Basketball únicamente
 const DEPORTES_MAP: Record<string, { emoji: string; label: string }> = {
@@ -434,6 +435,9 @@ export default async function DashboardPage() {
               <RefreshButton />
             </div>
           </div>
+
+          {/* ── Partido Rápido (flagship 3v3) ───────────────────────────── */}
+          <QuickMatchHero />
 
           {/* ── CTA principal: Desafiar / Buscar rival ────────────────────── */}
           {miEquipo && (
